@@ -20,8 +20,8 @@ export const BILLING: {
     trialDays: 7,
     tiers: {
         standard: { priceText: '$9.99/mo', stripePriceId: stripePriceIdStandard },
-        vip: { priceText: '$29.99/mo', stripePriceId: stripePriceIdVip },
-        elite: { priceText: '$149.99/mo', stripePriceId: stripePriceIdElite },
+        vip: { priceText: '$39.99/mo', stripePriceId: stripePriceIdVip },
+        elite: { priceText: '$99.99/mo', stripePriceId: stripePriceIdElite },
     },
     cancellationPolicyText: 'Cancel anytime. Access continues until the end of your billing period.',
     refundPolicyText: 'Refunds are not guaranteed and may be issued case-by-case.',
@@ -30,7 +30,7 @@ export const BILLING: {
 export function billingHasStripeIds(): boolean {
     return Boolean(
         BILLING.tiers.standard.stripePriceId &&
-            BILLING.tiers.vip.stripePriceId &&
-            BILLING.tiers.elite.stripePriceId
+        BILLING.tiers.vip.stripePriceId &&
+        BILLING.tiers.elite.stripePriceId
     );
 }

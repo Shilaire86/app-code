@@ -7,15 +7,15 @@ export interface StageScoreInput {
 }
 
 export const POINTS = {
-    WORKOUT: 5,
-    PROGRESS_ENTRY: 2,
-    PHOTO: 10,
+    WORKOUT: 50,
+    PROGRESS_ENTRY: 10,
+    PHOTO: 25,
 };
 
 export const THRESHOLDS = {
-    PRACTITIONER: 10,
-    DEVOTED: 50,
-    EMBODIED: 150,
+    PRACTITIONER: 250,
+    DEVOTED: 1000,
+    EMBODIED: 2500,
 };
 
 /**
@@ -64,4 +64,13 @@ export function calculateStageProgress(input: StageScoreInput): number {
     const range = nextThreshold - currentThreshold;
     const progressInStep = totalPoints - currentThreshold;
     return Math.min(100, Math.max(0, (progressInStep / range) * 100));
+}
+
+/**
+ * Helper to get the total points for a given set of inputs.
+ */
+export function calculateTotalPoints(input: StageScoreInput): number {
+    return input.workoutCount * POINTS.WORKOUT +
+        input.progressEntryCount * POINTS.PROGRESS_ENTRY +
+        input.photoCount * POINTS.PHOTO;
 }

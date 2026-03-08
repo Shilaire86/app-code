@@ -6,6 +6,8 @@ export type EntitlementKey =
     | 'macroToolsEnabled'
     | 'programsAccess'
     | 'offersAccess'
+    | 'communityComments'
+    | 'advancedAnalytics'
     | 'macroSnapshotScansPerWeek';
 
 export type TierEntitlements = {
@@ -13,22 +15,28 @@ export type TierEntitlements = {
     macroToolsEnabled: boolean;
     programsAccess: 'limited' | 'full';
     offersAccess: 'limited' | 'full';
+    communityComments: boolean;
+    advancedAnalytics: boolean;
     macroSnapshotScansPerWeek: number; // future placeholder
 };
 
 export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
     free: {
-        messagingEnabled: true,
-        macroToolsEnabled: true,
+        messagingEnabled: false,
+        macroToolsEnabled: false,
         programsAccess: 'limited',
         offersAccess: 'limited',
+        communityComments: false,
+        advancedAnalytics: false,
         macroSnapshotScansPerWeek: 0,
     },
     standard: {
         messagingEnabled: true,
         macroToolsEnabled: true,
-        programsAccess: 'full',
+        programsAccess: 'limited',
         offersAccess: 'full',
+        communityComments: false,
+        advancedAnalytics: false,
         macroSnapshotScansPerWeek: 0,
     },
     vip: {
@@ -36,6 +44,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         macroToolsEnabled: true,
         programsAccess: 'full',
         offersAccess: 'full',
+        communityComments: true,
+        advancedAnalytics: true,
         macroSnapshotScansPerWeek: 0,
     },
     elite: {
@@ -43,6 +53,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         macroToolsEnabled: true,
         programsAccess: 'full',
         offersAccess: 'full',
+        communityComments: true,
+        advancedAnalytics: true,
         macroSnapshotScansPerWeek: 0,
     },
 };

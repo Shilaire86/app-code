@@ -50,6 +50,22 @@ export async function fetchProgramDaySession(programDayId: string) {
     // Transform to match expected format
     const programName = (day as any)?.program_weeks?.programs?.name || 'Program';
 
+    // Look up full exercise details from the exercises table by name
+    const exerciseNames = (exercises ?? []).map(ex => ex.exercise_name).filter(Boolean);
+    let exerciseLookup: Record<string, any> = {};
+    if (exerciseNames.length > 0) {
+        const { data: fullExercises } = await supabase
+            .from('exercises')
+            .select('*')
+            .in('name', exerciseNames);
+
+        if (fullExercises) {
+            for (const fe of fullExercises) {
+                exerciseLookup[fe.name] = fe;
+            }
+        }
+    }
+
     return {
         workout: {
             id: day.id,
@@ -57,19 +73,25 @@ export async function fetchProgramDaySession(programDayId: string) {
             programs: { name: programName },
             isNewStructure: true,
         },
-        exercises: (exercises ?? []).map(ex => ({
-            id: ex.id,
-            exercises: {
+        exercises: (exercises ?? []).map(ex => {
+            const matched = exerciseLookup[ex.exercise_name];
+            return {
                 id: ex.id,
-                name: ex.exercise_name,
-                video_url: null,
-            },
-            sets: ex.sets_target || 3,
-            reps_min: null,
-            reps_max: null,
-            reps_target: ex.reps_target,
-            rest_seconds: ex.rest_seconds || 150,
-            order_index: ex.order_index,
-        })),
+                exercises: {
+                    id: matched?.id || ex.id,
+                    name: ex.exercise_name,
+                    video_url: matched?.video_url || null,
+                    alternatives: matched?.alternatives || [],
+                    muscle_groups: matched?.muscle_groups || [],
+                    equipment: matched?.equipment || [],
+                },
+                sets: ex.sets_target || 3,
+                reps_min: null,
+                reps_max: null,
+                reps_target: ex.reps_target,
+                rest_seconds: ex.rest_seconds || 150,
+                order_index: ex.order_index,
+            };
+        }),
     };
 }

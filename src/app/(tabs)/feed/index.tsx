@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCachedQuery } from '@/hooks/useCachedQuery';
 import { fetchAffiliateOffers, fetchCoachPosts, toggleLike, fetchUserLikes, fetchComments, addComment, fetchRecentActivities } from '@/services/feed';
 import { useAuthStore } from '@/stores/authStore';
+import { useProfileStore } from '@/stores/profileStore';
+import { hasEntitlement } from '@/lib/entitlements';
+import { useRouter } from 'expo-router';
 
 const OfferCard = memo(({ offer }: { offer: any }) => (
     <TouchableOpacity key={offer.id} style={styles.offerCard}>
@@ -17,6 +20,7 @@ const OfferCard = memo(({ offer }: { offer: any }) => (
 ));
 
 const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
+    const router = useRouter();
     const [comments, setComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState('');
@@ -54,23 +58,33 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
                 </View>
             ))}
             {user && (
-                <View style={styles.commentInputRow}>
-                    <TextInput
-                        style={styles.commentInput}
-                        placeholder="Add a comment..."
-                        placeholderTextColor="rgba(255,255,255,0.3)"
-                        value={newComment}
-                        onChangeText={setNewComment}
-                        multiline
-                    />
-                    <TouchableOpacity onPress={handleAddComment} disabled={submitting}>
-                        {submitting ? (
-                            <ActivityIndicator size="small" color={theme.colors.primary} />
-                        ) : (
-                            <Ionicons name="send" size={20} color={theme.colors.primary} />
-                        )}
+                hasEntitlement(useProfileStore.getState().tier, 'communityComments') ? (
+                    <View style={styles.commentInputRow}>
+                        <TextInput
+                            style={styles.commentInput}
+                            placeholder="Add a comment..."
+                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            value={newComment}
+                            onChangeText={setNewComment}
+                            multiline
+                        />
+                        <TouchableOpacity onPress={handleAddComment} disabled={submitting}>
+                            {submitting ? (
+                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                            ) : (
+                                <Ionicons name="send" size={20} color={theme.colors.primary} />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.lockedCommentRow}
+                        onPress={() => router.push('/subscribe')}
+                    >
+                        <Ionicons name="lock-closed" size={14} color="rgba(255,255,255,0.4)" />
+                        <Text style={styles.lockedCommentText}>VIP Feature: Upgrade to join the conversation</Text>
                     </TouchableOpacity>
-                </View>
+                )
             )}
         </View>
     );
@@ -137,39 +151,63 @@ const PostCard = memo(({ item, isLiked, onToggleLike, user }: any) => {
     );
 });
 
+const ACTIVITY_ICONS: Record<string, { name: string; color: string }> = {
+    workout_complete: { name: 'barbell-outline', color: '#00b894' },
+    pr_set: { name: 'trophy-outline', color: '#fdcb6e' },
+    milestone: { name: 'ribbon-outline', color: '#e17055' },
+    stage_up: { name: 'arrow-up-circle-outline', color: '#a29bfe' },
+    streak: { name: 'flame-outline', color: '#ff7675' },
+};
+
 const ActivityCard = memo(({ activity }: { activity: any }) => {
+    const iconInfo = ACTIVITY_ICONS[activity.activity_type] || { name: 'ellipse-outline', color: theme.colors.textSecondary };
+
     const renderContent = () => {
         switch (activity.activity_type) {
             case 'workout_complete':
-                return `just crushed ${activity.activity_data?.workout_name || 'a workout'}!`;
+                return `just crushed ${activity.activity_data?.workout_name || 'a workout'}! 💪`;
             case 'pr_set':
-                return `set a new PR on ${activity.activity_data?.exercise_name}: ${activity.activity_data?.weight} lbs!`;
+                return `set a new PR on ${activity.activity_data?.exercise_name}: ${activity.activity_data?.weight} lbs! 🏆`;
             case 'milestone':
-                return `hit a major milestone: ${activity.activity_data?.milestone}!`;
+                return `hit a major milestone: ${activity.activity_data?.milestone}! 🎯`;
+            case 'stage_up':
+                return `evolved to ${activity.activity_data?.new_stage?.toUpperCase() || 'a new stage'}! 🔥`;
+            case 'streak':
+                return `is on a ${activity.activity_data?.days || ''} day streak! 🔥`;
             default:
                 return 'is making progress!';
         }
     };
 
+    const timeAgo = (dateStr: string) => {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        const days = Math.floor(hrs / 24);
+        return `${days}d ago`;
+    };
+
     return (
-        <View style={styles.activityCard}>
-            <View style={styles.activityAvatar}>
-                <Text style={styles.activityAvatarText}>
-                    {activity.profiles?.full_name?.charAt(0) || 'U'}
-                </Text>
+        <View style={[styles.activityCard, { borderLeftWidth: 3, borderLeftColor: iconInfo.color }]}>
+            <View style={[styles.activityAvatar, { backgroundColor: `${iconInfo.color}22` }]}>
+                <Ionicons name={iconInfo.name as any} size={18} color={iconInfo.color} />
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.activityText}>
                     <Text style={styles.activityUser}>{activity.profiles?.full_name || 'Someone'}</Text>
                     {' '}{renderContent()}
                 </Text>
-                <Text style={styles.activityDate}>{new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                <Text style={styles.activityDate}>{timeAgo(activity.created_at)}</Text>
             </View>
         </View>
     );
 });
 
 export default function FeedScreen() {
+    const router = useRouter();
     const { user } = useAuthStore();
     const [likedPosts, setLikedPosts] = useState<string[]>([]);
 
@@ -431,6 +469,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 10,
         marginTop: 8,
+    },
+    lockedCommentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        padding: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    lockedCommentText: {
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        fontWeight: '600',
     },
     commentInput: {
         flex: 1,

@@ -140,51 +140,154 @@ export default function SubscribePlaceholderScreen() {
 
                 {checkoutNotice ? (
                     <View style={[styles.notice, checkoutNotice.type === 'success' ? styles.noticeSuccess : styles.noticeCancel]}>
-                        <Text style={styles.noticeText}>
-                            {checkoutNotice.text}
-                            {refreshingSubscription ? ' Please wait...' : ''}
-                        </Text>
+                        <View style={styles.noticeHeader}>
+                            <Ionicons
+                                name={checkoutNotice.type === 'success' ? "checkmark-circle" : "alert-circle"}
+                                size={20}
+                                color={checkoutNotice.type === 'success' ? '#00b894' : '#ff9f43'}
+                            />
+                            <Text style={styles.noticeText}>
+                                {checkoutNotice.text}
+                                {refreshingSubscription ? ' Please wait...' : ''}
+                            </Text>
+                        </View>
+                        {checkoutNotice.type === 'success' && !refreshingSubscription && (
+                            <TouchableOpacity
+                                style={styles.successButton}
+                                onPress={() => router.replace('/(tabs)/programs')}
+                            >
+                                <Text style={styles.successButtonText}>Explore Programs</Text>
+                                <Ionicons name="apps" size={16} color="#FFF" />
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : null}
 
+                {useProfileStore.getState().tier !== 'free' && !checkoutNotice && (
+                    <View style={styles.currentTierCard}>
+                        <View style={styles.currentTierHeader}>
+                            <Ionicons name="ribbon-outline" size={20} color={theme.colors.primary} />
+                            <Text style={styles.currentTierTitle}>Your Current Plan</Text>
+                        </View>
+                        <Text style={styles.currentTierName}>
+                            {getTierLabel(useProfileStore.getState().tier)}
+                        </Text>
+                        <Text style={styles.currentTierStatus}>Active • Subscription is managed via Stripe</Text>
+                    </View>
+                )}
+
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Tiers (preview)</Text>
+                    <Text style={styles.cardTitle}>{useProfileStore.getState().tier === 'free' ? 'Choose a Plan' : 'Change Plans'}</Text>
                     {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
                     {tiers.map((t) => {
                         // Billing tiers are expected to match the app's subscription tier keys.
                         const tierKey = t as SubscriptionTier;
+                        const isCurrent = useProfileStore.getState().tier === tierKey;
+                        const isElite = tierKey === 'elite';
+
                         return (
-                            <View key={t} style={styles.tierRow}>
+                            <View key={t} style={[styles.tierRow, isCurrent && styles.tierRowCurrent, isElite && styles.tierRowElite]}>
                                 <View style={styles.tierLeft}>
-                                    <Text style={styles.tierName}>{getTierLabel(t)}</Text>
-                                    <Text style={styles.tierPrice}>{BILLING.tiers[t].priceText}</Text>
-                                </View>
-                                {BILLING.trialDays > 0 && (
-                                    <Text style={styles.trialText}>{BILLING.trialDays}-day free trial</Text>
-                                )}
-                                <View style={styles.tierBullets}>
-                                    <Text style={styles.bullet}>- Programs: {ENTITLEMENTS[tierKey].programsAccess}</Text>
-                                    <Text style={styles.bullet}>- Offers: {ENTITLEMENTS[tierKey].offersAccess}</Text>
-                                    <Text style={styles.bullet}>- Messaging: {ENTITLEMENTS[tierKey].messagingEnabled ? 'included' : 'no'}</Text>
-                                </View>
-                                <TouchableOpacity
-                                    style={styles.subscribeButton}
-                                    onPress={() => startCheckout(String(t))}
-                                    accessibilityRole="button"
-                                    disabled={!!loadingTier}
-                                >
-                                    {loadingTier === t ? (
-                                        <ActivityIndicator size="small" color="#FFF" />
-                                    ) : (
-                                        <>
-                                            <Text style={styles.subscribeButtonText}>Start 7-day free trial</Text>
-                                            <Ionicons name="arrow-forward" size={16} color="#FFF" />
-                                        </>
+                                    <View>
+                                        <Text style={[styles.tierName, isElite && styles.tierNameElite]}>
+                                            {getTierLabel(t)}
+                                            {isCurrent && <Text style={styles.currentLabel}> (Current)</Text>}
+                                        </Text>
+                                        <Text style={[styles.tierPrice, isElite && styles.tierPriceElite]}>{BILLING.tiers[t].priceText}</Text>
+                                    </View>
+                                    {isElite && (
+                                        <View style={styles.comingSoonBadge}>
+                                            <Ionicons name="time-outline" size={12} color="#FFD700" />
+                                            <Text style={styles.comingSoonText}>Coming Soon</Text>
+                                        </View>
                                     )}
-                                </TouchableOpacity>
+                                    {!isElite && BILLING.trialDays > 0 && !isCurrent && (
+                                        <Text style={styles.trialText}>{BILLING.trialDays}-day free trial</Text>
+                                    )}
+                                </View>
+                                <View style={styles.tierBullets}>
+                                    <View style={styles.bulletRow}>
+                                        <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
+                                        <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
+                                            {tierKey === 'free' ? 'Introduction & Foundations' :
+                                                tierKey === 'standard' ? 'Standard Program Library' :
+                                                    tierKey === 'vip' ? 'Full Method Catalog' :
+                                                        'Custom 1-on-1 Programming'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.bulletRow}>
+                                        <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
+                                        <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
+                                            {tierKey === 'vip' || tierKey === 'elite' ? 'Advanced Analytics & Trends' : 'Workout Logbook & History'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.bulletRow}>
+                                        <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
+                                        <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
+                                            {tierKey === 'elite' ? 'Direct 24/7 Coach Messaging' :
+                                                tierKey === 'vip' ? 'Community Feed Access' :
+                                                    'Read-only Feed Access'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                {isElite && (
+                                    <View style={styles.eliteContainer}>
+                                        <Text style={styles.comingSoonNote}>
+                                            Elite members receive personalized 1-on-1 coaching, routine check-ins, and bespoke programming tailored to their specific evolution.
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={styles.inquiryButton}
+                                            onPress={() => Linking.openURL(`mailto:coach@thebecomingmethod.com?subject=Elite Tier Inquiry&body=I am interested in learning more about the Elite tier.`)}
+                                        >
+                                            <Text style={styles.inquiryButtonText}>Inquire for early access</Text>
+                                            <Ionicons name="mail-outline" size={14} color={theme.colors.primary} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                                {!isCurrent && !isElite && (
+                                    <TouchableOpacity
+                                        style={styles.subscribeButton}
+                                        onPress={() => startCheckout(String(t))}
+                                        accessibilityRole="button"
+                                        disabled={!!loadingTier}
+                                    >
+                                        {loadingTier === t ? (
+                                            <ActivityIndicator size="small" color="#FFF" />
+                                        ) : (
+                                            <>
+                                                <Text style={styles.subscribeButtonText}>
+                                                    {useProfileStore.getState().tier === 'free' ? `Start ${BILLING.trialDays}-day free trial` : 'Switch to this plan'}
+                                                </Text>
+                                                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+                                            </>
+                                        )}
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         );
                     })}
+                </View>
+
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Why Upgrade to VIP?</Text>
+                    <View style={styles.comparisonTable}>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Full Program Library</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Advanced Trend Analytics</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Full Community Comments</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Exclusive Mindset Audio</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                    </View>
                 </View>
 
                 <View style={styles.card}>
@@ -223,7 +326,33 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 159, 67, 0.14)',
         borderColor: 'rgba(255, 159, 67, 0.45)',
     },
-    noticeText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+    noticeText: { color: '#FFF', fontSize: 12, fontWeight: '700', flex: 1 },
+    noticeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    successButton: {
+        backgroundColor: '#00b894',
+        borderRadius: theme.radius.md,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 12,
+    },
+    successButtonText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
+    currentTierCard: {
+        backgroundColor: 'rgba(255, 215, 0, 0.05)',
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 215, 0, 0.2)',
+        padding: theme.spacing.lg,
+        gap: 4,
+        marginBottom: 8,
+    },
+    currentTierHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+    currentTierTitle: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    currentTierName: { color: theme.colors.primary, fontSize: 18, fontWeight: '900' },
+    currentTierStatus: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '600' },
     card: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,
@@ -241,11 +370,72 @@ const styles = StyleSheet.create({
         marginTop: 8,
         gap: 8,
     },
+    tierRowCurrent: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        marginHorizontal: -theme.spacing.lg,
+        paddingHorizontal: theme.spacing.lg,
+        borderTopWidth: 0,
+        borderRadius: theme.radius.md,
+    },
+    tierRowElite: {
+        opacity: 0.85,
+        borderTopColor: 'rgba(255, 215, 0, 0.15)',
+    },
+    eliteContainer: { gap: 12, marginTop: 4 },
+    inquiryButton: {
+        backgroundColor: 'rgba(255, 215, 0, 0.08)',
+        borderRadius: theme.radius.md,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 215, 0, 0.2)',
+    },
+    inquiryButtonText: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' },
+    comparisonTable: { gap: 12, marginTop: 8 },
+    comparisonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.04)',
+    },
+    comparisonLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600' },
+    tierNameElite: { color: 'rgba(255,255,255,0.7)' },
+    tierPriceElite: { color: 'rgba(255, 215, 0, 0.6)' },
+    bulletElite: { color: 'rgba(255,255,255,0.4)' },
+    comingSoonBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: 'rgba(255, 215, 0, 0.12)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 215, 0, 0.25)',
+    },
+    comingSoonText: { color: '#FFD700', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+    comingSoonNote: {
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        fontStyle: 'italic',
+        lineHeight: 16,
+        marginTop: 2,
+    },
+    currentLabel: { color: theme.colors.primary, fontSize: 11, fontWeight: '700' },
     tierLeft: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
     tierName: { color: '#FFF', fontSize: 13, fontWeight: '900' },
     tierPrice: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' },
     trialText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '700' },
-    tierBullets: { gap: 4 },
+    tierBullets: { gap: 8, marginTop: 4 },
+    bulletRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    bulletText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '500' },
+    bulletTextElite: { color: 'rgba(255,255,255,0.5)' },
     errorText: { color: '#FF6B6B', fontSize: 12, lineHeight: 16, marginTop: 6 },
     subscribeButton: {
         minHeight: 44,

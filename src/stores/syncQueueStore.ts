@@ -32,6 +32,8 @@ interface SyncQueueState {
     isSyncing: boolean;
     enqueueWorkout: (entry: PendingWorkoutLog) => void;
     processQueue: () => Promise<void>;
+    clearQueue: () => void;
+    pendingCount: () => number;
 }
 
 export const useSyncQueueStore = create<SyncQueueState>()(
@@ -41,6 +43,8 @@ export const useSyncQueueStore = create<SyncQueueState>()(
             isSyncing: false,
             enqueueWorkout: (entry) =>
                 set((state) => ({ queue: [...state.queue, entry] })),
+            pendingCount: () => get().queue.length,
+            clearQueue: () => set({ queue: [] }),
             processQueue: async () => {
                 const { queue, isSyncing } = get();
                 if (isSyncing || queue.length === 0) return;

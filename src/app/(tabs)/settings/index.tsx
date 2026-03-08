@@ -208,6 +208,23 @@ export default function SettingsScreen() {
             />
 
             <ScrollView contentContainerStyle={styles.content}>
+                {/* Upgrade Banner for Standard/Free users */}
+                {(tier === 'free' || tier === 'standard') && (
+                    <TouchableOpacity
+                        style={styles.upgradeBanner}
+                        onPress={() => router.push('/subscribe')}
+                    >
+                        <View style={styles.upgradeContent}>
+                            <Ionicons name="sparkles" size={20} color="#FFD700" />
+                            <View>
+                                <Text style={styles.upgradeTitle}>Unlock Full Potential</Text>
+                                <Text style={styles.upgradeSubtitle}>Upgrade to VIP for advanced analytics & community</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+                    </TouchableOpacity>
+                )}
+
                 {/* Profile Section */}
                 <Text style={styles.sectionTitle}>Profile</Text>
 
@@ -552,5 +569,31 @@ const styles = StyleSheet.create({
         color: theme.colors.textTertiary,
         fontSize: 12,
         marginTop: 4,
+    },
+    upgradeBanner: {
+        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        borderRadius: theme.radius.lg,
+        padding: 16,
+        marginBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 215, 0, 0.2)',
+    },
+    upgradeContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    upgradeTitle: {
+        color: '#FFD700',
+        fontSize: 14,
+        fontWeight: '800',
+    },
+    upgradeSubtitle: {
+        color: 'rgba(255, 215, 0, 0.7)',
+        fontSize: 11,
+        fontWeight: '600',
     },
 });

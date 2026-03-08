@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 
 const GOAL_OPTIONS = ['Strength', 'Fat Loss', 'Athletic', 'Mobility', 'Consistency'];
 const EQUIPMENT_OPTIONS = [
+    { label: 'Full Gym', value: 'full_gym' },
     { label: 'Barbell', value: 'barbell' },
     { label: 'Dumbbell', value: 'dumbbell' },
     { label: 'Kettlebell', value: 'kettlebell' },

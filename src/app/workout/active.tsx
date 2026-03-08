@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { useWorkoutStore } from '@/stores/workoutStore';
@@ -40,6 +40,14 @@ export default function ActiveWorkoutScreen() {
     const restTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [historyByExerciseId, setHistoryByExerciseId] = useState<Record<string, LastSet | null>>({});
     const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+
+    // Swap feature state
+    const [localExercises, setLocalExercises] = useState<any[]>([]);
+    const [swapModalVisible, setSwapModalVisible] = useState(false);
+    const [exerciseToSwap, setExerciseToSwap] = useState<any | null>(null);
+    const [availableAlternates, setAvailableAlternates] = useState<any[]>([]);
+    const [loadingAlternates, setLoadingAlternates] = useState(false);
 
     const {
         data,
@@ -59,8 +67,175 @@ export default function ActiveWorkoutScreen() {
     );
 
     const workout = data?.workout ?? null;
-    const exercises = data?.exercises ?? [];
+    const initialExercises = data?.exercises ?? [];
     const userId = useAuthStore.getState().user?.id ?? null;
+
+    useEffect(() => {
+        if (initialExercises.length > 0 && localExercises.length === 0) {
+            setLocalExercises(initialExercises);
+        }
+    }, [initialExercises]);
+
+    // Infer muscle groups from exercise name keywords (future-proofing)
+    // Using a more structured mapping to allow for multi-word priority
+    const MUSCLE_INFERENCE_DATA: Array<{ key: string; groups: string[] }> = [
+        // Priority multi-word matches
+        { key: 'leg press', groups: ['legs', 'glutes'] },
+        { key: 'bench press', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'chest press', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'overhead press', groups: ['shoulders', 'triceps'] },
+        { key: 'shoulder press', groups: ['shoulders', 'triceps'] },
+        { key: 'incline press', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'decline press', groups: ['chest', 'triceps'] },
+        { key: 'face pull', groups: ['shoulders', 'back'] },
+        { key: 'straight arm pulldown', groups: ['back'] },
+
+        // Single word matches
+        { key: 'press', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'bench', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'push', groups: ['chest', 'shoulders', 'triceps'] },
+        { key: 'fly', groups: ['chest'] },
+        { key: 'chest', groups: ['chest'] },
+        { key: 'row', groups: ['back', 'biceps'] },
+        { key: 'pull', groups: ['back', 'biceps'] },
+        { key: 'lat', groups: ['back', 'biceps'] },
+        { key: 'back', groups: ['back'] },
+        { key: 'squat', groups: ['legs', 'glutes'] },
+        { key: 'lunge', groups: ['legs', 'glutes'] },
+        { key: 'leg', groups: ['legs', 'glutes'] },
+        { key: 'calf', groups: ['legs'] },
+        { key: 'deadlift', groups: ['back', 'legs', 'glutes'] },
+        { key: 'hip', groups: ['glutes', 'legs'] },
+        { key: 'glute', groups: ['glutes', 'legs'] },
+        { key: 'curl', groups: ['biceps'] },
+        { key: 'bicep', groups: ['biceps'] },
+        { key: 'tricep', groups: ['triceps'] },
+        { key: 'extension', groups: ['triceps'] },
+        { key: 'shoulder', groups: ['shoulders'] },
+        { key: 'overhead', groups: ['shoulders', 'triceps'] },
+        { key: 'lateral', groups: ['shoulders'] },
+        { key: 'raise', groups: ['shoulders'] },
+        { key: 'plank', groups: ['core'] },
+        { key: 'crunch', groups: ['core'] },
+        { key: 'twist', groups: ['core'] },
+        { key: 'ab', groups: ['core'] },
+    ];
+
+    const inferMuscleGroups = (name: string): string[] => {
+        const lower = name.toLowerCase();
+
+        // 1. Try to find an exact multi-word match first
+        for (const item of MUSCLE_INFERENCE_DATA) {
+            if (item.key.includes(' ') && lower.includes(item.key)) {
+                return item.groups;
+            }
+        }
+
+        // 2. Special case: if it's a "press" but also mentions "leg", it's a leg exercise
+        // This is a safety guard for variant names like "Leg Press (machine)"
+        if (lower.includes('leg') && lower.includes('press') && !lower.includes('chest') && !lower.includes('bench')) {
+            return ['legs', 'glutes'];
+        }
+
+        // 3. Otherwise collect standard keywords
+        const inferred = new Set<string>();
+        for (const item of MUSCLE_INFERENCE_DATA) {
+            if (!item.key.includes(' ') && lower.includes(item.key)) {
+                item.groups.forEach(g => inferred.add(g));
+            }
+        }
+        return Array.from(inferred);
+    };
+
+    const handleShowSwap = async (ex: any) => {
+        setExerciseToSwap(ex);
+        setSwapModalVisible(true);
+        setLoadingAlternates(true);
+
+        try {
+            // 1. Try explicit alternatives first (UUID array on the exercise row)
+            const altIds = ex.exercises?.alternatives || [];
+            if (altIds.length > 0) {
+                const { data: alts, error: altsError } = await supabase
+                    .from('exercises')
+                    .select('*')
+                    .in('id', altIds);
+
+                if (!altsError && alts && alts.length > 0) {
+                    setAvailableAlternates(alts);
+                    return;
+                }
+            }
+
+            // 2. Fallback: find exercises with overlapping muscle groups
+            let muscleGroups = ex.exercises?.muscle_groups || [];
+
+            // If no muscle groups from DB, infer from exercise name
+            if (muscleGroups.length === 0) {
+                muscleGroups = inferMuscleGroups(ex.exercises?.name || '');
+            }
+
+            if (muscleGroups.length > 0) {
+                const { data: fallbackAlts, error: fallbackError } = await supabase
+                    .from('exercises')
+                    .select('*')
+                    .overlaps('muscle_groups', muscleGroups)
+                    .neq('name', ex.exercises?.name || '')
+                    .limit(8);
+
+                if (!fallbackError && fallbackAlts && fallbackAlts.length > 0) {
+                    setAvailableAlternates(fallbackAlts);
+                    return;
+                }
+            }
+
+            // 3. Last resort: search by keywords from the exercise name
+            const nameWords = (ex.exercises?.name || '')
+                .split(/[\s()/,]+/)
+                .filter((w: string) => w.length > 3 && !['machine', 'dumbbell', 'barbell', 'cable'].includes(w.toLowerCase()));
+
+            for (const keyword of nameWords) {
+                const { data: keywordAlts } = await supabase
+                    .from('exercises')
+                    .select('*')
+                    .ilike('name', `%${keyword}%`)
+                    .neq('name', ex.exercises?.name || '')
+                    .limit(8);
+
+                if (keywordAlts && keywordAlts.length > 0) {
+                    setAvailableAlternates(keywordAlts);
+                    return;
+                }
+            }
+
+            // Nothing found at all
+            setAvailableAlternates([]);
+        } catch (err) {
+            console.error('Error fetching alternates:', err);
+            Alert.alert('Error', 'Failed to load alternative exercises');
+        } finally {
+            setLoadingAlternates(false);
+        }
+    };
+
+    const performSwap = (newExercise: any) => {
+        if (!exerciseToSwap) return;
+
+        setLocalExercises(prev => prev.map(ex => {
+            if (ex.id === exerciseToSwap.id) {
+                return {
+                    ...ex,
+                    exercises: newExercise
+                };
+            }
+            return ex;
+        }));
+
+        setSwapModalVisible(false);
+        setExerciseToSwap(null);
+    };
+
+    const togglePause = () => setIsPaused(prev => !prev);
 
     function isLowerBodyExercise(name: string) {
         const s = name.toLowerCase();
@@ -147,17 +322,18 @@ export default function ActiveWorkoutScreen() {
     }
 
     useEffect(() => {
-        if (startTime) {
+        if (startTime && !isPaused) {
             const start = new Date(startTime).getTime();
+            // If we've been paused, we need to adjust for that.
+            // But for simplicity in this MVP, we use elapsedTime which we increment.
             timerRef.current = setInterval(() => {
-                const now = new Date().getTime();
-                setElapsedTime(Math.floor((now - start) / 1000));
+                setElapsedTime(prev => prev + 1);
             }, 1000);
         }
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [startTime]);
+    }, [startTime, isPaused]);
 
     useEffect(() => {
         if (restRemaining === null) return;
@@ -180,7 +356,7 @@ export default function ActiveWorkoutScreen() {
 
         if (activeWorkoutId !== workoutId) {
             startWorkout(workoutId);
-            exercises.forEach((ex: any) => {
+            initialExercises.forEach((ex: any) => {
                 for (let i = 0; i < ex.sets; i++) {
                     logSet({
                         exerciseId: ex.exercises.id,
@@ -191,11 +367,11 @@ export default function ActiveWorkoutScreen() {
                 }
             });
         }
-    }, [workoutId, data, activeWorkoutId, exercises, startWorkout, logSet]);
+    }, [workoutId, data, activeWorkoutId, initialExercises, startWorkout, logSet]);
 
     useEffect(() => {
         if (!userId) return;
-        if (!exercises || exercises.length === 0) return;
+        if (!localExercises || localExercises.length === 0) return;
         if (historyLoadFailed) return;
 
         let cancelled = false;
@@ -203,7 +379,7 @@ export default function ActiveWorkoutScreen() {
         async function loadLastSets() {
             try {
                 // Build list of exercises to query
-                const exerciseList = exercises.map((ex: any) => ({
+                const exerciseList = localExercises.map((ex: any) => ({
                     id: ex?.exercises?.id,
                     name: ex?.exercises?.name,
                 }));
@@ -276,7 +452,7 @@ export default function ActiveWorkoutScreen() {
         };
         // Intentionally exclude historyByExerciseId from deps to prevent request loops.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userId, exercises, historyLoadFailed]);
+    }, [userId, localExercises, historyLoadFailed]);
 
     useEffect(() => {
         if (!error || errorHandledRef.current) return;
@@ -336,7 +512,7 @@ export default function ActiveWorkoutScreen() {
                 if (setsError) throw setsError;
 
                 // 3. Check for PRs (only for exercises with valid exercise_id)
-                for (const exercise of exercises) {
+                for (const exercise of localExercises) {
                     // Skip PR check for new structure programs (synthetic IDs)
                     if (!exercise.exercises?.id || isNewStructure) continue;
 
@@ -411,6 +587,14 @@ export default function ActiveWorkoutScreen() {
                     const stageResult = await recalculateStage(userId, { force: true });
                     stageChanged = stageResult.changed;
                     newStage = stageResult.current;
+                    if (stageChanged) {
+                        useProfileStore.getState().setLevelUp(stageResult.previous, stageResult.current as any);
+                        // Log stage-up to the community feed
+                        await logActivity(userId, 'stage_up', {
+                            previous_stage: stageResult.previous,
+                            new_stage: stageResult.current,
+                        });
+                    }
                 } catch (stageErr) {
                     console.warn('[Workout] Stage recalculation failed:', stageErr);
                 }
@@ -451,7 +635,7 @@ export default function ActiveWorkoutScreen() {
                         weightLbs: log.weightLbs,
                         rpe: log.rpe,
                     })),
-                    exercises: exercises.map((ex: any) => ({
+                    exercises: localExercises.map((ex: any) => ({
                         id: ex.exercises.id,
                         name: ex.exercises.name,
                     })),
@@ -483,7 +667,24 @@ export default function ActiveWorkoutScreen() {
         );
     };
 
+    const exitActiveWorkout = () => {
+        discardWorkout();
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace('/(tabs)');
+    };
+
     const handleDiscard = () => {
+        // RN Web's Alert buttons can be unreliable; use a simple confirm there.
+        if ((globalThis as any)?.document) {
+            // eslint-disable-next-line no-alert
+            const ok = globalThis.confirm?.("Discard workout?\n\nThis progress will be lost.");
+            if (ok) exitActiveWorkout();
+            return;
+        }
+
         Alert.alert(
             "Discard Workout",
             "Are you sure? This progress will be lost.",
@@ -492,10 +693,7 @@ export default function ActiveWorkoutScreen() {
                 {
                     text: "Discard",
                     style: "destructive",
-                    onPress: () => {
-                        discardWorkout();
-                        router.back();
-                    }
+                    onPress: exitActiveWorkout
                 }
             ]
         );
@@ -525,21 +723,43 @@ export default function ActiveWorkoutScreen() {
             }} />
 
             <View style={styles.timerHeader}>
+                <View style={styles.timerRow}>
+                    <View>
+                        <Text style={styles.timerLabel}>Workout Time</Text>
+                        <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+                    </View>
+                    <View style={styles.headerControls}>
+                        <TouchableOpacity
+                            style={[styles.controlButton, isPaused && styles.resumeButton]}
+                            onPress={togglePause}
+                        >
+                            <Ionicons
+                                name={isPaused ? "play" : "pause"}
+                                size={20}
+                                color="#FFF"
+                            />
+                            <Text style={styles.controlButtonText}>
+                                {isPaused ? "Resume" : "Pause"}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
                 <Text style={styles.programName}>{workout?.programs?.name}</Text>
-                <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
             </View>
             {restRemaining !== null && (
                 <View style={styles.restBar}>
-                    <Text style={styles.restLabel}>Rest</Text>
-                    <Text style={styles.restTime}>{formatTime(restRemaining)}</Text>
-                    <TouchableOpacity onPress={() => setRestRemaining(null)}>
-                        <Text style={styles.restCancel}>Cancel</Text>
+                    <View>
+                        <Text style={styles.restLabel}>Rest Counter</Text>
+                        <Text style={styles.restTime}>{formatTime(restRemaining)}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.restCancelButton} onPress={() => setRestRemaining(null)}>
+                        <Text style={styles.restCancel}>Skip Rest</Text>
                     </TouchableOpacity>
                 </View>
             )}
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {exercises.map((ex) => {
+                {localExercises.map((ex) => {
                     const exerciseSets = setLogs.filter(log => log.exerciseId === ex.exercises.id);
                     const last = historyByExerciseId[ex.exercises.id] ?? null;
                     const targetRepsRange = parseTargetRange(ex);
@@ -553,7 +773,18 @@ export default function ActiveWorkoutScreen() {
                     return (
                         <View key={ex.id} style={styles.exerciseCard}>
                             <View style={styles.exerciseHeader}>
-                                <Text style={styles.exerciseName}>{ex.exercises.name}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Text style={styles.exerciseName}>{ex.exercises.name}</Text>
+                                        <TouchableOpacity
+                                            style={styles.inlineSwapButton}
+                                            onPress={() => handleShowSwap(ex)}
+                                        >
+                                            <Ionicons name="swap-horizontal" size={14} color={theme.colors.primary} />
+                                            <Text style={styles.inlineSwapText}>Swap</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
                                 {ex.exercises.video_url && (
                                     <TouchableOpacity
                                         style={styles.demoButton}
@@ -651,10 +882,72 @@ export default function ActiveWorkoutScreen() {
             </ScrollView>
 
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.finishButton} onPress={handleFinish}>
-                    <Text style={styles.finishText}>Finish Workout</Text>
-                </TouchableOpacity>
+                <View style={styles.footerButtons}>
+                    <TouchableOpacity style={styles.stopButton} onPress={handleDiscard}>
+                        <Text style={styles.stopText}>Stop Workout</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.finishButton} onPress={handleFinish}>
+                        <Text style={styles.finishText}>Finish Workout</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            {/* Swap Exercise Modal */}
+            <Modal
+                visible={swapModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setSwapModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Swap Exercise</Text>
+                            <TouchableOpacity onPress={() => setSwapModalVisible(false)}>
+                                <Ionicons name="close" size={24} color={theme.colors.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.modalSubtitle}>
+                            Select an alternative for {exerciseToSwap?.exercises?.name}
+                        </Text>
+
+                        {loadingAlternates ? (
+                            <ActivityIndicator color={theme.colors.primary} style={{ margin: 20 }} />
+                        ) : availableAlternates.length > 0 ? (
+                            <ScrollView style={styles.alternatesList}>
+                                {availableAlternates.map((alt) => (
+                                    <TouchableOpacity
+                                        key={alt.id}
+                                        style={styles.alternateItem}
+                                        onPress={() => performSwap(alt)}
+                                    >
+                                        <View>
+                                            <Text style={styles.alternateName}>{alt.name}</Text>
+                                            <Text style={styles.alternateEquipment}>
+                                                Equipment: {alt.equipment?.join(', ') || 'None'}
+                                            </Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        ) : (
+                            <View style={styles.emptyAlternates}>
+                                <Ionicons name="information-circle-outline" size={32} color={theme.colors.textTertiary} />
+                                <Text style={styles.emptyText}>No specific alternatives found in the library.</Text>
+                            </View>
+                        )}
+
+                        <TouchableOpacity
+                            style={styles.cancelModalButton}
+                            onPress={() => setSwapModalVisible(false)}
+                        >
+                            <Text style={styles.cancelModalButtonText}>Keep Original</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -669,10 +962,45 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     timerHeader: {
-        alignItems: 'center',
         paddingVertical: theme.spacing.lg,
+        paddingHorizontal: theme.spacing.lg,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.05)',
+    },
+    timerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: theme.spacing.xs,
+    },
+    timerLabel: {
+        color: theme.colors.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    headerControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    controlButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: theme.radius.md,
+    },
+    resumeButton: {
+        backgroundColor: theme.colors.primary,
+    },
+    controlButtonText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '700',
     },
     restBar: {
         flexDirection: 'row',
@@ -680,9 +1008,15 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: theme.spacing.lg,
         paddingVertical: theme.spacing.sm,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: 'rgba(57, 181, 74, 0.1)', // Subtle brand green background
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomColor: 'rgba(57, 181, 74, 0.2)',
+    },
+    restCancelButton: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: theme.radius.sm,
     },
     restLabel: {
         color: theme.colors.textSecondary,
@@ -737,6 +1071,43 @@ const styles = StyleSheet.create({
         color: theme.colors.text,
         fontSize: 18,
         fontWeight: '700',
+        flex: 1,
+    },
+    headerRightActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    swapButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: theme.radius.full,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    swapText: {
+        color: theme.colors.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    inlineSwapButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: theme.radius.sm,
+        backgroundColor: 'rgba(57, 181, 74, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(57, 181, 74, 0.15)',
+    },
+    inlineSwapText: {
+        color: theme.colors.primary,
+        fontSize: 11,
+        fontWeight: '700',
+        textTransform: 'uppercase',
     },
     demoButton: {
         flexDirection: 'row',
@@ -858,7 +1229,26 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.05)',
     },
+    footerButtons: {
+        flexDirection: 'row',
+        gap: theme.spacing.sm,
+    },
+    stopButton: {
+        flex: 1,
+        padding: theme.spacing.md,
+        borderRadius: theme.radius.md,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#FF4444',
+        backgroundColor: 'rgba(255,68,68,0.08)',
+    },
+    stopText: {
+        color: '#FF6B6B',
+        fontSize: 16,
+        fontWeight: '700',
+    },
     finishButton: {
+        flex: 1,
         backgroundColor: theme.colors.primary,
         padding: theme.spacing.md,
         borderRadius: theme.radius.md,
@@ -868,5 +1258,76 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: '700',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: theme.colors.surface,
+        borderTopLeftRadius: theme.radius.xl,
+        borderTopRightRadius: theme.radius.xl,
+        padding: theme.spacing.lg,
+        paddingBottom: 40,
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: theme.spacing.md,
+    },
+    modalTitle: {
+        ...theme.typography.h3,
+        color: theme.colors.text,
+    },
+    modalSubtitle: {
+        color: theme.colors.textSecondary,
+        fontSize: 14,
+        marginBottom: theme.spacing.lg,
+    },
+    alternatesList: {
+        marginBottom: theme.spacing.xl,
+    },
+    alternateItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: theme.spacing.md,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: theme.radius.lg,
+        marginBottom: theme.spacing.sm,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.03)',
+    },
+    alternateName: {
+        color: theme.colors.text,
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 2,
+    },
+    alternateEquipment: {
+        color: theme.colors.textSecondary,
+        fontSize: 12,
+    },
+    emptyAlternates: {
+        alignItems: 'center',
+        padding: 40,
+        gap: 12,
+    },
+    emptyText: {
+        color: theme.colors.textTertiary,
+        textAlign: 'center',
+        fontSize: 14,
+    },
+    cancelModalButton: {
+        padding: theme.spacing.md,
+        alignItems: 'center',
+    },
+    cancelModalButtonText: {
+        color: theme.colors.textSecondary,
+        fontSize: 14,
+        fontWeight: '600',
     },
 });

@@ -10,10 +10,13 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Card } from '@/components/ui/Card';
 import { POINTS } from '@/lib/stages/calculator';
 import { HintCard } from '@/components/HintCard';
+import { LevelUpModal } from '@/components/LevelUpModal';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { getWorkoutStreakSummary, WorkoutStreakSummary } from '@/lib/streaks';
 import { isVip } from '@/lib/entitlements';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useSyncQueueStore } from '@/stores/syncQueueStore';
 
 // Stage-specific motivational copy
 function getStageCopy(stage: string): string {
@@ -84,6 +87,10 @@ export default function HomeScreen() {
         );
     }
 
+    const { isConnected } = useNetworkStatus();
+    const { pendingCount, processQueue, isSyncing } = useSyncQueueStore();
+    const count = pendingCount();
+
     const displayStage = stage || 'initiate';
     const activityCounts = useProfileStore.getState().activityCounts;
     const progress = calculateStageProgress(activityCounts);
@@ -126,6 +133,32 @@ export default function HomeScreen() {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            {/* Network / Sync Status Banner */}
+            {(!isConnected || count > 0) && (
+                <TouchableOpacity
+                    style={[
+                        styles.syncBanner,
+                        !isConnected ? styles.offlineBanner : styles.pendingBanner
+                    ]}
+                    onPress={() => isConnected && count > 0 && processQueue()}
+                    disabled={isSyncing || !isConnected}
+                >
+                    <Ionicons
+                        name={!isConnected ? "cloud-offline-outline" : "sync-outline"}
+                        size={18}
+                        color="#FFF"
+                    />
+                    <Text style={styles.syncBannerText}>
+                        {!isConnected
+                            ? "Offline — Workouts will sync when reconnected"
+                            : isSyncing
+                                ? "Syncing workouts..."
+                                : `${count} workout${count > 1 ? 's' : ''} pending sync. Tap to retry.`
+                        }
+                    </Text>
+                    {isSyncing && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
+                </TouchableOpacity>
+            )}
             <View style={styles.header}>
                 <View>
                     <Text style={styles.greeting}>Welcome back,</Text>
@@ -343,15 +376,19 @@ export default function HomeScreen() {
                 </View>
                 <View style={[styles.actionGrid, { marginTop: theme.spacing.md }]}>
                     <TouchableOpacity
-                        style={styles.actionCard}
-                        onPress={() => router.push('/progress/trends')}
+                        style={[styles.actionCard, { opacity: isVip(tier) ? 1 : 0.8 }]}
+                        onPress={() => isVip(tier) ? router.push('/progress/trends') : router.push('/subscribe')}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: 'rgba(255,165,0,0.1)' }]}>
-                            <Ionicons name="analytics-outline" size={24} color="#FFA500" />
+                            <Ionicons
+                                name={isVip(tier) ? "analytics-outline" : "lock-closed-outline"}
+                                size={24}
+                                color={isVip(tier) ? "#FFA500" : "rgba(255,165,0,0.5)"}
+                            />
                         </View>
                         <View style={styles.actionInfo}>
                             <Text style={styles.actionTitle}>Trends</Text>
-                            <Text style={styles.actionSubtitle}>Charts</Text>
+                            <Text style={styles.actionSubtitle}>{isVip(tier) ? 'Charts' : 'VIP Feature'}</Text>
                         </View>
                     </TouchableOpacity>
 
@@ -452,6 +489,8 @@ export default function HomeScreen() {
                     <Text style={styles.signOutText}>Sign Out</Text>
                 </TouchableOpacity>
             </View>
+
+            <LevelUpModal />
         </ScrollView>
     );
 }
@@ -476,13 +515,6 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     debugButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: theme.colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
     helpButton: {
@@ -693,5 +725,27 @@ const styles = StyleSheet.create({
     signOutText: {
         color: '#FF4444',
         fontWeight: '600',
+    },
+    syncBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        marginHorizontal: theme.spacing.lg,
+        marginTop: theme.spacing.md,
+        marginBottom: theme.spacing.sm,
+        gap: 10,
+    },
+    offlineBanner: {
+        backgroundColor: '#636e72',
+    },
+    pendingBanner: {
+        backgroundColor: theme.colors.primary,
+    },
+    syncBannerText: {
+        color: '#FFF',
+        fontSize: 13,
+        fontWeight: '700',
+        flex: 1,
     },
 });

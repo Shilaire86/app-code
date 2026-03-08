@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions, Alert, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -18,12 +18,14 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
     const [loading, setLoading] = useState(true);
     const [verifying, setVerifying] = useState(false);
 
-    useEffect(() => {
-        if (user) {
-            console.log('--- EVOLUTION GALLERY v1.2 ---'); // New log
-            fetchPhotos();
-        }
-    }, [user]);
+    useFocusEffect(
+        useCallback(() => {
+            if (user) {
+                console.log('--- EVOLUTION GALLERY v1.2 ---'); // New log
+                fetchPhotos();
+            }
+        }, [user])
+    );
 
     async function verifyStorage() {
         if (!user) return;

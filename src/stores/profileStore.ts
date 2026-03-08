@@ -17,6 +17,10 @@ interface ProfileState {
     isLoading: boolean;
     bootstrappedUserId: string | null; // Track which user we've fetched for
     lastFetchAtMs: number | null;
+    levelUpDetails: { previous: BecomingStage; current: BecomingStage } | null;
+    justLeveledUp: boolean;
+    setLevelUp: (previous: BecomingStage, current: BecomingStage) => void;
+    clearLevelUp: () => void;
     fetchProfile: (userId: string) => Promise<void>;
     updateProfile: (updates: any) => Promise<void>;
     setSeenHint: (key: string) => Promise<void>;
@@ -36,6 +40,18 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     isLoading: false,
     bootstrappedUserId: null,
     lastFetchAtMs: null,
+    levelUpDetails: null,
+    justLeveledUp: false,
+
+    setLevelUp: (previous, current) => {
+        set({ justLeveledUp: true, levelUpDetails: { previous, current } });
+    },
+
+    clearLevelUp: () => {
+        set({ justLeveledUp: false });
+        // Don't clear levelUpDetails immediately so the modal can animate out smoothly
+        setTimeout(() => set({ levelUpDetails: null }), 500);
+    },
 
     fetchProfile: async (userId) => {
         if (!userId) return;
@@ -153,8 +169,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
                 const { recalculateStage } = await import('@/services/stageService');
                 const result = await recalculateStage(userId);
                 // Update local state if stage changed during recalculation
-                if (result.current !== get().stage) {
+                if (result.changed && result.current !== get().stage) {
                     set({ stage: result.current });
+                    get().setLevelUp(result.previous, result.current);
                 }
             } catch (stageErr) {
                 console.warn('[profileStore] Stage recalculation failed (non-fatal):', stageErr);

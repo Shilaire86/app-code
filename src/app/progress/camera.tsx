@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
+import { decode } from 'base64-arraybuffer';
 
 export default function ProgressPhotoScreen() {
     const { user } = useAuthStore();
@@ -22,15 +23,6 @@ export default function ProgressPhotoScreen() {
         { id: 'side', label: 'Side', icon: 'body' },
         { id: 'back', label: 'Back', icon: 'person-outline' },
     ] as const;
-
-    function base64ToUint8Array(b64: string) {
-        // Expo/RN provides `atob` in most environments; if it isn't available,
-        // the upload will fail loudly and we can switch to a FileSystem-based approach.
-        const binary = globalThis.atob(b64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return bytes;
-    }
 
     function extFromMime(mime: string) {
         if (mime === 'image/png') return 'png';
@@ -112,13 +104,13 @@ export default function ProgressPhotoScreen() {
 
             console.log('[camera] File path:', filePath);
 
-            // Prefer base64 from ImagePicker to avoid 0-byte uploads in some RN/Expo environments.
-            // (We were seeing 0.0KB objects in Storage even though the DB row existed.)
-            let body: Uint8Array | Blob;
+            // Using base64-arraybuffer is the most reliable way to upload to Supabase in React Native/Expo.
+            // React Native's `fetch(uri).blob()` often produces 0-byte objects.
+            let body: ArrayBuffer | Blob;
             let contentType = imageMimeType || 'image/jpeg';
             if (imageBase64) {
                 console.log('[camera] Using base64 payload:', imageBase64.length, 'chars');
-                body = base64ToUint8Array(imageBase64);
+                body = decode(imageBase64);
             } else {
                 console.log('[camera] No base64 available; falling back to fetch(blob)');
                 const res = await fetch(image);

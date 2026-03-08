@@ -24,7 +24,11 @@
       },
       "package": "com.becomingmethod.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,7 +46,14 @@
         {
           "photosPermission": "Allow The Becoming Method to access your photos to log your progress."
         }
-      ]
-    ]
+      ],
+      "expo-build-properties"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b4f4a1ba-17c5-4f1c-8eb1-1e6ba5621d12"
+      }
+    }
   }
 }

@@ -3,12 +3,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { theme } from '@/constants/theme';
-import { scheduleDailyCheckIn } from '@/lib/notifications';
+import { scheduleDailyCheckIn, registerForPushNotificationsAsync } from '@/lib/notifications';
 import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { LEGAL_VERSIONS } from '@/lib/legalVersions';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 const APP_VERSION = '1.0.1-debug';
 
@@ -77,20 +78,22 @@ export default function RootLayout() {
         // Use selectors so actions don't change identity and accidentally retrigger effects.
         const profileLoading = useProfileStore(s => s.isLoading);
         const profile = useProfileStore(s => s.profile);
+        const { isConnected } = useNetworkStatus();
         const { processQueue } = useSyncQueueStore();
         const lastScheduledRef = useRef<string | null>(null);
 
         // One-time log on first render
         useEffect(() => {
-            console.log('[RootLayout] Initial Mount. Version:', APP_VERSION);
+            console.log('[RootLayout] Initial Mount. Version:', APP_VERSION, 'Connected:', isConnected);
         }, []);
 
-        console.log(`[RootLayout] Render: init=${initialized}, sess=${!!session}, profLoad=${profileLoading}, seg=${segments?.[0] || 'none'}`);
+        console.log(`[RootLayout] Render: init = ${initialized}, sess = ${!!session}, profLoad = ${profileLoading}, seg = ${segments?.[0] || 'none'} `);
 
-        // Fetch profile when session is available (store handles deduplication)
+        // Fetch profile and register push tokens when session is available
         useEffect(() => {
             if (initialized && session?.user?.id) {
                 useProfileStore.getState().fetchProfile(session.user.id);
+                registerForPushNotificationsAsync(session.user.id).catch(err => console.error('[RootLayout] Push registration failed', err));
             } else if (initialized && !session) {
                 // Reset profile store on logout
                 useProfileStore.getState().reset();

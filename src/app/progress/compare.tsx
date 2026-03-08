@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
@@ -25,9 +25,11 @@ export default function CompareScreen() {
     const [selectedAfter, setSelectedAfter] = useState<Photo | null>(null);
     const [selectingFor, setSelectingFor] = useState<'before' | 'after' | null>(null);
 
-    useEffect(() => {
-        if (user) fetchPhotos();
-    }, [user]);
+    useFocusEffect(
+        useCallback(() => {
+            if (user) fetchPhotos();
+        }, [user])
+    );
 
     async function fetchPhotos() {
         try {
