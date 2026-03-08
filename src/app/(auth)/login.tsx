@@ -19,8 +19,6 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isSignUp, setIsSignUp] = useState(false);
-    const [debugMessage, setDebugMessage] = useState('');
     const router = useRouter();
 
     async function handleAuth() {
@@ -30,26 +28,11 @@ export default function LoginScreen() {
         }
 
         setLoading(true);
-        if (isSignUp) {
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-            });
-            if (error) Alert.alert('Error', error.message);
-            else {
-                Alert.alert('Success', 'Check your email for confirmation!');
-                setIsSignUp(false);
-            }
-        } else {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) Alert.alert('Error', error.message);
-            else {
-                // Auth state listener in useAuth will handle redirection
-            }
-        }
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        if (error) Alert.alert('Error', error.message);
         setLoading(false);
     }
 
@@ -62,19 +45,12 @@ export default function LoginScreen() {
                 contentContainerStyle={styles.scrollContainer}
                 keyboardShouldPersistTaps="handled"
             >
-                {debugMessage !== '' && (
-                    <View style={styles.debugBanner}>
-                        <Text style={styles.debugText}>{debugMessage}</Text>
-                    </View>
-                )}
                 <View style={styles.header}>
                     <Text style={styles.title}>
-                        {isSignUp ? 'Create Account' : 'Welcome Back'}
+                        Welcome Back
                     </Text>
                     <Text style={styles.subtitle}>
-                        {isSignUp
-                            ? 'Join The Becoming Method community'
-                            : 'Sign in to continue your journey'}
+                        Sign in to continue your journey
                     </Text>
                 </View>
 
@@ -96,61 +72,25 @@ export default function LoginScreen() {
                     />
 
                     <Button
-                        title={isSignUp ? 'Sign Up' : 'Sign In'}
+                        title="Sign In"
                         onPress={handleAuth}
                         loading={loading}
                         style={styles.button}
                     />
 
-                    {!isSignUp && (
-                        <TouchableOpacity
-                            onPress={async () => {
-                                if (!email) {
-                                    setDebugMessage('ERROR: Enter email first');
-                                    Alert.alert('Error', 'Please enter your email first');
-                                    return;
-                                }
-                                setLoading(true);
-                                setDebugMessage('STATUS: Starting reset process...');
-                                try {
-                                    const redirectUrl = Platform.OS === 'web'
-                                        ? window.location.origin + '/reset-password'
-                                        : 'thebecomingmethod://reset-password';
-
-                                    setDebugMessage(`STATUS: Requesting reset for ${email}...`);
-
-                                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                                        redirectTo: redirectUrl,
-                                    });
-
-                                    if (error) {
-                                        setDebugMessage(`SERVER ERROR: ${error.message}`);
-                                        Alert.alert('Error', error.message);
-                                    } else {
-                                        setDebugMessage('SUCCESS: Email sent! Check your inbox.');
-                                        Alert.alert('Success', 'Check your email for the reset link!');
-                                    }
-                                } catch (err: any) {
-                                    setDebugMessage(`CRASH: ${err.message || 'Unknown error'}`);
-                                    Alert.alert('Error', 'An unexpected error occurred. Check the console.');
-                                } finally {
-                                    setLoading(false);
-                                }
-                            }}
-                            style={styles.forgotContainer}
-                        >
-                            <Text style={styles.forgotText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-                    )}
+                    <TouchableOpacity
+                        onPress={() => router.push('/(auth)/forgot-password')}
+                        style={styles.forgotContainer}
+                    >
+                        <Text style={styles.forgotText}>Forgot Password?</Text>
+                    </TouchableOpacity>
 
                     <TouchableOpacity
-                        onPress={() => setIsSignUp(!isSignUp)}
+                        onPress={() => router.push('/(auth)/register')}
                         style={styles.toggleContainer}
                     >
                         <Text style={styles.toggleText}>
-                            {isSignUp
-                                ? 'Already have an account? Sign In'
-                                : "Don't have an account? Sign Up"}
+                            Don't have an account? Sign Up
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -205,19 +145,5 @@ const styles = StyleSheet.create({
     forgotText: {
         ...theme.typography.bodySmall,
         color: theme.colors.textSecondary,
-    },
-    debugBanner: {
-        backgroundColor: 'rgba(255,102,0,0.1)',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: theme.colors.primary,
-    },
-    debugText: {
-        color: theme.colors.primary,
-        fontSize: 12,
-        fontWeight: 'bold',
-        textAlign: 'center',
     },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
@@ -35,6 +35,7 @@ export default function WorkoutHistoryScreen() {
     const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [clearing, setClearing] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -64,6 +65,44 @@ export default function WorkoutHistoryScreen() {
         } finally {
             setLoading(false);
         }
+    }
+
+    async function clearHistory() {
+        if (!user?.id) return;
+        setClearing(true);
+        try {
+            // Deletes only the current user's workout history.
+            // `set_logs` should cascade from `workout_logs` via FK.
+            const { error } = await supabase
+                .from('workout_logs')
+                .delete()
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+            await fetchHistory();
+        } catch (error: any) {
+            const msg = typeof error?.message === 'string' ? error.message : 'Failed to clear history.';
+            Alert.alert('Error', msg);
+        } finally {
+            setClearing(false);
+        }
+    }
+
+    function confirmClear() {
+        const title = 'Clear History';
+        const message = 'This will delete all your logged workouts. This cannot be undone.';
+
+        if (Platform.OS === 'web') {
+            // eslint-disable-next-line no-alert
+            const typed = globalThis.prompt?.(`${title}\n\n${message}\n\nType DELETE to confirm:`);
+            if (typed === 'DELETE') clearHistory();
+            return;
+        }
+
+        Alert.alert(title, message, [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Delete All', style: 'destructive', onPress: clearHistory },
+        ]);
     }
 
     const formatDate = (dateString: string) => {
@@ -102,13 +141,26 @@ export default function WorkoutHistoryScreen() {
             <View style={styles.header}>
                 <View style={styles.headerRow}>
                     <Text style={styles.title}>History</Text>
-                    <TouchableOpacity
-                        style={styles.prButton}
-                        onPress={() => router.push('/history/prs')}
-                    >
-                        <Ionicons name="trophy-outline" size={20} color={theme.colors.primary} />
-                        <Text style={styles.prButtonText}>PRs</Text>
-                    </TouchableOpacity>
+                    <View style={styles.headerActions}>
+                        <TouchableOpacity
+                            style={styles.clearButton}
+                            onPress={confirmClear}
+                            disabled={clearing}
+                        >
+                            <Ionicons name="trash-outline" size={18} color={clearing ? 'rgba(255,255,255,0.35)' : '#FF6B6B'} />
+                            <Text style={[styles.clearButtonText, clearing && styles.clearButtonTextDisabled]}>
+                                {clearing ? 'Clearing...' : 'Clear'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.prButton}
+                            onPress={() => router.push('/history/prs')}
+                        >
+                            <Ionicons name="trophy-outline" size={20} color={theme.colors.primary} />
+                            <Text style={styles.prButtonText}>PRs</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
 
@@ -157,10 +209,35 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
     title: {
         color: theme.colors.text,
         fontSize: 28,
         fontWeight: '800',
+    },
+    clearButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,107,107,0.10)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: theme.radius.full,
+        gap: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255,107,107,0.18)',
+        minHeight: 36,
+    },
+    clearButtonText: {
+        color: '#FF6B6B',
+        fontSize: 14,
+        fontWeight: '800',
+    },
+    clearButtonTextDisabled: {
+        color: 'rgba(255,255,255,0.35)',
     },
     prButton: {
         flexDirection: 'row',

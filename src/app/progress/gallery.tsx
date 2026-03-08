@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions, Alert, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
@@ -10,43 +11,139 @@ const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 2;
 const ITEM_WIDTH = (width - theme.spacing.lg * 3) / COLUMN_COUNT;
 
-export default function ProgressGalleryScreen() {
+export default function EvolutionGalleryScreen() { // Renamed to force Metro refresh
     const { user } = useAuthStore();
     const router = useRouter();
     const [photos, setPhotos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [verifying, setVerifying] = useState(false);
 
     useEffect(() => {
         if (user) {
+            console.log('--- EVOLUTION GALLERY v1.2 ---'); // New log
             fetchPhotos();
         }
     }, [user]);
 
+    async function verifyStorage() {
+        if (!user) return;
+        setVerifying(true);
+        try {
+            console.log('[gallery] Verifying storage access...');
+            const { data, error } = await supabase.storage
+                .from('progress_photos')
+                .list(user.id);
+
+            if (error) {
+                const msg = `Storage Error: ${error.message}`;
+                if (Platform.OS === 'web') alert(msg);
+                else Alert.alert('Storage Error', error.message);
+                console.error('[gallery] List error:', error);
+            } else {
+                const fileInfos = (data || []).map(f => `${f.name} (${(f.metadata?.size / 1024).toFixed(1)}KB)`).join('\n');
+                const firstFile = data && data.length > 0 ? data[0].name : 'none';
+                const msg = `Storage Verified! Found ${data?.length || 0} files.\n\n${fileInfos}\n\nNote: This bucket is configured as private, so images must be loaded via signed URLs.`;
+                if (Platform.OS === 'web') alert(msg);
+                else Alert.alert('Storage Verified', msg);
+                console.log('[gallery] Files found:', data);
+            }
+        } catch (err: any) {
+            const msg = `Diagnostic Error: ${err.message}`;
+            if (Platform.OS === 'web') alert(msg);
+            else Alert.alert('Error', msg);
+        } finally {
+            setVerifying(false);
+        }
+    }
+
     async function fetchPhotos() {
         try {
+            console.log('--- GALLERY VERSION 1.2.1 ---');
+            console.log('[gallery] Fetching photos for user:', user?.id);
             const { data, error } = await supabase
                 .from('progress_photos')
                 .select('*')
                 .eq('user_id', user?.id)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('[gallery] Fetch error:', error);
+                throw error;
+            }
 
-            // Generate signed URLs for private photos (optional depending on privacy setting)
-            // For MVP, we'll assume they are in the 'progress_photos' bucket and we need public URLs or transform them
+            console.log('[gallery] Fetched photos:', data?.length || 0);
+
+            // Storage bucket is configured as private in `database/migrations/007_storage_setup.sql`
+            // so we must use signed URLs (a "public" URL will 403 and RN <Image> renders a gray box).
             const photosWithUrls = await Promise.all((data || []).map(async (photo) => {
-                const { data: urlData } = await supabase.storage
-                    .from('progress_photos')
-                    .getPublicUrl(photo.image_url); // Simplified for MVP; in production use createSignedUrl
+                let finalPath = photo.photo_url;
 
-                return { ...photo, publicUrl: urlData.publicUrl };
+                // Smart Prefix: If path is just a filename (no slash), add the user folder
+                if (finalPath && !finalPath.includes('/') && !finalPath.startsWith('http')) {
+                    finalPath = `${user?.id}/${finalPath}`;
+                }
+
+                // If the DB ever stored a full URL, just use it as-is.
+                if (!finalPath || finalPath.startsWith('http')) {
+                    return { ...photo, publicUrl: finalPath };
+                }
+
+                const { data: urlData, error: urlError } = await supabase.storage
+                    .from('progress_photos')
+                    .createSignedUrl(finalPath, 60 * 60); // 1 hour
+
+                if (urlError) {
+                    console.error('[gallery] Signed URL error:', urlError);
+                    // Keep the card rendered (gray) but avoid passing undefined to <Image>.
+                    return { ...photo, publicUrl: null };
+                }
+
+                const publicUrl = urlData?.signedUrl;
+
+                // Logging for deep diagnostic
+                console.log(`[gallery] Photo: ${photo.id}`);
+                console.log(` - Stored Path: ${photo.photo_url}`);
+                console.log(` - Final Path: ${finalPath}`);
+                console.log(` - User ID: ${user?.id}`);
+                console.log(` - Public URL: ${publicUrl}`);
+
+                return { ...photo, publicUrl };
             }));
 
             setPhotos(photosWithUrls);
         } catch (error) {
-            console.error('Error fetching photos:', error);
+            console.error('[gallery] Error fetching photos:', error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function deletePhoto(photoId: string, photoUrl: string) {
+        try {
+            console.log('[gallery] Deleting photo:', photoId);
+
+            // Delete from storage if it's a path (not full URL)
+            if (!photoUrl.startsWith('http')) {
+                const { error: storageError } = await supabase.storage
+                    .from('progress_photos')
+                    .remove([photoUrl]);
+
+                if (storageError) console.error('[gallery] Storage delete error:', storageError);
+            }
+
+            // Delete from database
+            const { error: dbError } = await supabase
+                .from('progress_photos')
+                .delete()
+                .eq('id', photoId);
+
+            if (dbError) throw dbError;
+
+            // Refresh list
+            fetchPhotos();
+        } catch (error) {
+            console.error('[gallery] Delete error:', error);
+            Alert.alert('Error', 'Failed to delete photo');
         }
     }
 
@@ -61,6 +158,7 @@ export default function ProgressGalleryScreen() {
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
+                headerShown: true,
                 headerTitle: 'Evolution Gallery',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
@@ -71,6 +169,24 @@ export default function ProgressGalleryScreen() {
                 )
             }} />
 
+            <View style={styles.debugActions}>
+                <TouchableOpacity
+                    style={styles.debugButton}
+                    onPress={verifyStorage}
+                    disabled={verifying}
+                >
+                    <Ionicons name="shield-checkmark" size={16} color="#FFF" />
+                    <Text style={styles.debugButtonText}>{verifying ? 'Checking...' : 'Verify Storage'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.debugButton, { backgroundColor: theme.colors.primary }]}
+                    onPress={() => router.push('/progress/compare')}
+                >
+                    <Ionicons name="git-compare-outline" size={16} color="#FFF" />
+                    <Text style={styles.debugButtonText}>Compare</Text>
+                </TouchableOpacity>
+            </View>
+
             <FlatList
                 data={photos}
                 keyExtractor={(item) => item.id}
@@ -80,26 +196,90 @@ export default function ProgressGalleryScreen() {
                     <View style={styles.emptyContainer}>
                         <Ionicons name="images-outline" size={60} color="rgba(255,255,255,0.1)" />
                         <Text style={styles.emptyText}>No photos yet. Capture your first win.</Text>
-                        <TouchableOpacity
-                            style={styles.ctaButton}
-                            onPress={() => router.push('/progress/camera')}
-                        >
-                            <Text style={styles.ctaText}>Take Photo</Text>
-                        </TouchableOpacity>
+                        <View style={styles.emptyActions}>
+                            <TouchableOpacity
+                                style={styles.ctaButton}
+                                onPress={() => router.push('/progress/camera')}
+                            >
+                                <Ionicons name="camera" size={20} color="#FFF" />
+                                <Text style={styles.ctaText}>Take Photo</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 }
                 renderItem={({ item }) => (
-                    <View style={styles.photoCard}>
-                        <Image source={{ uri: item.publicUrl }} style={styles.photo} />
+                    <TouchableOpacity
+                        style={styles.photoCard}
+                        onLongPress={() => {
+                            Alert.alert(
+                                'Delete Photo',
+                                'Are you sure you want to delete this photo?',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'Delete',
+                                        style: 'destructive',
+                                        onPress: () => deletePhoto(item.id, item.photo_url)
+                                    }
+                                ]
+                            );
+                        }}
+                    >
+                        <Image
+                            key={`${item.id}-${item.publicUrl}`} // Force remount if URL changes
+                            source={{
+                                uri: item.publicUrl,
+                                cache: 'reload' // Force bypass client cache
+                            }}
+                            style={styles.photo}
+                            resizeMode="cover"
+                            onError={(e) => {
+                                console.error('[gallery] Image load failed!');
+                                console.error('[gallery] ID:', item.id);
+                                console.error('[gallery] URL:', item.publicUrl);
+                                console.error('[gallery] Error:', e.nativeEvent.error);
+                            }}
+                        />
                         <View style={styles.photoOverlay}>
                             <Text style={styles.photoDate}>
                                 {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </Text>
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={() => {
+                                    Alert.alert(
+                                        'Delete Photo',
+                                        'Are you sure?',
+                                        [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            {
+                                                text: 'Delete',
+                                                style: 'destructive',
+                                                onPress: () => deletePhoto(item.id, item.photo_url)
+                                            }
+                                        ]
+                                    );
+                                }}
+                            >
+                                <Ionicons name="trash-outline" size={16} color="#FFF" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.debugLink, { backgroundColor: '#333' }]}
+                                onPress={() => {
+                                    if (item.publicUrl) {
+                                        console.log('[gallery] Opening URL:', item.publicUrl);
+                                        Linking.openURL(item.publicUrl);
+                                    }
+                                }}
+                            >
+                                <Ionicons name="link" size={14} color={theme.colors.primary} />
+                                <Text style={[styles.debugLinkText, { color: theme.colors.primary, fontWeight: '700' }]}>TEST LINK</Text>
+                            </TouchableOpacity>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
-        </View>
+        </View >
     );
 }
 
@@ -121,7 +301,9 @@ const styles = StyleSheet.create({
         margin: theme.spacing.xs,
         borderRadius: theme.radius.md,
         overflow: 'hidden',
-        backgroundColor: theme.colors.surface,
+        backgroundColor: '#1A1A1A', // Distinct color to confirm code update
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     photo: {
         width: '100%',
@@ -139,7 +321,11 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 10,
         fontWeight: '700',
-        textAlign: 'center',
+    },
+    deleteButton: {
+        backgroundColor: 'rgba(255,0,0,0.8)',
+        padding: 4,
+        borderRadius: 4,
     },
     emptyContainer: {
         alignItems: 'center',
@@ -150,14 +336,55 @@ const styles = StyleSheet.create({
         marginVertical: theme.spacing.lg,
         textAlign: 'center',
     },
+    emptyActions: {
+        flexDirection: 'row',
+        gap: theme.spacing.md,
+    },
     ctaButton: {
         backgroundColor: theme.colors.primary,
         paddingHorizontal: theme.spacing.xl,
         paddingVertical: theme.spacing.md,
         borderRadius: theme.radius.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     ctaText: {
         color: '#FFF',
         fontWeight: '700',
+    },
+    debugActions: {
+        padding: theme.spacing.md,
+        backgroundColor: '#111',
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    debugButton: {
+        backgroundColor: '#444',
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    debugButtonText: {
+        color: '#FFF',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    debugLink: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginTop: 4,
+        padding: 4,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 4,
+    },
+    debugLinkText: {
+        color: '#FFF',
+        fontSize: 9,
+        fontWeight: '500',
     },
 });

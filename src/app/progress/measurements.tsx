@@ -13,6 +13,10 @@ export default function MeasurementLogScreen() {
     const [weight, setWeight] = useState('');
     const [bodyFat, setBodyFat] = useState('');
     const [waist, setWaist] = useState('');
+    const [chest, setChest] = useState('');
+    const [hips, setHips] = useState('');
+    const [arms, setArms] = useState('');
+    const [thighs, setThighs] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     async function handleSubmit() {
@@ -30,6 +34,10 @@ export default function MeasurementLogScreen() {
                     weight_lbs: parseFloat(weight),
                     body_fat_percent: bodyFat ? parseFloat(bodyFat) : null,
                     waist_inches: waist ? parseFloat(waist) : null,
+                    chest_inches: chest ? parseFloat(chest) : null,
+                    hips_inches: hips ? parseFloat(hips) : null,
+                    arms_inches: arms ? parseFloat(arms) : null,
+                    thighs_inches: thighs ? parseFloat(thighs) : null,
                     entry_date: new Date().toISOString().split('T')[0],
                 });
 
@@ -96,8 +104,25 @@ export default function MeasurementLogScreen() {
                     </View>
                 </View>
 
+                <Text style={styles.sectionTitle}>Body Measurements (Optional)</Text>
+
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Waist (Inches - Optional)</Text>
+                    <Text style={styles.label}>Chest (Inches)</Text>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="0.0"
+                            placeholderTextColor="rgba(255,255,255,0.2)"
+                            keyboardType="numeric"
+                            value={chest}
+                            onChangeText={setChest}
+                        />
+                        <Text style={styles.unitText}>IN</Text>
+                    </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Waist (Inches)</Text>
                     <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
@@ -106,6 +131,51 @@ export default function MeasurementLogScreen() {
                             keyboardType="numeric"
                             value={waist}
                             onChangeText={setWaist}
+                        />
+                        <Text style={styles.unitText}>IN</Text>
+                    </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Hips (Inches)</Text>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="0.0"
+                            placeholderTextColor="rgba(255,255,255,0.2)"
+                            keyboardType="numeric"
+                            value={hips}
+                            onChangeText={setHips}
+                        />
+                        <Text style={styles.unitText}>IN</Text>
+                    </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Arms (Inches)</Text>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="0.0"
+                            placeholderTextColor="rgba(255,255,255,0.2)"
+                            keyboardType="numeric"
+                            value={arms}
+                            onChangeText={setArms}
+                        />
+                        <Text style={styles.unitText}>IN</Text>
+                    </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Thighs (Inches)</Text>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="0.0"
+                            placeholderTextColor="rgba(255,255,255,0.2)"
+                            keyboardType="numeric"
+                            value={thighs}
+                            onChangeText={setThighs}
                         />
                         <Text style={styles.unitText}>IN</Text>
                     </View>
@@ -167,6 +237,13 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.sm,
         textTransform: 'uppercase',
         letterSpacing: 1,
+    },
+    sectionTitle: {
+        color: theme.colors.text,
+        fontSize: 16,
+        fontWeight: '700',
+        marginTop: theme.spacing.xl,
+        marginBottom: theme.spacing.md,
     },
     inputWrapper: {
         flexDirection: 'row',

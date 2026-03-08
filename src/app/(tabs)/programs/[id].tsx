@@ -4,14 +4,17 @@ import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useProfileStore } from '@/stores/profileStore';
-import { canAccessTier, getTierLabel } from '@/lib/tier-gating';
+import { getTierLabel } from '@/lib/tier-gating';
 import { Ionicons } from '@expo/vector-icons';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { canAccessContentTier } from '@/lib/entitlements';
 
 export default function ProgramDetailScreen() {
     const { id } = useLocalSearchParams();
     const [program, setProgram] = useState<any>(null);
     const [workouts, setWorkouts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [notAvailable, setNotAvailable] = useState(false);
     const { tier } = useProfileStore();
     const router = useRouter();
 
@@ -20,27 +23,73 @@ export default function ProgramDetailScreen() {
     }, [id]);
 
     async function fetchProgramDetails() {
+        setNotAvailable(false);
         try {
             const { data: programData, error: pError } = await supabase
                 .from('programs')
                 .select('*')
                 .eq('id', id)
+                .eq('is_active', true)
+                // TEMP: Match the list filter until we have a real publish flag.
+                .not('name', 'ilike', 'demo%')
+                .not('name', 'ilike', 'sample%')
                 .single();
 
             if (pError) throw pError;
             setProgram(programData);
 
-            const { data: workoutData, error: wError } = await supabase
-                .from('workouts')
-                .select('*')
+            // Try new structure first (program_weeks -> program_days)
+            const { data: weeksData, error: weeksError } = await supabase
+                .from('program_weeks')
+                .select(`
+                    id,
+                    week_number,
+                    title,
+                    program_days(
+                        id,
+                        day_number,
+                        title
+                    )
+                `)
                 .eq('program_id', id)
-                .order('week_number', { ascending: true })
-                .order('day_number', { ascending: true });
+                .order('week_number', { ascending: true });
 
-            if (wError) throw wError;
-            setWorkouts(workoutData || []);
+            if (!weeksError && weeksData && weeksData.length > 0) {
+                // Flatten program_days into a workouts-like structure
+                const allDays: any[] = [];
+                weeksData.forEach((week: any) => {
+                    (week.program_days || []).forEach((day: any) => {
+                        allDays.push({
+                            id: day.id,
+                            name: day.title || `Day ${day.day_number}`,
+                            week_number: week.week_number,
+                            day_number: day.day_number,
+                            isNewStructure: true,
+                        });
+                    });
+                });
+                allDays.sort((a, b) => {
+                    if (a.week_number !== b.week_number) return a.week_number - b.week_number;
+                    return a.day_number - b.day_number;
+                });
+                setWorkouts(allDays);
+            } else {
+                // Fallback to legacy workouts table
+                const { data: workoutData, error: wError } = await supabase
+                    .from('workouts')
+                    .select('*')
+                    .eq('program_id', id)
+                    .order('week_number', { ascending: true })
+                    .order('day_number', { ascending: true });
+
+                if (wError) throw wError;
+                setWorkouts(workoutData || []);
+            }
         } catch (error) {
             console.error('Error fetching program details:', error);
+            setProgram(null);
+            setWorkouts([]);
+            setNotAvailable(true);
         } finally {
             setLoading(false);
         }
@@ -54,9 +103,25 @@ export default function ProgramDetailScreen() {
         );
     }
 
-    if (!program) return null;
+    if (notAvailable || !program) {
+        return (
+            <View style={[styles.container, styles.centered]}>
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'Programs',
+                    headerStyle: { backgroundColor: theme.colors.background },
+                    headerTintColor: '#FFF',
+                }} />
+                <Text style={styles.notAvailableTitle}>Program not available</Text>
+                <Text style={styles.notAvailableText}>This program is unpublished or cannot be found.</Text>
+                <TouchableOpacity style={styles.notAvailableButton} onPress={() => router.back()}>
+                    <Text style={styles.notAvailableButtonText}>Go back</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
-    const hasAccess = canAccessTier(tier, program.tier_required);
+    const hasAccess = canAccessContentTier(tier || 'free', program.tier_required);
 
     return (
         <View style={styles.container}>
@@ -104,7 +169,16 @@ export default function ProgramDetailScreen() {
                             <Text style={styles.emptyText}>No workouts added yet.</Text>
                         ) : (
                             workouts.map((workout, index) => (
-                                <View key={workout.id} style={styles.workoutItem}>
+                                <TouchableOpacity
+                                    key={workout.id}
+                                    style={styles.workoutItem}
+                                    onPress={() => {
+                                        if (hasAccess) {
+                                            router.push({ pathname: '/workout/active', params: { id: workout.id } });
+                                        }
+                                    }}
+                                    disabled={!hasAccess}
+                                >
                                     <View style={styles.workoutNumber}>
                                         <Text style={styles.workoutNumberText}>{index + 1}</Text>
                                     </View>
@@ -117,21 +191,26 @@ export default function ProgramDetailScreen() {
                                     ) : (
                                         <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.3)" />
                                     )}
-                                </View>
+                                </TouchableOpacity>
                             ))
                         )}
                     </View>
+
+                    {!hasAccess && (
+                        <View style={{ marginTop: theme.spacing.md }}>
+                            <UpgradePrompt
+                                title="Unlock this program"
+                                body="This program is part of a higher tier. Upgrade to access workouts and stay consistent."
+                                requiredTier={program.tier_required}
+                                onUpgradePress={() => router.push('/subscribe')}
+                                onLearnMorePress={() => router.push('/help/quick-start')}
+                            />
+                        </View>
+                    )}
                 </View>
             </ScrollView>
 
-            {!hasAccess && (
-                <View style={styles.footer}>
-                    <TouchableOpacity style={styles.upgradeButton}>
-                        <Text style={styles.upgradeText}>Upgrade to Unlock</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.footerNote}>This program requires {getTierLabel(program.tier_required)} access.</Text>
-                </View>
-            )}
+            {/* Keep footer reserved for Start Program when accessible */}
 
             {hasAccess && workouts.length > 0 && (
                 <View style={styles.footer}>
@@ -155,6 +234,31 @@ const styles = StyleSheet.create({
     centered: {
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    notAvailableTitle: {
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: '900',
+        marginTop: 10,
+    },
+    notAvailableText: {
+        color: theme.colors.textSecondary,
+        textAlign: 'center',
+        marginTop: 6,
+        marginBottom: 14,
+        paddingHorizontal: theme.spacing.xl,
+    },
+    notAvailableButton: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.md,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.12)',
+    },
+    notAvailableButtonText: {
+        color: '#FFF',
+        fontWeight: '800',
     },
     backButton: {
         marginLeft: 10,
