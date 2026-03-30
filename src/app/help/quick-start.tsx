@@ -113,6 +113,18 @@ export default function QuickStartGuideScreen() {
                     <Text style={styles.bullet}>- Not for emergencies</Text>
                     <Text style={styles.bullet}>- Replies typically within 24–48 hours</Text>
                 </GuideCard>
+
+                <GuideCard
+                    title="Having an Issue?"
+                    ctas={[{ label: 'Report an Issue', href: '/help/report-issue' }]}
+                >
+                    <Text style={styles.p}>
+                        If something isn't working right, let us know. We'll investigate and get back to you.
+                    </Text>
+                    <Text style={styles.bullet}>- Bug reports</Text>
+                    <Text style={styles.bullet}>- Feature requests</Text>
+                    <Text style={styles.bullet}>- Account or content issues</Text>
+                </GuideCard>
             </ScrollView>
         </View>
     );

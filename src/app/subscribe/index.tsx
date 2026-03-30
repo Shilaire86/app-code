@@ -1,15 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Platform, TextInput } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
 import { ENTITLEMENTS } from '@/lib/entitlements';
 import { getTierLabel } from '@/lib/tier-gating';
-import { BILLING } from '@/lib/billingConfig';
+import { BILLING, BillingPeriod } from '@/lib/billingConfig';
 import type { SubscriptionTier } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { validatePromoCode, PromoValidationResult } from '@/services/promoCodes';
+import { purchaseNativeSubscription } from '@/services/purchases';
+
+import { scheduleTrialEndingReminders } from '@/lib/notifications';
 
 export default function SubscribePlaceholderScreen() {
     const router = useRouter();
@@ -21,6 +25,12 @@ export default function SubscribePlaceholderScreen() {
     const [checkoutNotice, setCheckoutNotice] = useState<{ type: 'success' | 'cancel'; text: string } | null>(null);
     const [refreshingSubscription, setRefreshingSubscription] = useState(false);
     const lastHandledCheckoutRef = useRef<string | null>(null);
+
+    // Billing period & promo code state
+    const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
+    const [promoInput, setPromoInput] = useState('');
+    const [promoResult, setPromoResult] = useState<PromoValidationResult | null>(null);
+    const [promoLoading, setPromoLoading] = useState(false);
 
     const returnUrl = useMemo(() => {
         if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/subscribe`;
@@ -42,6 +52,17 @@ export default function SubscribePlaceholderScreen() {
                 .finally(() => {
                     setTimeout(() => {
                         useProfileStore.getState().fetchProfile(user.id)
+                            .then(async () => {
+                                // Once synced, attempt to schedule trial ending reminders if they have a trial
+                                const { data: sub } = await supabase
+                                    .from('subscriptions')
+                                    .select('trial_end')
+                                    .eq('user_id', user.id)
+                                    .maybeSingle();
+                                if (sub?.trial_end) {
+                                    await scheduleTrialEndingReminders(sub.trial_end).catch(console.error);
+                                }
+                            })
                             .finally(() => setRefreshingSubscription(false));
                     }, 2500);
                 });
@@ -57,6 +78,24 @@ export default function SubscribePlaceholderScreen() {
         setErrorText(null);
         setLoadingTier(tier);
         try {
+            // ─── Native Checkout (iOS / Android) ───
+            if (Platform.OS !== 'web') {
+                const isAnnual = billingPeriod === 'annual';
+                const success = await purchaseNativeSubscription(tier, isAnnual);
+                if (success) {
+                    setCheckoutNotice({ type: 'success', text: 'Checkout complete. Syncing your subscription now...' });
+                    if (user?.id) {
+                        setRefreshingSubscription(true);
+                        await useProfileStore.getState().fetchProfile(user.id);
+                        setRefreshingSubscription(false);
+                    }
+                } else {
+                    setCheckoutNotice({ type: 'cancel', text: 'Checkout canceled. No charges were made.' });
+                }
+                return;
+            }
+
+            // ─── Web Checkout (Stripe) ───
             // Ensure we have a fresh access token before calling Edge Functions.
             await supabase.auth.refreshSession();
             const { data: sessRes, error: sessErr } = await supabase.auth.getSession();
@@ -138,6 +177,25 @@ export default function SubscribePlaceholderScreen() {
                     </Text>
                 </View>
 
+                {/* Monthly / Annual Toggle */}
+                <View style={styles.periodToggle}>
+                    <TouchableOpacity
+                        style={[styles.periodBtn, billingPeriod === 'monthly' && styles.periodBtnActive]}
+                        onPress={() => setBillingPeriod('monthly')}
+                    >
+                        <Text style={[styles.periodBtnText, billingPeriod === 'monthly' && styles.periodBtnTextActive]}>Monthly</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.periodBtn, billingPeriod === 'annual' && styles.periodBtnActive]}
+                        onPress={() => setBillingPeriod('annual')}
+                    >
+                        <Text style={[styles.periodBtnText, billingPeriod === 'annual' && styles.periodBtnTextActive]}>Annual</Text>
+                        <View style={styles.saveBadge}>
+                            <Text style={styles.saveBadgeText}>SAVE 17%</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
                 {checkoutNotice ? (
                     <View style={[styles.notice, checkoutNotice.type === 'success' ? styles.noticeSuccess : styles.noticeCancel]}>
                         <View style={styles.noticeHeader}>
@@ -193,7 +251,14 @@ export default function SubscribePlaceholderScreen() {
                                             {getTierLabel(t)}
                                             {isCurrent && <Text style={styles.currentLabel}> (Current)</Text>}
                                         </Text>
-                                        <Text style={[styles.tierPrice, isElite && styles.tierPriceElite]}>{BILLING.tiers[t].priceText}</Text>
+                                        <Text style={[styles.tierPrice, isElite && styles.tierPriceElite]}>
+                                            {BILLING.tiers[t][billingPeriod].priceText}
+                                        </Text>
+                                        {billingPeriod === 'annual' && !isElite && (
+                                            <Text style={styles.annualSavings}>
+                                                {BILLING.tiers[t].annual.monthlyCost} · {BILLING.tiers[t].annual.savings}
+                                            </Text>
+                                        )}
                                     </View>
                                     {isElite && (
                                         <View style={styles.comingSoonBadge}>
@@ -266,6 +331,64 @@ export default function SubscribePlaceholderScreen() {
                             </View>
                         );
                     })}
+                </View>
+
+                {/* Promo Code Section */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Have a Promo Code?</Text>
+                    <View style={styles.promoRow}>
+                        <TextInput
+                            style={styles.promoInput}
+                            placeholder="Enter code"
+                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            value={promoInput}
+                            onChangeText={(text) => {
+                                setPromoInput(text.toUpperCase());
+                                setPromoResult(null);
+                            }}
+                            autoCapitalize="characters"
+                            returnKeyType="done"
+                        />
+                        <TouchableOpacity
+                            style={[styles.promoApplyBtn, promoLoading && { opacity: 0.5 }]}
+                            disabled={promoLoading || !promoInput.trim()}
+                            onPress={async () => {
+                                if (!user?.id) return;
+                                setPromoLoading(true);
+                                try {
+                                    const result = await validatePromoCode(
+                                        promoInput,
+                                        user.id,
+                                        'vip', // validate against VIP by default
+                                        billingPeriod
+                                    );
+                                    setPromoResult(result);
+                                } catch {
+                                    setPromoResult({ valid: false, error: 'Something went wrong. Try again.' });
+                                } finally {
+                                    setPromoLoading(false);
+                                }
+                            }}
+                        >
+                            {promoLoading ? (
+                                <ActivityIndicator size="small" color="#000" />
+                            ) : (
+                                <Text style={styles.promoApplyText}>APPLY</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                    {promoResult && (
+                        <View style={[styles.promoFeedback, promoResult.valid ? styles.promoSuccess : styles.promoError]}>
+                            <Ionicons
+                                name={promoResult.valid ? 'checkmark-circle' : 'alert-circle'}
+                                size={16}
+                                color={promoResult.valid ? '#00b894' : '#FF6B6B'}
+                            />
+                            <Text style={[styles.promoFeedbackText, promoResult.valid ? { color: '#00b894' } : { color: '#FF6B6B' }]}>
+                                {promoResult.valid ? `✓ Code applied! ${promoResult.discountLabel}` : promoResult.error}
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.card}>
@@ -464,4 +587,107 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
     },
     secondaryText: { color: 'rgba(255,255,255,0.82)', fontSize: 13, fontWeight: '900' },
+
+    // Period Toggle Styles
+    periodToggle: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        padding: 4,
+        marginBottom: 24,
+    },
+    periodBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 8,
+        flexDirection: 'row',
+        gap: 6,
+    },
+    periodBtnActive: {
+        backgroundColor: theme.colors.surface,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    periodBtnText: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    periodBtnTextActive: {
+        color: '#FFF',
+    },
+    saveBadge: {
+        backgroundColor: '#00b894',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    saveBadgeText: {
+        color: '#000',
+        fontSize: 9,
+        fontWeight: '900',
+        letterSpacing: 0.5,
+    },
+    annualSavings: {
+        color: '#00b894',
+        fontSize: 12,
+        fontWeight: '700',
+        marginTop: 4,
+    },
+
+    // Promo Code Styles
+    promoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginTop: 12,
+    },
+    promoInput: {
+        flex: 1,
+        height: 48,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 10,
+        paddingHorizontal: 16,
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '600',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    promoApplyBtn: {
+        height: 48,
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    promoApplyText: {
+        color: '#000',
+        fontSize: 13,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    promoFeedback: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+        paddingHorizontal: 4,
+    },
+    promoSuccess: {
+        // Success color handled inline
+    },
+    promoError: {
+        // Error color handled inline
+    },
+    promoFeedbackText: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
 });

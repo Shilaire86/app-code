@@ -166,7 +166,7 @@ export async function fetchRecentActivities() {
     return data ?? [];
 }
 
-export async function logActivity(userId: string, type: 'workout_complete' | 'pr_set' | 'milestone', data: any) {
+export async function logActivity(userId: string, type: 'workout_complete' | 'pr_set' | 'milestone' | 'stage_up', data: any) {
     const { error } = await supabase
         .from('user_activities')
         .insert({
@@ -187,4 +187,20 @@ export async function fetchAffiliateOffers() {
 
     if (error) throw error;
     return data ?? [];
+}
+
+export async function logAffiliateClick(userId: string, offerId: string, offerTitle: string) {
+    try {
+        await supabase
+            .from('user_activities')
+            .insert({
+                user_id: userId,
+                activity_type: 'affiliate_click',
+                activity_data: { offer_id: offerId, offer_title: offerTitle },
+            });
+        console.log(`[Affiliate] Logged click for offer: ${offerTitle}`);
+    } catch (e) {
+        // Non-blocking — don't let tracking failures interrupt UX
+        console.warn('[Affiliate] Failed to log click:', e);
+    }
 }

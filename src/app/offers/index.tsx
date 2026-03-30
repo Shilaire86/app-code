@@ -4,9 +4,11 @@ import { Stack, useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useProfileStore } from '@/stores/profileStore';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { canAccessContentTier } from '@/lib/entitlements';
+import { logAffiliateClick } from '@/services/feed';
 
 interface Offer {
     id: string;
@@ -25,6 +27,7 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function AffiliateOffersScreen() {
     const { tier } = useProfileStore();
+    const { user } = useAuthStore();
     const [offers, setOffers] = useState<Offer[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -54,6 +57,9 @@ export default function AffiliateOffersScreen() {
 
     const handleOfferPress = (offer: Offer) => {
         if (canAccess(offer.tier_required)) {
+            if (user?.id) {
+                logAffiliateClick(user.id, offer.id, offer.title);
+            }
             Linking.openURL(offer.url);
         }
     };

@@ -9,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { checkPermissions, scheduleDailyCheckIn } from '@/lib/notifications';
 
 const PRESET_TIMES_24H = ['06:00', '09:00', '12:00', '18:00', '20:00'] as const;
+const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian'] as const;
+
 
 function toDisplayTime(hhmm: string | null | undefined) {
     const value = hhmm || '09:00';
@@ -45,6 +47,8 @@ export default function SettingsScreen() {
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [timezone, setTimezone] = useState(profile?.timezone || 'America/New_York');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [streakNudgesEnabled, setStreakNudgesEnabled] = useState(profile?.streak_nudges_enabled ?? true);
+    const [dietaryPreference, setDietaryPreference] = useState(profile?.dietary_preference || 'standard');
     const [isSaving, setIsSaving] = useState(false);
     const [savingReminder, setSavingReminder] = useState(false);
     const [subscription, setSubscription] = useState<SubscriptionSnapshot | null>(null);
@@ -92,6 +96,8 @@ export default function SettingsScreen() {
                 .update({
                     full_name: fullName,
                     timezone: timezone,
+                    streak_nudges_enabled: streakNudgesEnabled,
+                    dietary_preference: dietaryPreference,
                 })
                 .eq('id', user.id);
 
@@ -284,6 +290,21 @@ export default function SettingsScreen() {
                             thumbColor="#fff"
                         />
                     </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.settingRow}>
+                        <View>
+                            <Text style={styles.settingLabel}>Smart Streak Reminders</Text>
+                            <Text style={styles.settingDesc}>Nudges you when your streak is at risk</Text>
+                        </View>
+                        <Switch
+                            value={streakNudgesEnabled}
+                            onValueChange={setStreakNudgesEnabled}
+                            trackColor={{ false: '#3e3e3e', true: theme.colors.primary }}
+                            thumbColor="#fff"
+                        />
+                    </View>
                 </View>
 
                 <Text style={styles.sectionTitle}>Workout Reminders</Text>
@@ -317,6 +338,31 @@ export default function SettingsScreen() {
                     {!!savingReminder && (
                         <Text style={[styles.helperText, { marginTop: 10 }]}>Saving...</Text>
                     )}
+                </View>
+
+                <Text style={styles.sectionTitle}>Nutrition</Text>
+
+                <View style={styles.card}>
+                    <Text style={styles.settingLabel}>Dietary Preference</Text>
+                    <Text style={styles.settingDesc}>Used to personalize smart food suggestions</Text>
+                    
+                    <View style={styles.presetRow}>
+                        {DIETARY_PREFERENCES.map((pref) => {
+                            const active = dietaryPreference === pref;
+                            return (
+                                <TouchableOpacity
+                                    key={pref}
+                                    style={[styles.presetButton, active && styles.presetButtonActive, { minWidth: '45%' }]}
+                                    onPress={() => setDietaryPreference(pref)}
+                                    disabled={isSaving}
+                                >
+                                    <Text style={[styles.presetButtonText, active && styles.presetButtonTextActive, { textTransform: 'capitalize' }]}>
+                                        {pref}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
                 </View>
 
                 {/* Account Actions */}
@@ -379,6 +425,13 @@ export default function SettingsScreen() {
                     <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/help/quick-start')}>
                         <Ionicons name="help-circle-outline" size={20} color={theme.colors.text} />
                         <Text style={styles.actionText}>Help & Quick Start Guide</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.divider} />
+
+                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/help/report-issue')}>
+                        <Ionicons name="chatbox-ellipses-outline" size={20} color={theme.colors.text} />
+                        <Text style={styles.actionText}>Report an Issue</Text>
                     </TouchableOpacity>
                 </View>
 

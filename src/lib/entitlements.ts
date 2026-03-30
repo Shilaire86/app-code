@@ -8,6 +8,13 @@ export type EntitlementKey =
     | 'offersAccess'
     | 'communityComments'
     | 'advancedAnalytics'
+    | 'quickWorkoutEnabled'
+    | 'quickWorkoutsPerWeek'
+    | 'guidedProgramsEnabled'
+    | 'maxActiveGuidedPrograms'
+    | 'customProgramsEnabled'
+    | 'nutritionEnabled'
+    | 'cardioRecommendationsEnabled'
     | 'macroSnapshotScansPerWeek';
 
 export type TierEntitlements = {
@@ -17,6 +24,13 @@ export type TierEntitlements = {
     offersAccess: 'limited' | 'full';
     communityComments: boolean;
     advancedAnalytics: boolean;
+    quickWorkoutEnabled: boolean;
+    quickWorkoutsPerWeek: number;
+    guidedProgramsEnabled: boolean;
+    maxActiveGuidedPrograms: number;
+    customProgramsEnabled: boolean;
+    nutritionEnabled: boolean;
+    cardioRecommendationsEnabled: boolean;
     macroSnapshotScansPerWeek: number; // future placeholder
 };
 
@@ -28,6 +42,13 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         offersAccess: 'limited',
         communityComments: false,
         advancedAnalytics: false,
+        quickWorkoutEnabled: false,
+        quickWorkoutsPerWeek: 0,
+        guidedProgramsEnabled: false,
+        maxActiveGuidedPrograms: 0,
+        customProgramsEnabled: false,
+        nutritionEnabled: false,
+        cardioRecommendationsEnabled: false,
         macroSnapshotScansPerWeek: 0,
     },
     standard: {
@@ -37,6 +58,13 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         offersAccess: 'full',
         communityComments: false,
         advancedAnalytics: false,
+        quickWorkoutEnabled: true,
+        quickWorkoutsPerWeek: 3,
+        guidedProgramsEnabled: false,
+        maxActiveGuidedPrograms: 0,
+        customProgramsEnabled: false,
+        nutritionEnabled: true,
+        cardioRecommendationsEnabled: false,
         macroSnapshotScansPerWeek: 0,
     },
     vip: {
@@ -46,6 +74,13 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         offersAccess: 'full',
         communityComments: true,
         advancedAnalytics: true,
+        quickWorkoutEnabled: true,
+        quickWorkoutsPerWeek: 999,
+        guidedProgramsEnabled: true,
+        maxActiveGuidedPrograms: 2,
+        customProgramsEnabled: false,
+        nutritionEnabled: true,
+        cardioRecommendationsEnabled: true,
         macroSnapshotScansPerWeek: 0,
     },
     elite: {
@@ -55,6 +90,13 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         offersAccess: 'full',
         communityComments: true,
         advancedAnalytics: true,
+        quickWorkoutEnabled: true,
+        quickWorkoutsPerWeek: 999,
+        guidedProgramsEnabled: true,
+        maxActiveGuidedPrograms: 999,
+        customProgramsEnabled: true,
+        nutritionEnabled: true,
+        cardioRecommendationsEnabled: true,
         macroSnapshotScansPerWeek: 0,
     },
 };
@@ -79,6 +121,11 @@ export function requiredTierForEntitlement(key: EntitlementKey): SubscriptionTie
     if (key === 'programsAccess') return 'standard';
     if (key === 'offersAccess') return 'standard';
     if (key === 'macroSnapshotScansPerWeek') return 'vip';
+    if (key === 'quickWorkoutEnabled') return 'standard';
+    if (key === 'guidedProgramsEnabled') return 'vip';
+    if (key === 'customProgramsEnabled') return 'elite';
+    if (key === 'nutritionEnabled') return 'standard';
+    if (key === 'cardioRecommendationsEnabled') return 'vip';
     return 'free';
 }
 

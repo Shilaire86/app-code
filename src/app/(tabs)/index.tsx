@@ -12,11 +12,14 @@ import { POINTS } from '@/lib/stages/calculator';
 import { HintCard } from '@/components/HintCard';
 import { LevelUpModal } from '@/components/LevelUpModal';
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { getWorkoutStreakSummary, WorkoutStreakSummary } from '@/lib/streaks';
-import { isVip } from '@/lib/entitlements';
+import { fetchNextSession, fetchLatestWeight } from '@/services/workouts';
+import { isVip, hasEntitlement } from '@/lib/entitlements';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
+import { getTodaysCardio, markCardioComplete, UserCardioPlanEntry } from '@/services/cardio';
+import { fetchUserActiveModules, TrainingModule } from '@/services/modules';
 
 // Stage-specific motivational copy
 function getStageCopy(stage: string): string {
@@ -50,27 +53,49 @@ export default function HomeScreen() {
     const isAdmin = profile?.role === 'admin';
 
     const [streak, setStreak] = useState<WorkoutStreakSummary>({ streakDays: 0, lastWorkoutAt: null, daysSinceLast: null });
-    const [streakLoading, setStreakLoading] = useState(false);
+    const [nextSession, setNextSession] = useState<any>(null);
+    const [latestWeight, setLatestWeight] = useState<any>(null);
+    const [todaysCardio, setTodaysCardio] = useState<UserCardioPlanEntry | null>(null);
+    const [activeModules, setActiveModules] = useState<TrainingModule[]>([]);
+    const [dashboardLoading, setDashboardLoading] = useState(false);
 
-    const fetchStreak = useCallback(async () => {
+    const showCardioCard = hasEntitlement(tier, 'cardioRecommendationsEnabled');
+
+    const fetchDashboardData = useCallback(async () => {
         if (!user?.id) return;
-        setStreakLoading(true);
+        setDashboardLoading(true);
         try {
-            const res = await getWorkoutStreakSummary(user.id, { force: false });
-            setStreak(res);
-        } catch {
-            // Fail closed: keep card but show 0/unknown.
+            const cardioPromise = hasEntitlement(tier, 'cardioRecommendationsEnabled')
+                ? getTodaysCardio(user.id)
+                : Promise.resolve(null);
+            const [streakRes, sessionRes, weightRes, cardioRes, modulesRes] = await Promise.all([
+                getWorkoutStreakSummary(user.id, { force: false }),
+                fetchNextSession(user.id),
+                fetchLatestWeight(user.id),
+                cardioPromise,
+                fetchUserActiveModules(user.id)
+            ]);
+            setStreak(streakRes);
+            setNextSession(sessionRes);
+            setLatestWeight(weightRes);
+            setTodaysCardio(cardioRes);
+            setActiveModules(modulesRes);
+        } catch (err) {
+            console.warn('[Dashboard] Failed to fetch dashboard data', err);
             setStreak({ streakDays: 0, lastWorkoutAt: null, daysSinceLast: null });
         } finally {
-            setStreakLoading(false);
+            setDashboardLoading(false);
         }
     }, [user?.id]);
 
     useFocusEffect(
         useCallback(() => {
-            fetchStreak();
-        }, [fetchStreak])
+            fetchDashboardData();
+        }, [fetchDashboardData])
     );
+
+    const { isConnected } = useNetworkStatus();
+    const { pendingCount, processQueue, isSyncing } = useSyncQueueStore();
 
     const handleSignOut = async () => {
         const { error } = await supabase.auth.signOut();
@@ -87,8 +112,6 @@ export default function HomeScreen() {
         );
     }
 
-    const { isConnected } = useNetworkStatus();
-    const { pendingCount, processQueue, isSyncing } = useSyncQueueStore();
     const count = pendingCount();
 
     const displayStage = stage || 'initiate';
@@ -220,7 +243,7 @@ export default function HomeScreen() {
             <Card style={styles.consistencyCard}>
                 <View style={styles.consistencyTop}>
                     <Text style={styles.consistencyTitle}>Consistency</Text>
-                    {streakLoading && (
+                    {dashboardLoading && (
                         <ActivityIndicator size="small" color={theme.colors.primary} />
                     )}
                 </View>
@@ -228,10 +251,167 @@ export default function HomeScreen() {
                     {streak.streakDays > 0 ? `🔥 ${streak.streakDays} day streak` : 'Start your streak today'}
                 </Text>
                 <Text style={styles.consistencySub}>{lastWorkoutLabel}</Text>
-                {typeof streak.daysSinceLast === 'number' && streak.daysSinceLast >= 2 && (
+                {typeof streak.daysSinceLast === 'number' && streak.daysSinceLast >= 2 && !showRisk && (
                     <Text style={styles.consistencyNudge}>Don't break your streak — get a quick session in today.</Text>
                 )}
             </Card>
+
+            <View style={styles.dashboardRow}>
+                {/* Today's Workout Card */}
+                {nextSession ? (
+                    <TouchableOpacity 
+                        style={[styles.dashboardHalfCard, { borderColor: 'rgba(255,255,255,0.08)' }]}
+                        onPress={() => router.push(`/workout/active?id=${nextSession.programDayId}`)}
+                    >
+                        <View style={styles.halfCardIcon}>
+                            <Ionicons name="barbell-outline" size={20} color={theme.colors.primary} />
+                        </View>
+                        <View style={styles.halfCardContent}>
+                            <Text style={styles.halfCardLabel}>Up Next</Text>
+                            <Text style={styles.halfCardValue} numberOfLines={1}>{nextSession.title || `Day ${nextSession.dayNumber}`}</Text>
+                            <Text style={styles.halfCardSub} numberOfLines={1}>{nextSession.programName}</Text>
+                        </View>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity 
+                        style={[styles.dashboardHalfCard, { borderColor: 'rgba(255,255,255,0.08)' }]}
+                        onPress={() => router.push('/(tabs)/programs')}
+                    >
+                        <View style={styles.halfCardIcon}>
+                            <Ionicons name="play-outline" size={20} color={theme.colors.primary} />
+                        </View>
+                        <View style={styles.halfCardContent}>
+                            <Text style={styles.halfCardLabel}>Next Workout</Text>
+                            <Text style={styles.halfCardValue}>Start Program</Text>
+                            <Text style={styles.halfCardSub}>Browse the library</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
+
+                {/* Progress Snapshot Card */}
+                <TouchableOpacity 
+                    style={[styles.dashboardHalfCard, { borderColor: 'rgba(0,255,170,0.1)' }]}
+                    onPress={() => router.push('/progress/measurements')}
+                >
+                    <View style={[styles.halfCardIcon, { backgroundColor: 'rgba(0,255,170,0.1)' }]}>
+                        <Ionicons name="scale-outline" size={20} color="#00FFAA" />
+                    </View>
+                    <View style={styles.halfCardContent}>
+                        <Text style={styles.halfCardLabel}>Weight</Text>
+                        {latestWeight ? (
+                            <>
+                                <View style={styles.snapshotTop}>
+                                    <Text style={styles.halfCardValue}>{latestWeight.weight} lb</Text>
+                                    {latestWeight.trend === 'up' && <Ionicons name="arrow-up" size={14} color="#FF6B6B" />}
+                                    {latestWeight.trend === 'down' && <Ionicons name="arrow-down" size={14} color="#00b894" />}
+                                    {latestWeight.trend === 'flat' && <Ionicons name="remove" size={14} color="#A0A0A0" />}
+                                </View>
+                                {latestWeight.trend ? (
+                                    <Text style={styles.halfCardSub}>
+                                        {latestWeight.trend === 'down' ? '-' : latestWeight.trend === 'up' ? '+' : ''}
+                                        {latestWeight.change.toFixed(1)} lb from prev
+                                    </Text>
+                                ) : (
+                                    <Text style={styles.halfCardSub}>{new Date(latestWeight.date).toLocaleDateString()}</Text>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Text style={styles.halfCardValue}>Log Weight</Text>
+                                <Text style={styles.halfCardSub}>Track your evolution</Text>
+                            </>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </View>
+
+            {/* Today's Cardio Card */}
+            {showCardioCard && todaysCardio && todaysCardio.protocol && !todaysCardio.is_completed && (
+                <TouchableOpacity
+                    style={styles.cardioCard}
+                    onPress={() => router.push('/cardio/plan')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.cardioLeft}>
+                        <View style={styles.cardioIconBox}>
+                            <Ionicons name="fitness-outline" size={20} color="#FF9800" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.cardioLabel}>TODAY'S CARDIO</Text>
+                            <Text style={styles.cardioName} numberOfLines={1}>
+                                {(todaysCardio.protocol as any).is_signature ? '★ ' : ''}
+                                {(todaysCardio.protocol as any).name}
+                            </Text>
+                            <Text style={styles.cardioDuration}>
+                                {(todaysCardio.protocol as any).duration_minutes} min · {todaysCardio.placement === 'rest_day' ? 'Rest Day' : 'Post-Workout'}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.cardioCompleteBtn}
+                        onPress={async (e) => {
+                            e.stopPropagation();
+                            await markCardioComplete(todaysCardio.id);
+                            setTodaysCardio({ ...todaysCardio, is_completed: true });
+                        }}
+                    >
+                        <Ionicons name="checkmark" size={18} color="#000" />
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            )}
+
+            {/* Active Training Modules */}
+            {activeModules.map(mod => (
+                <TouchableOpacity
+                    key={mod.id}
+                    style={styles.moduleCard}
+                    onPress={() => router.push('/modules')}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.moduleLeft}>
+                        <View style={styles.moduleIconBox}>
+                            <Ionicons name="body-outline" size={20} color="#00FF80" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.moduleLabel}>ACTIVE MODULE</Text>
+                            <Text style={styles.moduleName} numberOfLines={1}>{mod.name}</Text>
+                            <Text style={styles.moduleDuration}>
+                                {mod.routines?.length || 0} routines available
+                            </Text>
+                        </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                </TouchableOpacity>
+            ))}
+
+            {showRisk && (
+                <TouchableOpacity
+                    style={styles.riskCard}
+                    onPress={() => router.push('/(tabs)/programs')}
+                >
+                    <View style={styles.riskHeader}>
+                        <Ionicons name="warning" size={24} color="#FFD700" />
+                        <Text style={styles.riskTitle}>STREAK AT RISK</Text>
+                        <TouchableOpacity
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                setSeenHintValue('streak_risk_last_dismissed', todayKey);
+                            }}
+                            style={styles.riskDismiss}
+                        >
+                            <Ionicons name="close" size={20} color="rgba(255,255,255,0.4)" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.riskBody}>
+                        Your {streak.streakDays}-day streak expires in {24 - (hoursSinceLastWorkout || 0)} hours.
+                        Don't let the momentum stop now.
+                    </Text>
+                    <View style={styles.riskFooter}>
+                        <Text style={styles.riskAction}>Start Workout</Text>
+                        <Ionicons name="arrow-forward" size={16} color="#FFD700" />
+                    </View>
+                </TouchableOpacity>
+            )}
 
             {showUpgradeCard && (
                 <Card style={styles.upgradeCard}>
@@ -248,34 +428,6 @@ export default function HomeScreen() {
                         <Ionicons name="arrow-forward" size={16} color="#FFF" />
                     </TouchableOpacity>
                 </Card>
-            )}
-
-            {showRisk && (
-                <View style={styles.riskCard}>
-                    <View style={styles.riskTop}>
-                        <Text style={styles.riskTitle}>Streak risk</Text>
-                        <TouchableOpacity
-                            onPress={() => setSeenHintValue('streak_risk_last_dismissed', todayKey)}
-                            style={styles.riskDismiss}
-                            accessibilityRole="button"
-                            accessibilityLabel="Dismiss streak warning"
-                        >
-                            <Ionicons name="close" size={18} color={theme.colors.textSecondary} />
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={styles.riskBody}>Don't break your streak — get a quick session in today.</Text>
-                    <TouchableOpacity
-                        style={styles.riskButton}
-                        onPress={() => {
-                            setSeenHintValue('streak_risk_last_dismissed', todayKey);
-                            router.push('/(tabs)/programs');
-                        }}
-                        accessibilityRole="button"
-                    >
-                        <Text style={styles.riskButtonText}>Start a workout</Text>
-                        <Ionicons name="arrow-forward" size={16} color="#FFF" />
-                    </TouchableOpacity>
-                </View>
             )}
 
             <View style={styles.quickActions}>
@@ -561,6 +713,52 @@ const styles = StyleSheet.create({
     consistencyMain: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 10 },
     consistencySub: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 6 },
     consistencyNudge: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 10, lineHeight: 16 },
+    dashboardRow: {
+        flexDirection: 'row',
+        gap: theme.spacing.md,
+        marginTop: theme.spacing.md,
+    },
+    dashboardHalfCard: {
+        flex: 1,
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        padding: 16,
+        gap: 12,
+    },
+    halfCardIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    halfCardContent: {
+        gap: 4,
+    },
+    halfCardLabel: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 11,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    snapshotTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    halfCardValue: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '900',
+    },
+    halfCardSub: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        fontWeight: '500',
+    },
     upgradeCard: {
         backgroundColor: theme.colors.surface,
         padding: theme.spacing.lg,
@@ -585,17 +783,46 @@ const styles = StyleSheet.create({
     },
     upgradeButtonText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
     riskCard: {
-        marginTop: theme.spacing.md,
-        backgroundColor: 'rgba(255,165,0,0.08)',
-        borderColor: 'rgba(255,165,0,0.28)',
-        borderWidth: 1,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.lg,
+        backgroundColor: 'rgba(255, 68, 68, 0.1)',
+        borderRadius: theme.radius.xl,
+        padding: 20,
+        marginBottom: theme.spacing.lg,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 68, 68, 0.2)',
     },
-    riskTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-    riskTitle: { color: '#FFF', fontSize: 12, fontWeight: '900', letterSpacing: 0.6 },
-    riskDismiss: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-    riskBody: { color: 'rgba(255,255,255,0.78)', fontSize: 13, lineHeight: 18, marginTop: 8 },
+    riskHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        gap: 10,
+    },
+    riskTitle: {
+        color: '#FF4444',
+        fontSize: 13,
+        fontWeight: '900',
+        letterSpacing: 2,
+        flex: 1,
+    },
+    riskDismiss: {
+        padding: 4,
+    },
+    riskBody: {
+        color: theme.colors.text,
+        fontSize: 15,
+        fontWeight: '600',
+        lineHeight: 22,
+        marginBottom: 16,
+    },
+    riskFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    riskAction: {
+        color: '#FFD700',
+        fontSize: 14,
+        fontWeight: '800',
+    },
     riskButton: {
         marginTop: 12,
         backgroundColor: theme.colors.primary,
@@ -747,5 +974,98 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
         flex: 1,
+    },
+    cardioCard: {
+        backgroundColor: 'rgba(255,152,0,0.06)',
+        borderRadius: 16,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,152,0,0.15)',
+    },
+    cardioLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    cardioIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,152,0,0.12)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cardioLabel: {
+        color: '#FF9800',
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+        marginBottom: 2,
+    },
+    cardioName: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    cardioDuration: {
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    cardioCompleteBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#FF9800',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 12,
+    },
+    moduleCard: {
+        backgroundColor: 'rgba(0,255,128,0.04)',
+        borderRadius: 16,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(0,255,128,0.15)',
+    },
+    moduleLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    moduleIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0,255,128,0.12)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    moduleLabel: {
+        color: '#00FF80',
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+        marginBottom: 2,
+    },
+    moduleName: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    moduleDuration: {
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 12,
+        marginTop: 2,
     },
 });

@@ -11,6 +11,8 @@ import { useCachedQuery } from '@/hooks/useCachedQuery';
 import { fetchWorkoutSession, fetchProgramDaySession } from '@/services/workouts';
 import { fetchAffiliateOffers, fetchCoachPosts, toggleLike, fetchUserLikes, logActivity } from '@/services/feed';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
+import { scheduleStreakNudge } from '@/lib/notifications';
+import { getWorkoutStreakSummary } from '@/lib/streaks';
 
 type RepRange = { min: number | null; max: number | null };
 type LastSet = { weightLbs: number; reps: number; createdAt: string };
@@ -608,7 +610,15 @@ export default function ActiveWorkoutScreen() {
             completeWorkout();
             router.replace('/(tabs)');
 
-            // Show appropriate success message
+            // 6. Schedule Streak Nudge
+            if (userId) {
+                getWorkoutStreakSummary(userId, { force: true }).then(summary => {
+                    if (summary.streakDays >= 1) {
+                        scheduleStreakNudge(summary.streakDays);
+                    }
+                }).catch(err => console.error('[Workout] Failed to schedule nudge:', err));
+            }
+
             if (stageChanged) {
                 Alert.alert(
                     "🎉 Stage Up!",
@@ -640,6 +650,13 @@ export default function ActiveWorkoutScreen() {
                         name: ex.exercises.name,
                     })),
                 });
+
+                // Also schedule nudge for offline completion if possible
+                getWorkoutStreakSummary(userId, { force: true }).then(summary => {
+                    if (summary.streakDays >= 1) {
+                        scheduleStreakNudge(summary.streakDays);
+                    }
+                }).catch(() => { });
             }
 
             Alert.alert("Error", "Workout saved locally and will sync when you're back online.");

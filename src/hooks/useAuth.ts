@@ -14,8 +14,15 @@ export function useAuth() {
             }
         }, 5000);
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
             clearTimeout(sessionTimeout);
+            if (error) {
+                // Invalid refresh token or other auth error → clear session gracefully
+                console.warn('[useAuth] Session error (clearing):', error.message);
+                supabase.auth.signOut().catch(() => {});
+                setAuth(null);
+                return;
+            }
             console.log('[useAuth] Initial session found:', !!session);
             setAuth(session);
         }).catch(err => {
@@ -27,7 +34,15 @@ export function useAuth() {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
+            (event, session) => {
+                if (event === 'TOKEN_REFRESHED') {
+                    console.log('[useAuth] Token refreshed successfully');
+                }
+                if (event === 'SIGNED_OUT') {
+                    console.log('[useAuth] User signed out');
+                    setAuth(null);
+                    return;
+                }
                 setAuth(session);
             }
         );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
-import { Stack } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+
 import { theme } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -14,10 +15,13 @@ import {
     ACTIVITY_DESCRIPTIONS,
     GOAL_DESCRIPTIONS,
 } from '@/lib/macroCalculator';
+import { saveNutritionTargets } from '@/services/nutrition';
+import { hasEntitlement } from '@/lib/entitlements';
 
 export default function MacroCalculatorScreen() {
     const { user } = useAuthStore();
-    const { profile } = useProfileStore();
+    const { profile, tier } = useProfileStore();
+    const router = useRouter();
 
     // Form state
     const [age, setAge] = useState('30');
@@ -28,6 +32,9 @@ export default function MacroCalculatorScreen() {
     const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderate');
     const [goal, setGoal] = useState<Goal>('maintain');
     const [results, setResults] = useState<MacroResults | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const canSaveTargets = hasEntitlement(tier, 'nutritionEnabled');
 
     // Auto-fill from profile if available
     useEffect(() => {
@@ -47,6 +54,21 @@ export default function MacroCalculatorScreen() {
             goal,
         });
         setResults(result);
+    }
+
+    async function handleSave() {
+        if (!user?.id || !results) return;
+        setIsSaving(true);
+        try {
+            await saveNutritionTargets(user.id, results, goal);
+            // Seamlessly redirect to the Nutrition dashboard instead of pausing for an Alert
+            router.replace('/(tabs)/nutrition');
+        } catch (e) {
+            console.error('[MacroCalculator] Error saving targets', e);
+            Alert.alert('Error', 'Failed to save targets. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     return (
@@ -203,6 +225,23 @@ export default function MacroCalculatorScreen() {
                             <Text style={styles.detailLabel}>TDEE (Maintenance):</Text>
                             <Text style={styles.detailValue}>{results.tdee} cal</Text>
                         </View>
+
+                        {canSaveTargets && (
+                            <TouchableOpacity
+                                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                                onPress={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <ActivityIndicator color="#000" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="save" size={18} color="#000" />
+                                        <Text style={styles.saveButtonText}>Save These Targets</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </ScrollView>
@@ -407,5 +446,23 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 12,
         fontWeight: '600',
+    },
+    saveButton: {
+        backgroundColor: theme.colors.primary,
+        padding: theme.spacing.md,
+        borderRadius: theme.radius.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: theme.spacing.xl,
+    },
+    saveButtonDisabled: {
+        opacity: 0.7,
+    },
+    saveButtonText: {
+        color: '#000',
+        fontSize: 16,
+        fontWeight: '700',
     },
 });

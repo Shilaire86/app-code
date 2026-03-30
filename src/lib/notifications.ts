@@ -142,3 +142,148 @@ export async function registerForPushNotificationsAsync(userId: string) {
 
     return token;
 }
+
+export async function cancelStreakNudges() {
+    if (isWeb) return;
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const n of scheduled) {
+        if (n.content.data?.type === 'streak_nudge') {
+            await Notifications.cancelScheduledNotificationAsync(n.identifier);
+        }
+    }
+}
+
+export async function scheduleStreakNudge(streakDays: number) {
+    if (isWeb) return;
+    if (streakDays < 1) return; // Only nudge if they have at least 1 day streak they want to keep
+
+    try {
+        // 1. Cancel previous nudges to avoid spam
+        await cancelStreakNudges();
+
+        // 2. Schedule for 22 hours from now
+        // This gives them a 2-hour window before the 24-hour streak window expires
+        const trigger: Notifications.NotificationTriggerInput = {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 22 * 3600, // 22 hours
+        };
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "🔥 Streak at Risk!",
+                body: `Don't lose your ${streakDays}-day streak. One quick session keeps the momentum alive.`,
+                data: { type: 'streak_nudge' },
+                sound: true,
+                priority: Notifications.AndroidNotificationPriority.HIGH,
+            },
+            trigger,
+        });
+
+        console.log(`[Push] Streak nudge scheduled for 22 hours from now (Streak: ${streakDays} days)`);
+    } catch (e) {
+        console.error('[Push] Error scheduling streak nudge:', e);
+    }
+}
+
+// ─── Weekly Progress Summary ───────────────────────────────────────────
+export async function scheduleWeeklyProgressSummary() {
+    if (isWeb) return;
+
+    try {
+        // Cancel any existing weekly summaries first
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const n of scheduled) {
+            if (n.content.data?.type === 'weekly_summary') {
+                await Notifications.cancelScheduledNotificationAsync(n.identifier);
+            }
+        }
+
+        const hasPermission = await requestNotificationPermissions();
+        if (!hasPermission) return;
+
+        // Schedule for every Sunday at 6:00 PM
+        const trigger: Notifications.NotificationTriggerInput = {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            weekday: 1, // Sunday
+            hour: 18,
+            minute: 0,
+        };
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "📊 Your Weekly Recap",
+                body: "Another week of becoming. Tap to see what you accomplished.",
+                data: { type: 'weekly_summary' },
+                sound: true,
+            },
+            trigger,
+        });
+
+        console.log('[Push] Weekly progress summary scheduled for Sundays at 6 PM');
+    } catch (e) {
+        console.error('[Push] Error scheduling weekly summary:', e);
+    }
+}
+
+// ─── Trial Ending Reminders ────────────────────────────────────────────
+export async function scheduleTrialEndingReminders(trialEndDateIso: string) {
+    if (isWeb) return;
+
+    try {
+        // Cancel previous trial reminders
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const n of scheduled) {
+            if (n.content.data?.type === 'trial_ending') {
+                await Notifications.cancelScheduledNotificationAsync(n.identifier);
+            }
+        }
+
+        const hasPermission = await requestNotificationPermissions();
+        if (!hasPermission) return;
+
+        const trialEnd = new Date(trialEndDateIso);
+        if (Number.isNaN(trialEnd.getTime())) return;
+
+        const now = Date.now();
+
+        // 3-day reminder
+        const threeDaysBefore = trialEnd.getTime() - 3 * 24 * 3600 * 1000;
+        if (threeDaysBefore > now) {
+            const secondsUntil = Math.floor((threeDaysBefore - now) / 1000);
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "⏳ Trial Ends in 3 Days",
+                    body: "Your VIP trial is ending soon. Keep your premium access — upgrade now.",
+                    data: { type: 'trial_ending', daysLeft: 3 },
+                    sound: true,
+                },
+                trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                    seconds: secondsUntil,
+                },
+            });
+            console.log(`[Push] Trial reminder (3-day) scheduled in ${Math.round(secondsUntil / 3600)}h`);
+        }
+
+        // 1-day reminder
+        const oneDayBefore = trialEnd.getTime() - 1 * 24 * 3600 * 1000;
+        if (oneDayBefore > now) {
+            const secondsUntil = Math.floor((oneDayBefore - now) / 1000);
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "⚠️ Trial Ends Tomorrow",
+                    body: "Last chance to keep your VIP access. Upgrade today to avoid losing your features.",
+                    data: { type: 'trial_ending', daysLeft: 1 },
+                    sound: true,
+                },
+                trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                    seconds: secondsUntil,
+                },
+            });
+            console.log(`[Push] Trial reminder (1-day) scheduled in ${Math.round(secondsUntil / 3600)}h`);
+        }
+    } catch (e) {
+        console.error('[Push] Error scheduling trial reminders:', e);
+    }
+}

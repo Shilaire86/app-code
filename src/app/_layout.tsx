@@ -3,13 +3,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { theme } from '@/constants/theme';
-import { scheduleDailyCheckIn, registerForPushNotificationsAsync } from '@/lib/notifications';
+import { scheduleDailyCheckIn, registerForPushNotificationsAsync, scheduleWeeklyProgressSummary } from '@/lib/notifications';
 import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { LEGAL_VERSIONS } from '@/lib/legalVersions';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { initializePurchases } from '@/services/purchases';
 
 const APP_VERSION = '1.0.1-debug';
 
@@ -85,6 +86,7 @@ export default function RootLayout() {
         // One-time log on first render
         useEffect(() => {
             console.log('[RootLayout] Initial Mount. Version:', APP_VERSION, 'Connected:', isConnected);
+            initializePurchases().catch(err => console.error('[RootLayout] Failed to init purchases:', err));
         }, []);
 
         console.log(`[RootLayout] Render: init = ${initialized}, sess = ${!!session}, profLoad = ${profileLoading}, seg = ${segments?.[0] || 'none'} `);
@@ -94,6 +96,7 @@ export default function RootLayout() {
             if (initialized && session?.user?.id) {
                 useProfileStore.getState().fetchProfile(session.user.id);
                 registerForPushNotificationsAsync(session.user.id).catch(err => console.error('[RootLayout] Push registration failed', err));
+                scheduleWeeklyProgressSummary().catch(err => console.error('[RootLayout] Weekly summary scheduling failed', err));
             } else if (initialized && !session) {
                 // Reset profile store on logout
                 useProfileStore.getState().reset();
