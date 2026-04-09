@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { validatePromoCode, PromoValidationResult } from '@/services/promoCodes';
-import { purchaseNativeSubscription } from '@/services/purchases';
+import { purchaseNativeSubscription, syncNativeEntitlements } from '@/services/purchases';
 
 import { scheduleTrialEndingReminders } from '@/lib/notifications';
 
@@ -32,6 +32,36 @@ export default function SubscribePlaceholderScreen() {
     const [promoResult, setPromoResult] = useState<PromoValidationResult | null>(null);
     const [promoLoading, setPromoLoading] = useState(false);
 
+    const syncSubscriptionState = async (userId: string) => {
+        setRefreshingSubscription(true);
+        try {
+            await useProfileStore.getState().fetchProfile(userId);
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+            await useProfileStore.getState().fetchProfile(userId);
+
+            const { data: sub } = await supabase
+                .from('subscriptions')
+                .select('trial_end')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (sub?.trial_end) {
+                await scheduleTrialEndingReminders(sub.trial_end).catch(console.error);
+            }
+        } finally {
+            setRefreshingSubscription(false);
+        }
+    };
+
+    const validatePromoForCheckout = async (tier: string): Promise<PromoValidationResult | null> => {
+        const trimmed = promoInput.trim();
+        if (!trimmed || !user?.id) return null;
+
+        const result = await validatePromoCode(trimmed, user.id, tier, billingPeriod);
+        setPromoResult(result);
+        return result;
+    };
+
     const returnUrl = useMemo(() => {
         if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/subscribe`;
         // TODO: replace with your production web base URL or a deep link handler once configured.
@@ -41,35 +71,20 @@ export default function SubscribePlaceholderScreen() {
     useEffect(() => {
         const checkoutParam = Array.isArray(params.checkout) ? params.checkout[0] : params.checkout;
         if (!checkoutParam || checkoutParam === lastHandledCheckoutRef.current) return;
-        lastHandledCheckoutRef.current = checkoutParam;
 
         if (checkoutParam === 'success') {
             setCheckoutNotice({ type: 'success', text: 'Checkout complete. Syncing your subscription now...' });
             if (!user?.id) return;
-
-            setRefreshingSubscription(true);
-            useProfileStore.getState().fetchProfile(user.id)
-                .finally(() => {
-                    setTimeout(() => {
-                        useProfileStore.getState().fetchProfile(user.id)
-                            .then(async () => {
-                                // Once synced, attempt to schedule trial ending reminders if they have a trial
-                                const { data: sub } = await supabase
-                                    .from('subscriptions')
-                                    .select('trial_end')
-                                    .eq('user_id', user.id)
-                                    .maybeSingle();
-                                if (sub?.trial_end) {
-                                    await scheduleTrialEndingReminders(sub.trial_end).catch(console.error);
-                                }
-                            })
-                            .finally(() => setRefreshingSubscription(false));
-                    }, 2500);
-                });
+            lastHandledCheckoutRef.current = checkoutParam;
+            syncSubscriptionState(user.id).catch((err) => {
+                console.error('[Subscribe] Failed to sync subscription state:', err);
+                setRefreshingSubscription(false);
+            });
             return;
         }
 
         if (checkoutParam === 'cancel') {
+            lastHandledCheckoutRef.current = checkoutParam;
             setCheckoutNotice({ type: 'cancel', text: 'Checkout canceled. No charges were made.' });
         }
     }, [params.checkout, user?.id]);
@@ -78,16 +93,23 @@ export default function SubscribePlaceholderScreen() {
         setErrorText(null);
         setLoadingTier(tier);
         try {
+            const promoValidation = await validatePromoForCheckout(tier);
+            if (promoInput.trim() && !promoValidation?.valid) {
+                throw new Error(promoValidation?.error || 'Promo code is not valid for this plan.');
+            }
+
             // ─── Native Checkout (iOS / Android) ───
             if (Platform.OS !== 'web') {
+                if (promoInput.trim()) {
+                    throw new Error('Promo codes are currently supported on web checkout only.');
+                }
                 const isAnnual = billingPeriod === 'annual';
                 const success = await purchaseNativeSubscription(tier, isAnnual);
                 if (success) {
                     setCheckoutNotice({ type: 'success', text: 'Checkout complete. Syncing your subscription now...' });
                     if (user?.id) {
-                        setRefreshingSubscription(true);
-                        await useProfileStore.getState().fetchProfile(user.id);
-                        setRefreshingSubscription(false);
+                        await syncNativeEntitlements();
+                        await syncSubscriptionState(user.id);
                     }
                 } else {
                     setCheckoutNotice({ type: 'cancel', text: 'Checkout canceled. No charges were made.' });
@@ -115,7 +137,12 @@ export default function SubscribePlaceholderScreen() {
                     apikey: anonKey,
                     Authorization: `Bearer ${accessToken}`,
                 },
-                body: JSON.stringify({ tier, returnUrl }),
+                body: JSON.stringify({
+                    tier,
+                    billingPeriod,
+                    returnUrl,
+                    promoCode: promoValidation?.valid ? promoInput.trim().toUpperCase() : undefined,
+                }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
@@ -333,63 +360,66 @@ export default function SubscribePlaceholderScreen() {
                     })}
                 </View>
 
-                {/* Promo Code Section */}
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Have a Promo Code?</Text>
-                    <View style={styles.promoRow}>
-                        <TextInput
-                            style={styles.promoInput}
-                            placeholder="Enter code"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
-                            value={promoInput}
-                            onChangeText={(text) => {
-                                setPromoInput(text.toUpperCase());
-                                setPromoResult(null);
-                            }}
-                            autoCapitalize="characters"
-                            returnKeyType="done"
-                        />
-                        <TouchableOpacity
-                            style={[styles.promoApplyBtn, promoLoading && { opacity: 0.5 }]}
-                            disabled={promoLoading || !promoInput.trim()}
-                            onPress={async () => {
-                                if (!user?.id) return;
-                                setPromoLoading(true);
-                                try {
-                                    const result = await validatePromoCode(
-                                        promoInput,
-                                        user.id,
-                                        'vip', // validate against VIP by default
-                                        billingPeriod
-                                    );
-                                    setPromoResult(result);
-                                } catch {
-                                    setPromoResult({ valid: false, error: 'Something went wrong. Try again.' });
-                                } finally {
-                                    setPromoLoading(false);
-                                }
-                            }}
-                        >
-                            {promoLoading ? (
-                                <ActivityIndicator size="small" color="#000" />
-                            ) : (
-                                <Text style={styles.promoApplyText}>APPLY</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                    {promoResult && (
-                        <View style={[styles.promoFeedback, promoResult.valid ? styles.promoSuccess : styles.promoError]}>
-                            <Ionicons
-                                name={promoResult.valid ? 'checkmark-circle' : 'alert-circle'}
-                                size={16}
-                                color={promoResult.valid ? '#00b894' : '#FF6B6B'}
+                {Platform.OS === 'web' && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Have a Promo Code?</Text>
+                        <View style={styles.promoRow}>
+                            <TextInput
+                                style={styles.promoInput}
+                                placeholder="Enter code"
+                                placeholderTextColor="rgba(255,255,255,0.3)"
+                                value={promoInput}
+                                onChangeText={(text) => {
+                                    setPromoInput(text.toUpperCase());
+                                    setPromoResult(null);
+                                }}
+                                autoCapitalize="characters"
+                                returnKeyType="done"
                             />
-                            <Text style={[styles.promoFeedbackText, promoResult.valid ? { color: '#00b894' } : { color: '#FF6B6B' }]}>
-                                {promoResult.valid ? `✓ Code applied! ${promoResult.discountLabel}` : promoResult.error}
-                            </Text>
+                            <TouchableOpacity
+                                style={[styles.promoApplyBtn, promoLoading && { opacity: 0.5 }]}
+                                disabled={promoLoading || !promoInput.trim()}
+                                onPress={async () => {
+                                    if (!user?.id) return;
+                                    setPromoLoading(true);
+                                    try {
+                                        let result: PromoValidationResult = { valid: false, error: 'This promo code is not valid for any available plan.' };
+                                        for (const tier of tiers) {
+                                            const candidate = await validatePromoCode(promoInput, user.id, tier, billingPeriod);
+                                            if (candidate.valid) {
+                                                result = candidate;
+                                                break;
+                                            }
+                                        }
+                                        setPromoResult(result);
+                                    } catch {
+                                        setPromoResult({ valid: false, error: 'Something went wrong. Try again.' });
+                                    } finally {
+                                        setPromoLoading(false);
+                                    }
+                                }}
+                            >
+                                {promoLoading ? (
+                                    <ActivityIndicator size="small" color="#000" />
+                                ) : (
+                                    <Text style={styles.promoApplyText}>APPLY</Text>
+                                )}
+                            </TouchableOpacity>
                         </View>
-                    )}
-                </View>
+                        {promoResult && (
+                            <View style={[styles.promoFeedback, promoResult.valid ? styles.promoSuccess : styles.promoError]}>
+                                <Ionicons
+                                    name={promoResult.valid ? 'checkmark-circle' : 'alert-circle'}
+                                    size={16}
+                                    color={promoResult.valid ? '#00b894' : '#FF6B6B'}
+                                />
+                                <Text style={[styles.promoFeedbackText, promoResult.valid ? { color: '#00b894' } : { color: '#FF6B6B' }]}>
+                                    {promoResult.valid ? `✓ Code applied! ${promoResult.discountLabel}` : promoResult.error}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Why Upgrade to VIP?</Text>

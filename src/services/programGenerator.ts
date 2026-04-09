@@ -123,62 +123,99 @@ export async function generateProgram(
 
     if (pErr) throw pErr;
 
-    // 4. Create weeks and days
-    const usedExercisesThisWeek = new Set<string>();
+    const createdWeekIds: string[] = [];
+    const createdDayIds: string[] = [];
 
-    for (let week = 1; week <= prefs.durationWeeks; week++) {
-        usedExercisesThisWeek.clear();
+    try {
+        // 4. Create weeks and days
+        const usedExercisesThisWeek = new Set<string>();
 
-        const { data: weekRow, error: wErr } = await supabase
-            .from('program_weeks')
-            .insert({ program_id: program.id, week_number: week })
-            .select()
-            .single();
+        for (let week = 1; week <= prefs.durationWeeks; week++) {
+            usedExercisesThisWeek.clear();
 
-        if (wErr) throw wErr;
-
-        for (const slot of daySlots) {
-            const { data: dayRow, error: dErr } = await supabase
-                .from('program_days')
-                .insert({
-                    program_week_id: weekRow.id,
-                    day_number: slot.day_number,
-                    title: slot.focus,
-                })
+            const { data: weekRow, error: wErr } = await supabase
+                .from('program_weeks')
+                .insert({ program_id: program.id, week_number: week })
                 .select()
                 .single();
 
-            if (dErr) throw dErr;
+            if (wErr) throw wErr;
+            createdWeekIds.push(weekRow.id);
 
-            // Pick exercises for this day
-            const exercisesPerDay = getExercisesPerDay(slot.muscle_groups.length, prefs.goal);
-            const dayExercises = pickExercisesForDay(
-                filteredPool,
-                slot.muscle_groups,
-                exercisesPerDay,
-                usedExercisesThisWeek,
-            );
+            for (const slot of daySlots) {
+                const { data: dayRow, error: dErr } = await supabase
+                    .from('program_days')
+                    .insert({
+                        program_week_id: weekRow.id,
+                        day_number: slot.day_number,
+                        title: slot.focus,
+                    })
+                    .select()
+                    .single();
 
-            // Insert exercises
-            const exercisePayload = dayExercises.map((ex, idx) => ({
-                program_day_id: dayRow.id,
-                exercise_name: ex.name,
-                order_index: idx,
-                sets_target: goalParams.setsPerExercise,
-                reps_target: goalParams.repsTarget,
-                rest_seconds: goalParams.restSeconds,
-            }));
+                if (dErr) throw dErr;
+                createdDayIds.push(dayRow.id);
 
-            if (exercisePayload.length > 0) {
-                const { error: eErr } = await supabase
-                    .from('program_day_exercises')
-                    .insert(exercisePayload);
-                if (eErr) throw eErr;
+                // Pick exercises for this day
+                const exercisesPerDay = getExercisesPerDay(slot.muscle_groups.length, prefs.goal);
+                const dayExercises = pickExercisesForDay(
+                    filteredPool,
+                    slot.muscle_groups,
+                    exercisesPerDay,
+                    usedExercisesThisWeek,
+                );
+
+                // Insert exercises
+                const exercisePayload = dayExercises.map((ex, idx) => ({
+                    program_day_id: dayRow.id,
+                    exercise_name: ex.name,
+                    order_index: idx,
+                    sets_target: goalParams.setsPerExercise,
+                    reps_target: goalParams.repsTarget,
+                    rest_seconds: goalParams.restSeconds,
+                }));
+
+                if (exercisePayload.length > 0) {
+                    const { error: eErr } = await supabase
+                        .from('program_day_exercises')
+                        .insert(exercisePayload);
+                    if (eErr) throw eErr;
+                }
             }
         }
-    }
 
-    return program.id;
+        return program.id;
+    } catch (error) {
+        console.error('[ProgramGenerator] Rolling back partially created guided program', error);
+
+        if (createdDayIds.length > 0) {
+            await supabase
+                .from('program_day_exercises')
+                .delete()
+                .in('program_day_id', createdDayIds);
+        }
+
+        if (createdDayIds.length > 0) {
+            await supabase
+                .from('program_days')
+                .delete()
+                .in('id', createdDayIds);
+        }
+
+        if (createdWeekIds.length > 0) {
+            await supabase
+                .from('program_weeks')
+                .delete()
+                .in('id', createdWeekIds);
+        }
+
+        await supabase
+            .from('programs')
+            .delete()
+            .eq('id', program.id);
+
+        throw error;
+    }
 }
 
 // ------- Exercise Selection Logic -------

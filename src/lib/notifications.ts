@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 
 const isWeb = Platform.OS === 'web';
+const DAILY_CHECK_IN_TYPE = 'daily_check_in';
 
 // Only configure notifications on native platforms
 if (!isWeb) {
@@ -36,8 +37,13 @@ export async function scheduleDailyCheckIn(hour: number = 9, minute: number = 0)
     if (isWeb) return false;
 
     try {
-        // 1. Clear existing schedules to avoid duplicates
-        await Notifications.cancelAllScheduledNotificationsAsync();
+        // Clear only prior daily check-ins so weekly summaries and trial reminders survive.
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const n of scheduled) {
+            if (n.content.data?.type === DAILY_CHECK_IN_TYPE) {
+                await Notifications.cancelScheduledNotificationAsync(n.identifier);
+            }
+        }
 
         // 2. Request permissions (if not already granted)
         const hasPermission = await requestNotificationPermissions();
@@ -56,6 +62,7 @@ export async function scheduleDailyCheckIn(hour: number = 9, minute: number = 0)
                 body: "Your daily evolution awaits. Time for your check-in.",
                 sound: true,
                 priority: Notifications.AndroidNotificationPriority.HIGH,
+                data: { type: DAILY_CHECK_IN_TYPE },
             },
             trigger,
         });
