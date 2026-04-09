@@ -1,10 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity } from 'react-native';
 import { useProfileStore, BecomingStage } from '@/stores/profileStore';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
 
 const STAGE_CONTENT: Record<BecomingStage, { title: string; copy: string; icon: any; color: string }> = {
     initiate: {

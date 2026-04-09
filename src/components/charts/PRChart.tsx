@@ -13,8 +13,6 @@ interface PRChartProps {
     data: PRDataPoint[];
 }
 
-const CHART_HEIGHT = 140;
-
 export default function PRChart({ data }: PRChartProps) {
     if (!data || data.length === 0) {
         return (

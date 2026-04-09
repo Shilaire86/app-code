@@ -34,7 +34,20 @@ module.exports = [
         rules: {
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': 'off',
+            eqeqeq: ['error', 'smart'],
             'react-hooks/exhaustive-deps': 'off',
+        },
+    },
+    {
+        files: ['src/components/**/*.{ts,tsx}'],
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'error',
+        },
+    },
+    {
+        files: ['src/hooks/**/*.{ts,tsx}'],
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'error',
         },
     },
 ];

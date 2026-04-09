@@ -3,8 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-// Major muscle group categories for balance checking
-const MAJOR_GROUPS = ['chest', 'back', 'legs', 'shoulders', 'core'];
 const PUSH_GROUPS = ['chest', 'shoulders', 'triceps'];
 const PULL_GROUPS = ['back', 'biceps', 'forearms'];
 const LEG_GROUPS = ['legs', 'glutes', 'calves'];

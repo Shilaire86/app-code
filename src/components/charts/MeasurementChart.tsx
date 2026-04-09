@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
 interface MeasurementData {
@@ -15,8 +15,6 @@ interface MeasurementChartProps {
     data: MeasurementData[];
     showFields?: ('chest' | 'waist' | 'hips' | 'arms' | 'thighs')[];
 }
-
-const CHART_HEIGHT = 100;
 
 const COLORS: Record<string, string> = {
     chest: '#FF6B6B',

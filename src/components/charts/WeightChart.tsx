@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
 interface DataPoint {
@@ -12,7 +12,6 @@ interface WeightChartProps {
     unit?: string;
 }
 
-const { width } = Dimensions.get('window');
 const CHART_HEIGHT = 120;
 
 export default function WeightChart({ data, unit = 'lbs' }: WeightChartProps) {
