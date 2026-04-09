@@ -56,4 +56,10 @@ module.exports = [
             '@typescript-eslint/no-unused-vars': 'error',
         },
     },
+    {
+        files: ['src/services/**/*.{ts,tsx}'],
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'error',
+        },
+    },
 ];
