@@ -12,6 +12,7 @@ import { decode } from 'base64-arraybuffer';
 export default function ProgressPhotoScreen() {
     const { user } = useAuthStore();
     const router = useRouter();
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
     const [image, setImage] = useState<string | null>(null);
     const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [imageMimeType, setImageMimeType] = useState<string>('image/jpeg');
@@ -165,7 +166,7 @@ export default function ProgressPhotoScreen() {
 
             // Refresh profile to update points
             if (user) {
-                useProfileStore.getState().fetchProfile(user.id);
+                void fetchProfile(user.id);
             }
 
             Alert.alert("Transformed", "Progress photo uploaded. Your growth is documented.");

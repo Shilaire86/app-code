@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.becomingmethod.app"
+      "bundleIdentifier": "com.thebecomingmethod.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1A1A"
       },
-      "package": "com.becomingmethod.app",
+      "package": "com.thebecomingmethod.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [

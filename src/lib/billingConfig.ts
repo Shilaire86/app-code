@@ -31,8 +31,8 @@ export const BILLING: {
             annual: { priceText: '$99.99/yr', monthlyCost: '$8.33/mo', savings: 'Save $19.89', stripePriceId: stripePriceIdStandardAnnual },
         },
         vip: {
-            monthly: { priceText: '$39.99/mo', stripePriceId: stripePriceIdVip },
-            annual: { priceText: '$399.99/yr', monthlyCost: '$33.33/mo', savings: 'Save $79.89', stripePriceId: stripePriceIdVipAnnual },
+            monthly: { priceText: '$19.99/mo', stripePriceId: stripePriceIdVip },
+            annual: { priceText: '$199.99/yr', monthlyCost: '$16.67/mo', savings: 'Save $39.89', stripePriceId: stripePriceIdVipAnnual },
         },
         elite: {
             monthly: { priceText: '$99.99/mo', stripePriceId: stripePriceIdElite },
@@ -46,8 +46,11 @@ export const BILLING: {
 export function billingHasStripeIds(): boolean {
     return Boolean(
         BILLING.tiers.standard.monthly.stripePriceId &&
+        BILLING.tiers.standard.annual.stripePriceId &&
         BILLING.tiers.vip.monthly.stripePriceId &&
-        BILLING.tiers.elite.monthly.stripePriceId
+        BILLING.tiers.vip.annual.stripePriceId &&
+        BILLING.tiers.elite.monthly.stripePriceId &&
+        BILLING.tiers.elite.annual.stripePriceId
     );
 }
 

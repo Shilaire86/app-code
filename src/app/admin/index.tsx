@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
 import { useProfileStore } from '@/stores/profileStore';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminScreen() {
     const router = useRouter();
@@ -11,26 +13,87 @@ export default function AdminScreen() {
     const role = profile?.role;
     const isAdmin = role === 'admin';
 
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        activeSubs: 0,
+        workoutsThisWeek: 0,
+        openTickets: 0,
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    useEffect(() => {
+        if (!isAdmin) return;
+        
+        async function fetchStats() {
+            try {
+                // 1. Total Users
+                const { count: usersCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                // 2. Active Subscribers (VIP/Elite)
+                const { count: activeSubs } = await supabase
+                    .from('subscriptions')
+                    .select('*', { count: 'exact', head: true })
+                    .in('tier', ['vip', 'elite']); // Standard is also paid, we can include it.
+                    // Wait, standard is also a sub. Let's just count all that aren't 'free'.
+                    
+                const { count: paidCount } = await supabase
+                    .from('subscriptions')
+                    .select('*', { count: 'exact', head: true })
+                    .neq('tier', 'free');
+
+                // 3. Workouts this week
+                const startOfWeek = new Date();
+                startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+
+                const { count: workouts } = await supabase
+                    .from('workout_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('created_at', startOfWeek.toISOString());
+
+                // 4. Open tickets
+                const { count: tickets } = await supabase
+                    .from('support_tickets')
+                    .select('*', { count: 'exact', head: true })
+                    .in('status', ['open', 'in_progress']);
+
+                setStats({
+                    totalUsers: usersCount || 0,
+                    activeSubs: paidCount || 0,
+                    workoutsThisWeek: workouts || 0,
+                    openTickets: tickets || 0,
+                });
+            } catch (err) {
+                console.error('Error fetching admin stats:', err);
+            } finally {
+                setLoadingStats(false);
+            }
+        }
+
+        fetchStats();
+    }, [isAdmin]);
+
     const goBack = () => {
-        // In some navigation stacks, back can be a no-op; fall back to tabs.
         try {
             router.back();
             setTimeout(() => router.replace('/(tabs)'), 0);
-        } catch {
+        } catch (error) {
+            console.warn('[Admin] router.back failed, falling back to tabs root:', error);
             router.replace('/(tabs)');
         }
     };
 
-    return (
-        <View style={styles.container}>
-            <Stack.Screen options={{
-                headerShown: true,
-                headerTitle: 'Admin',
-                headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
-            }} />
-
-            {!isAdmin ? (
+    if (!isAdmin) {
+        return (
+            <View style={styles.container}>
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'Admin',
+                    headerStyle: { backgroundColor: theme.colors.background },
+                    headerTintColor: '#FFF',
+                }} />
                 <View style={styles.center}>
                     <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
                     <Text style={styles.title}>Not authorized</Text>
@@ -39,52 +102,86 @@ export default function AdminScreen() {
                         <Text style={styles.primaryButtonText}>Go back</Text>
                     </TouchableOpacity>
                 </View>
-            ) : (
-                <View style={styles.content}>
-                    <Text style={styles.sectionTitle}>Admin Dashboard</Text>
+            </View>
+        );
+    }
 
-                    <Pressable
-                        style={({ pressed }) => [styles.cardButton, pressed && styles.cardButtonPressed]}
-                        onPress={() => router.push('/admin/programs')}
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="barbell-outline" size={20} color={theme.colors.primary} />
-                        <Text style={styles.cardButtonText}>Manage Programs</Text>
-                    </Pressable>
+    return (
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+            <Stack.Screen options={{
+                headerShown: true,
+                headerTitle: 'Admin Dashboard',
+                headerStyle: { backgroundColor: theme.colors.background },
+                headerTintColor: '#FFF',
+            }} />
 
-                    <Pressable
-                        style={({ pressed }) => [styles.cardButton, pressed && styles.cardButtonPressed]}
-                        onPress={() => router.push('/admin/feed')}
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="newspaper-outline" size={20} color={theme.colors.primary} />
-                        <Text style={styles.cardButtonText}>Manage Feed</Text>
-                    </Pressable>
-
-                    <Pressable
-                        style={({ pressed }) => [styles.cardButton, pressed && styles.cardButtonPressed]}
-                        onPress={() => router.push('/admin/offers')}
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="pricetags-outline" size={20} color={theme.colors.primary} />
-                        <Text style={styles.cardButtonText}>Manage Offers</Text>
-                    </Pressable>
-
-                    <Pressable
-                        style={({ pressed }) => [styles.cardButton, pressed && styles.cardButtonPressed]}
-                        onPress={() => router.push('/admin/inbox')}
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="mail-outline" size={20} color={theme.colors.primary} />
-                        <Text style={styles.cardButtonText}>Inbox</Text>
-                    </Pressable>
+            {/* STATS ROW */}
+            <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                    <Text style={styles.statLabel}>Total Users</Text>
+                    {loadingStats ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <Text style={styles.statValue}>{stats.totalUsers}</Text>}
                 </View>
-            )}
-        </View>
+                <View style={styles.statCard}>
+                    <Text style={styles.statLabel}>Active Subs</Text>
+                    {loadingStats ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <Text style={styles.statValue}>{stats.activeSubs}</Text>}
+                </View>
+                <View style={styles.statCard}>
+                    <Text style={styles.statLabel}>Workouts / Wk</Text>
+                    {loadingStats ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <Text style={styles.statValue}>{stats.workoutsThisWeek}</Text>}
+                </View>
+                <View style={styles.statCard}>
+                    <Text style={styles.statLabel}>Open Tix</Text>
+                    {loadingStats ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <Text style={[styles.statValue, stats.openTickets > 0 && { color: '#FFD700' }]}>{stats.openTickets}</Text>}
+                </View>
+            </View>
+
+            <Text style={styles.sectionTitle}>Overview & Management</Text>
+            
+            <View style={styles.navGrid}>
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/users')}>
+                    <View style={styles.navIconWrap}><Ionicons name="people" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Users</Text>
+                    <Text style={styles.navDesc}>Manage users, block accounts</Text>
+                </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/activity')}>
+                    <View style={styles.navIconWrap}><Ionicons name="pulse" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Activity</Text>
+                    <Text style={styles.navDesc}>Community event timeline</Text>
+                </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/tickets')}>
+                    <View style={styles.navIconWrap}><Ionicons name="bug" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Tickets</Text>
+                    <Text style={styles.navDesc}>Support issues & bugs</Text>
+                </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/programs')}>
+                    <View style={styles.navIconWrap}><Ionicons name="barbell" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Programs</Text>
+                    <Text style={styles.navDesc}>Manage workout content</Text>
+                </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/feed')}>
+                    <View style={styles.navIconWrap}><Ionicons name="newspaper" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Feed</Text>
+                    <Text style={styles.navDesc}>Coach posts & community</Text>
+                </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/inbox')}>
+                    <View style={styles.navIconWrap}><Ionicons name="mail" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Inbox</Text>
+                    <Text style={styles.navDesc}>Direct coach messages</Text>
+                </Pressable>
+                
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/offers')}>
+                    <View style={styles.navIconWrap}><Ionicons name="pricetags" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Offers</Text>
+                    <Text style={styles.navDesc}>Affiliate & promo codes</Text>
+                </Pressable>
+            </View>
+
+        </ScrollView>
     );
 }
 
@@ -92,13 +189,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
         padding: theme.spacing.lg,
+        paddingBottom: 40,
     },
     center: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 10,
+        height: 400,
     },
     title: {
         color: '#FFF',
@@ -121,36 +222,80 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontWeight: '800',
     },
-    content: {
+    statsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        marginBottom: 24,
+    },
+    statCard: {
         flex: 1,
-        paddingTop: theme.spacing.md,
-        gap: theme.spacing.sm,
+        minWidth: '45%',
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.lg,
+        padding: theme.spacing.md,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.08)',
+        alignItems: 'center',
+    },
+    statLabel: {
+        color: theme.colors.textSecondary,
+        fontSize: 11,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 8,
+    },
+    statValue: {
+        color: '#FFF',
+        fontSize: 24,
+        fontWeight: '900',
     },
     sectionTitle: {
         color: '#FFF',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '900',
-        marginBottom: theme.spacing.sm,
+        marginBottom: 12,
+        marginTop: 8,
     },
-    cardButton: {
+    navGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    navCard: {
+        width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
         backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        paddingVertical: 14,
-        paddingHorizontal: 14,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
-        minHeight: 44,
+        borderRadius: theme.radius.lg,
+        padding: 16,
         ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : null),
     },
-    cardButtonPressed: {
-        opacity: 0.85,
+    pressed: {
+        opacity: 0.8,
+        backgroundColor: 'rgba(255,255,255,0.05)',
     },
-    cardButtonText: {
+    navIconWrap: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(0,187,255,0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
+    },
+    navTitle: {
         color: '#FFF',
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: '800',
+        flex: 1,
+        marginBottom: 2,
+    },
+    navDesc: {
+        color: theme.colors.textSecondary,
+        fontSize: 12,
     },
 });

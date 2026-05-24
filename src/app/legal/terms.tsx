@@ -17,7 +17,7 @@ export default function TermsScreen() {
                 <Text style={styles.version}>Version: {LEGAL_VERSIONS.terms}</Text>
                 <Text style={styles.h1}>Terms of Service</Text>
                 <Text style={styles.p}>
-                    These Terms of Service are provided for MVP/testing. They will be finalized before launch.
+                    These Terms of Service explain the basic rules for using The Becoming Method.
                 </Text>
                 <Text style={styles.h2}>Use of the App</Text>
                 <Text style={styles.p}>
@@ -44,4 +44,3 @@ const styles = StyleSheet.create({
     h2: { color: '#FFF', fontSize: 14, fontWeight: '900', marginTop: 12 },
     p: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18 },
 });
-

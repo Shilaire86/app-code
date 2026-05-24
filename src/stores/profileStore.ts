@@ -5,6 +5,27 @@ export type UserRole = 'user' | 'coach' | 'admin';
 export type BecomingStage = 'initiate' | 'practitioner' | 'devoted' | 'embodied';
 export type SubscriptionTier = 'free' | 'standard' | 'vip' | 'elite';
 
+const SELF_SERVICE_PROFILE_FIELDS = new Set([
+    'full_name',
+    'timezone',
+    'streak_nudges_enabled',
+    'dietary_preference',
+    'preferred_workout_time',
+    'goals',
+    'equipment_access',
+    'experience_level',
+    'onboarding_complete',
+    'legal_accepted_at',
+    'legal_accepted_version',
+    'terms_accepted_at',
+    'terms_accepted_version',
+    'privacy_accepted_at',
+    'privacy_accepted_version',
+    'disclaimer_accepted_at',
+    'disclaimer_accepted_version',
+    'seen_hints',
+]);
+
 interface ProfileState {
     profile: any | null;
     stage: BecomingStage;
@@ -15,6 +36,8 @@ interface ProfileState {
         photoCount: number;
     };
     isLoading: boolean;
+    bootstrapState: 'idle' | 'loading' | 'ready' | 'failed';
+    bootstrapError: string | null;
     bootstrappedUserId: string | null; // Track which user we've fetched for
     lastFetchAtMs: number | null;
     levelUpDetails: { previous: BecomingStage; current: BecomingStage } | null;
@@ -38,6 +61,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         photoCount: 0,
     },
     isLoading: false,
+    bootstrapState: 'idle',
+    bootstrapError: null,
     bootstrappedUserId: null,
     lastFetchAtMs: null,
     levelUpDetails: null,
@@ -64,7 +89,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         if (state.lastFetchAtMs && (nowMs - state.lastFetchAtMs) < 1500 && state.bootstrappedUserId === userId) return;
 
         console.log('[profileStore] Fetching profile for:', userId);
-        set({ isLoading: true, bootstrappedUserId: userId, lastFetchAtMs: nowMs });
+        set({
+            isLoading: true,
+            bootstrapState: 'loading',
+            bootstrapError: null,
+            bootstrappedUserId: userId,
+            lastFetchAtMs: nowMs,
+        });
 
         // Add a timeout fallback
         const timeoutId = setTimeout(() => {
@@ -161,6 +192,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
                     photoCount: photos.count || 0,
                 },
                 isLoading: false,
+                bootstrapState: 'ready',
+                bootstrapError: null,
             });
 
             // 5. Recalculate stage now that we have fresh counts
@@ -179,7 +212,11 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         } catch (error) {
             console.error('[profileStore] Fatal error fetching profile:', error);
             clearTimeout(timeoutId);
-            set({ isLoading: false });
+            set({
+                isLoading: false,
+                bootstrapState: 'failed',
+                bootstrapError: error instanceof Error ? error.message : String(error),
+            });
         }
     },
 
@@ -188,13 +225,27 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         if (!profile) return;
 
         try {
+            const safeUpdates = Object.fromEntries(
+                Object.entries(updates).filter(([key]) => SELF_SERVICE_PROFILE_FIELDS.has(key))
+            );
+
+            if (Object.keys(safeUpdates).length === 0) {
+                console.warn('[profileStore] Ignoring profile update with no allowed fields.');
+                return;
+            }
+
+            const blockedKeys = Object.keys(updates).filter((key) => !SELF_SERVICE_PROFILE_FIELDS.has(key));
+            if (blockedKeys.length > 0) {
+                console.warn('[profileStore] Ignoring disallowed profile fields:', blockedKeys.join(', '));
+            }
+
             const { error } = await supabase
                 .from('profiles')
-                .update(updates)
+                .update(safeUpdates)
                 .eq('id', profile.id);
 
             if (error) throw error;
-            set({ profile: { ...profile, ...updates } });
+            set({ profile: { ...profile, ...safeUpdates } });
         } catch (error) {
             console.error('Error updating profile:', error);
         }
@@ -228,6 +279,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
                 photoCount: 0,
             },
             isLoading: false,
+            bootstrapState: 'idle',
+            bootstrapError: null,
             bootstrappedUserId: null,
             lastFetchAtMs: null,
         });

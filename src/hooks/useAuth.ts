@@ -1,25 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
 export function useAuth() {
     const { setAuth, user, session, initialized } = useAuthStore();
+    const initializedRef = useRef(initialized);
+
+    useEffect(() => {
+        initializedRef.current = initialized;
+    }, [initialized]);
 
     useEffect(() => {
         // Check for initial session
         const sessionTimeout = setTimeout(() => {
-            if (!useAuthStore.getState().initialized) {
+            if (!initializedRef.current) {
                 console.warn('[useAuth] Session check timed out, forcing initialization');
                 setAuth(null);
             }
-        }, 5000);
+        }, 10000);
 
         supabase.auth.getSession().then(({ data: { session }, error }) => {
             clearTimeout(sessionTimeout);
             if (error) {
                 // Invalid refresh token or other auth error → clear session gracefully
                 console.warn('[useAuth] Session error (clearing):', error.message);
-                supabase.auth.signOut().catch(() => {});
+                supabase.auth.signOut().catch((signOutError) => {
+                    console.error('[useAuth] Failed to clear invalid session:', signOutError);
+                });
                 setAuth(null);
                 return;
             }
@@ -48,6 +55,7 @@ export function useAuth() {
         );
 
         return () => {
+            clearTimeout(sessionTimeout);
             subscription.unsubscribe();
         };
     }, [setAuth]);

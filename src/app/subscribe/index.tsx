@@ -11,14 +11,18 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { validatePromoCode, PromoValidationResult } from '@/services/promoCodes';
-import { purchaseNativeSubscription, syncNativeEntitlements } from '@/services/purchases';
+import { nativeBillingReady, purchaseNativeSubscription, syncNativeEntitlements } from '@/services/purchases';
 
 import { scheduleTrialEndingReminders } from '@/lib/notifications';
+import * as ExpoLinking from 'expo-linking';
+import { APP_CONFIG } from '@/lib/appConfig';
 
 export default function SubscribePlaceholderScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ checkout?: string | string[] }>();
     const { user } = useAuthStore();
+    const tier = useProfileStore(s => s.tier);
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
     const tiers = Object.keys(BILLING.tiers) as Array<keyof typeof BILLING.tiers>;
     const [loadingTier, setLoadingTier] = useState<string | null>(null);
     const [errorText, setErrorText] = useState<string | null>(null);
@@ -35,9 +39,9 @@ export default function SubscribePlaceholderScreen() {
     const syncSubscriptionState = async (userId: string) => {
         setRefreshingSubscription(true);
         try {
-            await useProfileStore.getState().fetchProfile(userId);
+            await fetchProfile(userId);
             await new Promise((resolve) => setTimeout(resolve, 2500));
-            await useProfileStore.getState().fetchProfile(userId);
+            await fetchProfile(userId);
 
             const { data: sub } = await supabase
                 .from('subscriptions')
@@ -57,15 +61,14 @@ export default function SubscribePlaceholderScreen() {
         const trimmed = promoInput.trim();
         if (!trimmed || !user?.id) return null;
 
-        const result = await validatePromoCode(trimmed, user.id, tier, billingPeriod);
+        const result = await validatePromoCode(trimmed, tier, billingPeriod);
         setPromoResult(result);
         return result;
     };
 
     const returnUrl = useMemo(() => {
         if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/subscribe`;
-        // TODO: replace with your production web base URL or a deep link handler once configured.
-        return 'http://localhost:8081/subscribe';
+        return ExpoLinking.createURL('/subscribe');
     }, []);
 
     useEffect(() => {
@@ -100,6 +103,9 @@ export default function SubscribePlaceholderScreen() {
 
             // ─── Native Checkout (iOS / Android) ───
             if (Platform.OS !== 'web') {
+                if (!nativeBillingReady()) {
+                    throw new Error('Native checkout is disabled until RevenueCat subscription syncing is configured for this app.');
+                }
                 if (promoInput.trim()) {
                     throw new Error('Promo codes are currently supported on web checkout only.');
                 }
@@ -198,9 +204,9 @@ export default function SubscribePlaceholderScreen() {
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.hero}>
                     <Ionicons name="sparkles-outline" size={42} color={theme.colors.primary} />
-                    <Text style={styles.title}>Upgrade</Text>
+                    <Text style={styles.title}>Choose Your Plan</Text>
                     <Text style={styles.body}>
-                        Choose a plan to start your {BILLING.trialDays}-day free trial.
+                        Start your {BILLING.trialDays}-day free trial on any paid plan. Cancel anytime.
                     </Text>
                 </View>
 
@@ -248,26 +254,26 @@ export default function SubscribePlaceholderScreen() {
                     </View>
                 ) : null}
 
-                {useProfileStore.getState().tier !== 'free' && !checkoutNotice && (
+                {tier !== 'free' && !checkoutNotice && (
                     <View style={styles.currentTierCard}>
                         <View style={styles.currentTierHeader}>
                             <Ionicons name="ribbon-outline" size={20} color={theme.colors.primary} />
                             <Text style={styles.currentTierTitle}>Your Current Plan</Text>
                         </View>
                         <Text style={styles.currentTierName}>
-                            {getTierLabel(useProfileStore.getState().tier)}
+                            {getTierLabel(tier)}
                         </Text>
                         <Text style={styles.currentTierStatus}>Active • Subscription is managed via Stripe</Text>
                     </View>
                 )}
 
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>{useProfileStore.getState().tier === 'free' ? 'Choose a Plan' : 'Change Plans'}</Text>
+                    <Text style={styles.cardTitle}>{tier === 'free' ? 'Choose a Plan' : 'Change Plans'}</Text>
                     {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
                     {tiers.map((t) => {
                         // Billing tiers are expected to match the app's subscription tier keys.
                         const tierKey = t as SubscriptionTier;
-                        const isCurrent = useProfileStore.getState().tier === tierKey;
+                        const isCurrent = tier === tierKey;
                         const isElite = tierKey === 'elite';
 
                         return (
@@ -290,7 +296,7 @@ export default function SubscribePlaceholderScreen() {
                                     {isElite && (
                                         <View style={styles.comingSoonBadge}>
                                             <Ionicons name="time-outline" size={12} color="#FFD700" />
-                                            <Text style={styles.comingSoonText}>Coming Soon</Text>
+                                            <Text style={styles.comingSoonText}>By Request</Text>
                                         </View>
                                     )}
                                     {!isElite && BILLING.trialDays > 0 && !isCurrent && (
@@ -301,24 +307,28 @@ export default function SubscribePlaceholderScreen() {
                                     <View style={styles.bulletRow}>
                                         <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
                                         <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
-                                            {tierKey === 'free' ? 'Introduction & Foundations' :
-                                                tierKey === 'standard' ? 'Standard Program Library' :
-                                                    tierKey === 'vip' ? 'Full Method Catalog' :
-                                                        'Custom 1-on-1 Programming'}
+                                            {tierKey === 'free' ? 'Sample workouts to explore the feel' :
+                                                tierKey === 'standard' ? 'Curated coach-led programs + unlimited quick workouts' :
+                                                    tierKey === 'vip' ? 'Full program catalog + Build Your Own' :
+                                                        '1:1 coaching partnership with direct messaging'}
                                         </Text>
                                     </View>
                                     <View style={styles.bulletRow}>
                                         <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
                                         <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
-                                            {tierKey === 'vip' || tierKey === 'elite' ? 'Advanced Analytics & Trends' : 'Workout Logbook & History'}
+                                            {tierKey === 'free' ? 'Macro calculator preview' :
+                                                tierKey === 'standard' ? 'Full nutrition dashboard with meal logging' :
+                                                    tierKey === 'vip' ? 'Smart recommendations — splits, cardio, nutrition & recovery' :
+                                                        'Personalized program design & progress interpretation'}
                                         </Text>
                                     </View>
                                     <View style={styles.bulletRow}>
                                         <Ionicons name="checkmark-circle" size={14} color={isElite ? "rgba(255, 215, 0, 0.6)" : theme.colors.primary} />
                                         <Text style={[styles.bulletText, isElite && styles.bulletTextElite]}>
-                                            {tierKey === 'elite' ? 'Direct 24/7 Coach Messaging' :
-                                                tierKey === 'vip' ? 'Community Feed Access' :
-                                                    'Read-only Feed Access'}
+                                            {tierKey === 'free' ? 'Basic weight tracking' :
+                                                tierKey === 'standard' ? 'Complete progress tracking — weight, measurements, PRs & photos' :
+                                                    tierKey === 'vip' ? 'Advanced adherence insights with visible logic' :
+                                                        'Plateau detection, recovery adjustments & accountability'}
                                         </Text>
                                     </View>
                                 </View>
@@ -329,7 +339,7 @@ export default function SubscribePlaceholderScreen() {
                                         </Text>
                                         <TouchableOpacity
                                             style={styles.inquiryButton}
-                                            onPress={() => Linking.openURL(`mailto:coach@thebecomingmethod.com?subject=Elite Tier Inquiry&body=I am interested in learning more about the Elite tier.`)}
+                                            onPress={() => Linking.openURL(`mailto:${APP_CONFIG.coachEmail}?subject=Elite Tier Inquiry&body=I am interested in learning more about the Elite tier.`)}
                                         >
                                             <Text style={styles.inquiryButtonText}>Inquire for early access</Text>
                                             <Ionicons name="mail-outline" size={14} color={theme.colors.primary} />
@@ -348,7 +358,7 @@ export default function SubscribePlaceholderScreen() {
                                         ) : (
                                             <>
                                                 <Text style={styles.subscribeButtonText}>
-                                                    {useProfileStore.getState().tier === 'free' ? `Start ${BILLING.trialDays}-day free trial` : 'Switch to this plan'}
+                                                    {tier === 'free' ? `Start ${BILLING.trialDays}-day free trial` : 'Switch to this plan'}
                                                 </Text>
                                                 <Ionicons name="arrow-forward" size={16} color="#FFF" />
                                             </>
@@ -385,14 +395,15 @@ export default function SubscribePlaceholderScreen() {
                                     try {
                                         let result: PromoValidationResult = { valid: false, error: 'This promo code is not valid for any available plan.' };
                                         for (const tier of tiers) {
-                                            const candidate = await validatePromoCode(promoInput, user.id, tier, billingPeriod);
+                                            const candidate = await validatePromoCode(promoInput, tier, billingPeriod);
                                             if (candidate.valid) {
                                                 result = candidate;
                                                 break;
                                             }
                                         }
                                         setPromoResult(result);
-                                    } catch {
+                                    } catch (error) {
+                                        console.warn('[Subscribe] Failed to validate promo code:', error);
                                         setPromoResult({ valid: false, error: 'Something went wrong. Try again.' });
                                     } finally {
                                         setPromoLoading(false);
@@ -422,25 +433,64 @@ export default function SubscribePlaceholderScreen() {
                 )}
 
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Why Upgrade to VIP?</Text>
+                    <Text style={styles.cardTitle}>Standard → VIP: What Changes?</Text>
+                    <Text style={styles.upgradeSubtitle}>Standard gives you the tools to show up. VIP makes the app think with you.</Text>
                     <View style={styles.comparisonTable}>
                         <View style={styles.comparisonRow}>
-                            <Text style={styles.comparisonLabel}>Full Program Library</Text>
+                            <Text style={styles.comparisonLabel}>Full Coach-Led Program Catalog</Text>
                             <Ionicons name="checkmark" size={16} color="#00b894" />
                         </View>
                         <View style={styles.comparisonRow}>
-                            <Text style={styles.comparisonLabel}>Advanced Trend Analytics</Text>
+                            <Text style={styles.comparisonLabel}>Build Your Own Program</Text>
                             <Ionicons name="checkmark" size={16} color="#00b894" />
                         </View>
                         <View style={styles.comparisonRow}>
-                            <Text style={styles.comparisonLabel}>Full Community Comments</Text>
+                            <Text style={styles.comparisonLabel}>Guided Program Generator</Text>
                             <Ionicons name="checkmark" size={16} color="#00b894" />
                         </View>
                         <View style={styles.comparisonRow}>
-                            <Text style={styles.comparisonLabel}>Exclusive Mindset Audio</Text>
+                            <Text style={styles.comparisonLabel}>Smart Split & Goal Recommendations</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Cardio Scheduling & Auto-Placement</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Full Mobility & Conditioning Library</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Saved Meals & Smart Food Suggestions</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Advanced Adherence Insights</Text>
+                            <Ionicons name="checkmark" size={16} color="#00b894" />
+                        </View>
+                        <View style={styles.comparisonRow}>
+                            <Text style={styles.comparisonLabel}>Visible Recommendation Logic</Text>
                             <Ionicons name="checkmark" size={16} color="#00b894" />
                         </View>
                     </View>
+                </View>
+
+                <View style={styles.eliteTeaserCard}>
+                    <View style={styles.eliteTeaserHeader}>
+                        <Ionicons name="time-outline" size={16} color="#FFD700" />
+                        <Text style={styles.eliteTeaserBadge}>COMING SOON</Text>
+                    </View>
+                    <Text style={styles.eliteTeaserTitle}>Elite — The Coaching Partnership</Text>
+                    <Text style={styles.eliteTeaserBody}>
+                        Everything in VIP, plus a dedicated 1:1 coaching relationship. Your coach reviews your data, interprets your trends, and evolves your plan with you — so you never plateau alone.
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.eliteTeaserCTA}
+                        onPress={() => Linking.openURL(`mailto:${APP_CONFIG.coachEmail}?subject=Elite Tier — Early Access&body=I'm interested in early access to Elite coaching.`)}
+                    >
+                        <Text style={styles.eliteTeaserCTAText}>Join the Early Access List</Text>
+                        <Ionicons name="arrow-forward" size={14} color="#FFD700" />
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
@@ -579,6 +629,54 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         lineHeight: 16,
         marginTop: 2,
+    },
+    upgradeSubtitle: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        fontStyle: 'italic',
+        marginBottom: 8,
+    },
+    eliteTeaserCard: {
+        backgroundColor: 'rgba(255, 215, 0, 0.05)',
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 215, 0, 0.2)',
+        padding: theme.spacing.lg,
+        gap: 8,
+    },
+    eliteTeaserHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 4,
+    },
+    eliteTeaserBadge: {
+        color: '#FFD700',
+        fontSize: 11,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    eliteTeaserTitle: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '900',
+    },
+    eliteTeaserBody: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    eliteTeaserCTA: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        alignSelf: 'flex-start',
+    },
+    eliteTeaserCTAText: {
+        color: '#FFD700',
+        fontSize: 13,
+        fontWeight: '800',
     },
     currentLabel: { color: theme.colors.primary, fontSize: 11, fontWeight: '700' },
     tierLeft: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },

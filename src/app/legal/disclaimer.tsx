@@ -25,7 +25,7 @@ export default function DisclaimerScreen() {
                 </Text>
                 <Text style={styles.h2}>Assumption of Risk</Text>
                 <Text style={styles.p}>
-                    Exercise carries inherent risks. By using the app, you acknowledge and assume these risks.
+                    Exercise carries inherent risks. By using the app, you acknowledge and accept these risks.
                 </Text>
             </ScrollView>
         </View>
@@ -40,4 +40,3 @@ const styles = StyleSheet.create({
     h2: { color: '#FFF', fontSize: 14, fontWeight: '900', marginTop: 12 },
     p: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18 },
 });
-

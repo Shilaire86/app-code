@@ -29,3 +29,16 @@ export function getTierLabel(tier: SubscriptionTier): string {
         default: return 'Free';
     }
 }
+
+/**
+ * Returns the marketing tagline for a subscription tier.
+ */
+export function getTierTagline(tier: SubscriptionTier): string {
+    switch (tier) {
+        case 'free': return 'Explore the Method';
+        case 'standard': return 'Build Your Foundation';
+        case 'vip': return 'Train Smarter, Not Harder';
+        case 'elite': return 'Your Coach. Your Plan. Your Evolution.';
+        default: return 'Explore the Method';
+    }
+}

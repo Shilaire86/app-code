@@ -70,9 +70,13 @@ export async function createThread(params: {
 }
 
 export async function listMyThreads(): Promise<MessageThread[]> {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) throw new Error('Not signed in.');
+
     const { data, error } = await supabase
         .from('message_threads')
         .select('id,created_at,created_by,status,category,subject,last_message_at,diagnostics')
+        .eq('created_by', userId)
         .order('last_message_at', { ascending: false });
     throwOnError(error, 'Failed to load threads.');
     return (data || []) as any;

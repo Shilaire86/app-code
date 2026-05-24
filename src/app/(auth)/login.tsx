@@ -22,18 +22,22 @@ export default function LoginScreen() {
     const router = useRouter();
 
     async function handleAuth() {
-        if (!email || !password) {
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail || !password) {
             Alert.alert('Error', 'Please enter both email and password');
             return;
         }
 
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-        if (error) Alert.alert('Error', error.message);
-        setLoading(false);
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email: trimmedEmail,
+                password,
+            });
+            if (error) Alert.alert('Error', error.message);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (

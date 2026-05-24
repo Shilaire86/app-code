@@ -30,7 +30,10 @@ export default function AdminOffersScreen() {
             ) : (
                 <View style={styles.content}>
                     <Text style={styles.header}>Offers Admin</Text>
-                    <Text style={styles.body}>Placeholder screen. Manage Offers tools coming soon.</Text>
+                    <Text style={styles.body}>
+                        Offer management is available through backend tooling in this build.
+                        Wire up a live editor only if you want a dedicated admin UI for it.
+                    </Text>
                 </View>
             )}
         </View>
@@ -81,4 +84,3 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
 });
-

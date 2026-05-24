@@ -9,6 +9,7 @@ import {
     Alert,
     TouchableOpacity,
 } from 'react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -21,7 +22,8 @@ export default function ForgotPasswordScreen() {
     const router = useRouter();
 
     async function handleReset() {
-        if (!email) {
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
             Alert.alert('Error', 'Please enter your email address');
             return;
         }
@@ -30,9 +32,9 @@ export default function ForgotPasswordScreen() {
         try {
             const redirectUrl = Platform.OS === 'web' && typeof window !== 'undefined'
                 ? `${window.location.origin}/reset-password`
-                : 'thebecomingmethod://reset-password';
+                : Linking.createURL('/reset-password');
 
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
                 redirectTo: redirectUrl,
             });
 

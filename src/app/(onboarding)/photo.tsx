@@ -23,7 +23,15 @@ export default function PhotoScreen() {
                     Optional. Capture a private reference image to track your evolution.
                 </Text>
                 <View style={styles.placeholder}>
-                    <Text style={styles.placeholderText}>Camera setup coming next</Text>
+                    <Text style={styles.placeholderTitle}>Capture your baseline</Text>
+                    <Text style={styles.placeholderText}>
+                        This opens the Growth Track camera so you can take a private progress photo now.
+                    </Text>
+                    <Button
+                        title="Open Camera"
+                        onPress={() => router.push('/progress/camera')}
+                        style={styles.cameraButton}
+                    />
                 </View>
             </View>
 
@@ -65,17 +73,29 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     placeholder: {
-        height: 220,
+        minHeight: 240,
         borderRadius: theme.radius.lg,
         borderWidth: 1,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
+        padding: theme.spacing.lg,
+        gap: theme.spacing.md,
+    },
+    placeholderTitle: {
+        ...theme.typography.h3,
+        color: theme.colors.text,
+        textAlign: 'center',
     },
     placeholderText: {
         ...theme.typography.bodySmall,
         color: theme.colors.textTertiary,
+        textAlign: 'center',
+        maxWidth: 280,
+    },
+    cameraButton: {
+        width: '100%',
     },
     actions: {
         gap: theme.spacing.md,

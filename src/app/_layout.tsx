@@ -8,32 +8,34 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
-import { LEGAL_VERSIONS } from '@/lib/legalVersions';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { initializePurchases } from '@/services/purchases';
+import {
+    canAccessAdminRoute,
+    canAccessDebugRoute,
+    getBootstrapFailureMessage,
+    isAdminRoute,
+    isAuthGroup,
+    isDebugRoute,
+    isLegalGroup,
+    isOnboardingGroup,
+    shouldBlockForBootstrap,
+    shouldRedirectAuthenticatedAwayFromAuthGroup,
+    shouldRedirectToLegal,
+    shouldRedirectToLogin,
+    shouldRedirectToOnboarding,
+} from '@/lib/routeGuards';
+import Constants from 'expo-constants';
 
-const APP_VERSION = '1.0.1-debug';
+const APP_VERSION = Constants.expoConfig?.version ?? Constants.easConfig?.projectId ?? 'dev';
 
-function DiagnosticView({ message }: { message: string }) {
+function DiagnosticView({ message, initialized, onForceClear }: { message: string; initialized: boolean; onForceClear: () => Promise<void> }) {
     const [showActions, setShowActions] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => setShowActions(true), 7000);
         return () => clearTimeout(timer);
     }, []);
-
-    const forceClear = async () => {
-        console.log('[Diagnostic] Force clearing session...');
-        try {
-            await supabase.auth.signOut();
-            useAuthStore.getState().signOut();
-            if (typeof window !== 'undefined' && window.location) {
-                window.location.reload();
-            }
-        } catch (e) {
-            console.error('[Diagnostic] Error clearing:', e);
-        }
-    };
 
     return (
         <View style={{
@@ -48,14 +50,14 @@ function DiagnosticView({ message }: { message: string }) {
             <Text style={{ color: theme.colors.textSecondary, marginTop: 20, textAlign: 'center', fontSize: 16 }}>{message}</Text>
 
             <Text style={{ position: 'absolute', bottom: 20, color: theme.colors.textTertiary, fontSize: 10 }}>
-                v{APP_VERSION} | initialized: {useAuthStore.getState().initialized ? 'Y' : 'N'}
+                v{APP_VERSION} | initialized: {initialized ? 'Y' : 'N'}
             </Text>
 
             {showActions && (
                 <View style={{ marginTop: 40, width: '100%', maxWidth: 400, gap: 10 }}>
                     <Text style={{ color: '#FF4444', textAlign: 'center', marginBottom: 10 }}>Taking longer than expected?</Text>
                     <TouchableOpacity
-                        onPress={forceClear}
+                        onPress={onForceClear}
                         style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center' }}
                     >
                         <Text style={{ color: '#FFF', textAlign: 'center', fontWeight: 'bold' }}>Clear Session & Restart</Text>
@@ -76,12 +78,30 @@ export default function RootLayout() {
     try {
         const { session, initialized } = useAuth();
         const segments = useSegments();
+        const signOut = useAuthStore(s => s.signOut);
         // Use selectors so actions don't change identity and accidentally retrigger effects.
         const profileLoading = useProfileStore(s => s.isLoading);
+        const profileBootstrapState = useProfileStore(s => s.bootstrapState);
+        const profileBootstrapError = useProfileStore(s => s.bootstrapError);
         const profile = useProfileStore(s => s.profile);
+        const fetchProfile = useProfileStore(s => s.fetchProfile);
+        const resetProfile = useProfileStore(s => s.reset);
         const { isConnected } = useNetworkStatus();
         const { processQueue } = useSyncQueueStore();
         const lastScheduledRef = useRef<string | null>(null);
+
+        const forceClear = async () => {
+            console.log('[Diagnostic] Force clearing session...');
+            try {
+                await supabase.auth.signOut();
+                signOut();
+                if (typeof window !== 'undefined' && window.location) {
+                    window.location.reload();
+                }
+            } catch (e) {
+                console.error('[Diagnostic] Error clearing:', e);
+            }
+        };
 
         // One-time log on first render
         useEffect(() => {
@@ -94,14 +114,14 @@ export default function RootLayout() {
         // Fetch profile and register push tokens when session is available
         useEffect(() => {
             if (initialized && session?.user?.id) {
-                useProfileStore.getState().fetchProfile(session.user.id);
+                void fetchProfile(session.user.id);
                 registerForPushNotificationsAsync(session.user.id).catch(err => console.error('[RootLayout] Push registration failed', err));
                 scheduleWeeklyProgressSummary().catch(err => console.error('[RootLayout] Weekly summary scheduling failed', err));
             } else if (initialized && !session) {
                 // Reset profile store on logout
-                useProfileStore.getState().reset();
+                resetProfile();
             }
-        }, [initialized, session?.user?.id]);
+        }, [initialized, session?.user?.id, fetchProfile, resetProfile]);
 
         useEffect(() => {
             if (!initialized) return;
@@ -123,46 +143,60 @@ export default function RootLayout() {
             }
         }, [initialized, session?.user?.id, processQueue]);
 
-        const inAuthGroup = segments?.[0] === '(auth)';
-        const inOnboardingGroup = segments?.[0] === '(onboarding)';
-        const inLegalGroup = segments?.[0] === 'legal';
+        const currentSegment = segments?.[0];
+        const inAuthGroup = isAuthGroup(currentSegment);
+        const inOnboardingGroup = isOnboardingGroup(currentSegment);
+        const inLegalGroup = isLegalGroup(currentSegment);
 
         if (!initialized) {
-            return <DiagnosticView message="Initializing authenticator..." />;
+            return <DiagnosticView message="Initializing authenticator..." initialized={initialized} onForceClear={forceClear} />;
         }
 
-        if (session && profileLoading && !inAuthGroup) {
-            return <DiagnosticView message="Loading your profile..." />;
+        if (shouldBlockForBootstrap({
+            hasSession: !!session,
+            bootstrapState: profileBootstrapState,
+            profileLoading,
+            inAuthGroup,
+        })) {
+            return <DiagnosticView message="Loading your profile..." initialized={initialized} onForceClear={forceClear} />;
         }
 
-        if (!session && !inAuthGroup) {
+        if (session && profileBootstrapState === 'failed' && !inAuthGroup) {
+            return (
+                <DiagnosticView
+                    message={getBootstrapFailureMessage(profileBootstrapError)}
+                    initialized={initialized}
+                    onForceClear={forceClear}
+                />
+            );
+        }
+
+        if (shouldRedirectToLogin({ hasSession: !!session, inAuthGroup })) {
             console.log('[RootLayout] Auth required, redirecting to login');
             return <Redirect href="/(auth)/login" />;
         }
 
-        if (session && profile && !profile.onboarding_complete && !inOnboardingGroup) {
+        if (shouldRedirectToOnboarding({ hasSession: !!session, profile, inOnboardingGroup })) {
             return <Redirect href="/(onboarding)/welcome" />;
         }
 
-        const needsLegalAccept =
-            !!session &&
-            !!profile &&
-            profile.onboarding_complete &&
-            (
-                profile.terms_accepted_version !== LEGAL_VERSIONS.terms ||
-                profile.privacy_accepted_version !== LEGAL_VERSIONS.privacy ||
-                profile.disclaimer_accepted_version !== LEGAL_VERSIONS.disclaimer
-            );
-
-        if (needsLegalAccept && !inLegalGroup) {
+        if (shouldRedirectToLegal({ hasSession: !!session, profile, inLegalGroup })) {
             return <Redirect href="/legal/accept" />;
         }
 
-        if (session && profile?.onboarding_complete && inOnboardingGroup) {
+        if (shouldRedirectAuthenticatedAwayFromAuthGroup({ hasSession: !!session, profile, inAuthGroup })) {
             return <Redirect href="/" />;
         }
 
         if (session && inAuthGroup) {
+            return <Redirect href="/" />;
+        }
+
+        if (isAdminRoute(currentSegment) && !canAccessAdminRoute(profile?.role)) {
+            return <Redirect href="/" />;
+        }
+
+        if (isDebugRoute(currentSegment) && !canAccessDebugRoute(profile?.role)) {
             return <Redirect href="/" />;
         }
 

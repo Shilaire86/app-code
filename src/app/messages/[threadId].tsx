@@ -23,6 +23,7 @@ export default function MessageThreadScreen() {
     const [replyText, setReplyText] = useState('');
     const [sending, setSending] = useState(false);
     const [threadOwnerLabel, setThreadOwnerLabel] = useState<string>('User');
+    const [threadOwnerId, setThreadOwnerId] = useState<string | null>(null);
     const [threadStatus, setThreadStatus] = useState<'open' | 'closed'>('open');
 
     const fetchThread = useCallback(async () => {
@@ -37,14 +38,23 @@ export default function MessageThreadScreen() {
                 .eq('id', threadId)
                 .maybeSingle();
             if (threadErr) throw threadErr;
+            const ownerId = (threadRow as any)?.created_by as string | undefined;
+            const canAccessThread = isCoachOrAdmin || ownerId === user.id;
+            if (!canAccessThread) {
+                setThreadStatus('closed');
+                setThreadOwnerId(ownerId ?? null);
+                setErrorText('Not authorized to view this thread.');
+                setMsgs([]);
+                return;
+            }
             setThreadStatus((threadRow as any)?.status === 'closed' ? 'closed' : 'open');
+            setThreadOwnerId(ownerId ?? null);
 
             const data = await listMessages(threadId);
             setMsgs(data);
 
             // If I'm viewing as coach/admin, show the actual user's name (or email) for clarity.
             if (isCoachOrAdmin) {
-                const ownerId = (threadRow as any)?.created_by as string | undefined;
                 if (ownerId) {
                     const { data: prof, error: profErr } = await supabase
                         .from('profiles')
@@ -77,6 +87,10 @@ export default function MessageThreadScreen() {
         if (!threadId || !user?.id) return;
         const text = replyText.trim();
         if (!text || sending) return;
+        if (threadOwnerId && !isCoachOrAdmin && threadOwnerId !== user.id) {
+            setErrorText('Not authorized to reply to this thread.');
+            return;
+        }
         if (threadStatus === 'closed' && !isCoachOrAdmin) {
             setErrorText('This thread is closed.');
             return;
@@ -96,6 +110,10 @@ export default function MessageThreadScreen() {
 
     function confirmDeleteThread() {
         if (!threadId) return;
+        if (threadOwnerId && !isCoachOrAdmin && threadOwnerId !== user?.id) {
+            setErrorText('Not authorized to delete this thread.');
+            return;
+        }
         Alert.alert(
             'Delete thread?',
             'This will permanently delete the entire conversation.',

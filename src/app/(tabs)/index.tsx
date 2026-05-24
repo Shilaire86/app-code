@@ -8,7 +8,6 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Card } from '@/components/ui/Card';
-import { POINTS } from '@/lib/stages/calculator';
 import { HintCard } from '@/components/HintCard';
 import { LevelUpModal } from '@/components/LevelUpModal';
 import { useCallback, useState } from 'react';
@@ -20,6 +19,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { getTodaysCardio, markCardioComplete, UserCardioPlanEntry } from '@/services/cardio';
 import { fetchUserActiveModules, TrainingModule } from '@/services/modules';
+import { calculateTotalPoints } from '@/lib/stagePoints';
 
 // Stage-specific motivational copy
 function getStageCopy(stage: string): string {
@@ -37,18 +37,18 @@ function getStageCopy(stage: string): string {
     }
 }
 
-function calculateTotalPoints(activityCounts: { workoutCount: number; progressEntryCount: number; photoCount: number }): number {
-    return (
-        activityCounts.workoutCount * POINTS.WORKOUT +
-        activityCounts.progressEntryCount * POINTS.PROGRESS_ENTRY +
-        activityCounts.photoCount * POINTS.PHOTO
-    );
-}
-
 export default function HomeScreen() {
     const { user, signOut } = useAuthStore();
     // Profile is now bootstrapped globally in _layout.tsx
-    const { profile, stage, tier, isLoading, setSeenHint, setSeenHintValue } = useProfileStore();
+    const {
+        profile,
+        stage,
+        tier,
+        activityCounts,
+        isLoading,
+        setSeenHint,
+        setSeenHintValue,
+    } = useProfileStore();
     const router = useRouter();
     const isAdmin = profile?.role === 'admin';
 
@@ -115,7 +115,6 @@ export default function HomeScreen() {
     const count = pendingCount();
 
     const displayStage = stage || 'initiate';
-    const activityCounts = useProfileStore.getState().activityCounts;
     const progress = calculateStageProgress(activityCounts);
     const totalPoints = calculateTotalPoints(activityCounts);
     const stageCopy = getStageCopy(displayStage);

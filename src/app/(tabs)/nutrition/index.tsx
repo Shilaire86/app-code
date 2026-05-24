@@ -205,7 +205,7 @@ export default function NutritionDashboard() {
                     </Text>
                 </View>
                 <View style={styles.headerActions}>
-                    {isVip(profile?.tier) && (
+                    {isVip(tier) && (
                         <TouchableOpacity onPress={() => router.push('/nutrition/adherence')} style={styles.headerBtn}>
                             <Ionicons name="stats-chart" size={20} color={theme.colors.primary} />
                         </TouchableOpacity>

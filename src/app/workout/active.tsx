@@ -34,6 +34,9 @@ export default function ActiveWorkoutScreen() {
         discardWorkout
     } = useWorkoutStore();
     const { enqueueWorkout } = useSyncQueueStore();
+    const userId = useAuthStore(s => s.user?.id ?? null);
+    const setLevelUp = useProfileStore(s => s.setLevelUp);
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
 
     const errorHandledRef = useRef(false);
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -70,8 +73,6 @@ export default function ActiveWorkoutScreen() {
 
     const workout = data?.workout ?? null;
     const initialExercises = data?.exercises ?? [];
-    const userId = useAuthStore.getState().user?.id ?? null;
-
     useEffect(() => {
         if (initialExercises.length > 0 && localExercises.length === 0) {
             setLocalExercises(initialExercises);
@@ -476,7 +477,6 @@ export default function ActiveWorkoutScreen() {
     };
 
     const finishWorkout = async () => {
-        const userId = useAuthStore.getState().user?.id;
         try {
             // Check if this is a new structure workout (program_day_id vs workout_id)
             const isNewStructure = (data as any)?.workout?.isNewStructure === true;
@@ -590,7 +590,7 @@ export default function ActiveWorkoutScreen() {
                     stageChanged = stageResult.changed;
                     newStage = stageResult.current;
                     if (stageChanged) {
-                        useProfileStore.getState().setLevelUp(stageResult.previous, stageResult.current as any);
+                        setLevelUp(stageResult.previous, stageResult.current as any);
                         // Log stage-up to the community feed
                         await logActivity(userId, 'stage_up', {
                             previous_stage: stageResult.previous,
@@ -604,7 +604,7 @@ export default function ActiveWorkoutScreen() {
 
             // 5. Refresh Profile Points
             if (userId) {
-                useProfileStore.getState().fetchProfile(userId);
+                void fetchProfile(userId);
             }
 
             completeWorkout();

@@ -87,7 +87,7 @@ export default function ProgramsScreen() {
     const programRows = programs ?? [];
     const [activeTab, setActiveTab] = React.useState<'coach' | 'my'>('coach');
     const [userPrograms, setUserPrograms] = useState<any[]>([]);
-    const userId = useAuthStore.getState().user?.id ?? null;
+    const userId = useAuthStore(s => s.user?.id ?? null);
 
     const canDoQuick = hasEntitlement(tier, 'quickWorkoutEnabled');
     const canCreateProgram = hasEntitlement(tier, 'guidedProgramsEnabled');
@@ -234,7 +234,7 @@ export default function ProgramsScreen() {
                         {!canBuildOwn ? (
                              <View style={[styles.quickLock, { backgroundColor: '#FFAA00' }]}>
                                 <Ionicons name="lock-closed" size={14} color="#000" />
-                                <Text style={[styles.lockText, { color: '#000' }]}>Elite</Text>
+                                <Text style={[styles.lockText, { color: '#000' }]}>VIP+</Text>
                              </View>
                         ) : (
                             <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />

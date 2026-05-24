@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -9,6 +9,7 @@ import {
     Alert,
     TouchableOpacity,
 } from 'react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -19,23 +20,92 @@ export default function ResetPasswordScreen() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [recoveryReady, setRecoveryReady] = useState(false);
     const router = useRouter();
+    const linkUrl = Linking.useURL();
+    const processedUrlRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        async function ensureRecoverySession() {
+            const fallbackUrl = Platform.OS === 'web' && typeof window !== 'undefined'
+                ? window.location.href
+                : await Linking.getInitialURL();
+            const activeUrl = linkUrl || fallbackUrl;
+
+            if (!activeUrl) {
+                const { data: { session } } = await supabase.auth.getSession();
+                setRecoveryReady(!!session);
+                return;
+            }
+
+            if (processedUrlRef.current === activeUrl) return;
+            processedUrlRef.current = activeUrl;
+
+            const hashIndex = activeUrl.indexOf('#');
+            const queryIndex = activeUrl.indexOf('?');
+            const paramsSource = hashIndex >= 0
+                ? activeUrl.slice(hashIndex + 1)
+                : queryIndex >= 0
+                    ? activeUrl.slice(queryIndex + 1)
+                    : '';
+
+            const params = new URLSearchParams(paramsSource);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            const code = params.get('code');
+
+            try {
+                if (accessToken && refreshToken) {
+                    const { error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken,
+                    });
+                    if (error) throw error;
+                } else if (code) {
+                    const { error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (error) throw error;
+                }
+
+                const { data: { session } } = await supabase.auth.getSession();
+                setRecoveryReady(!!session);
+            } catch (error) {
+                console.error('[ResetPassword] Failed to restore recovery session:', error);
+                setRecoveryReady(false);
+            }
+        }
+
+        ensureRecoverySession();
+    }, [linkUrl]);
 
     async function handleUpdatePassword() {
-        if (!password || password !== confirmPassword) {
+        if (!recoveryReady) {
+            Alert.alert('Invalid Link', 'Open the password reset link from your email again and retry.');
+            return;
+        }
+
+        if (!password || password.length < 8) {
+            Alert.alert('Error', 'Password must be at least 8 characters.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
             Alert.alert('Error', 'Passwords must match.');
             return;
         }
 
         setLoading(true);
-        const { error } = await supabase.auth.updateUser({ password });
-        if (error) {
-            Alert.alert('Error', error.message);
-        } else {
+        try {
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) {
+                Alert.alert('Error', error.message);
+                return;
+            }
+
             Alert.alert('Success', 'Your password has been updated.');
             router.replace('/(auth)/login');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     return (
@@ -74,8 +144,15 @@ export default function ResetPasswordScreen() {
                         title="Update Password"
                         onPress={handleUpdatePassword}
                         loading={loading}
+                        disabled={loading || !recoveryReady}
                         style={styles.button}
                     />
+
+                    {!recoveryReady && (
+                        <Text style={styles.helperText}>
+                            Waiting for a valid recovery session from your reset link.
+                        </Text>
+                    )}
 
                     <TouchableOpacity
                         onPress={() => router.replace('/(auth)/login')}
@@ -118,6 +195,12 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: theme.spacing.md,
+    },
+    helperText: {
+        ...theme.typography.bodySmall,
+        color: theme.colors.textSecondary,
+        marginTop: theme.spacing.sm,
+        textAlign: 'center',
     },
     toggleContainer: {
         marginTop: theme.spacing.xl,

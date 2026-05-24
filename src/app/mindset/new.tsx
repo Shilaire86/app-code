@@ -11,6 +11,7 @@ import { getDailyPrompts, getRandomPrompt } from '@/constants/mindsetPrompts';
 export default function NewMindsetScreen() {
     const { user } = useAuthStore();
     const router = useRouter();
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
     const [gratitude, setGratitude] = useState('');
     const [intention, setIntention] = useState('');
     const [reflection, setReflection] = useState('');
@@ -45,7 +46,7 @@ export default function NewMindsetScreen() {
             if (error) throw error;
 
             if (user) {
-                useProfileStore.getState().fetchProfile(user.id);
+                void fetchProfile(user.id);
             }
 
             Alert.alert("Reflected", "Your mindset has been recorded. Great work!");

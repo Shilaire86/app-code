@@ -2,22 +2,52 @@ import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { supabase } from '@/lib/supabase';
 
-// API Keys should be placed in your .env file
 const API_KEYS = {
-    apple: process.env.EXPO_PUBLIC_RC_APPLE_KEY || 'appl_YOUR_APPLE_KEY',
-    google: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY || 'goog_YOUR_GOOGLE_KEY',
+    apple: process.env.EXPO_PUBLIC_RC_APPLE_KEY,
+    google: process.env.EXPO_PUBLIC_RC_GOOGLE_KEY,
 };
+
+const nativeBillingSyncEnabled = process.env.EXPO_PUBLIC_NATIVE_BILLING_SYNC_ENABLED === 'true';
+
+/** Returns true only when native billing is fully configured and sync is enabled. */
+export function nativeBillingReady(): boolean {
+    return nativeBillingSyncEnabled;
+}
+
+function isPlaceholderKey(key: string | undefined): boolean {
+    if (!key) return true;
+    const lower = key.toLowerCase();
+    return (
+        lower.includes('your') ||
+        lower.includes('placeholder') ||
+        lower.includes('yourgoogle') ||
+        lower.includes('yourapple') ||
+        lower === 'appl_yourapplerevenuecat_key' ||
+        lower === 'goog_yourgooglekeyhere'
+    );
+}
 
 export async function initializePurchases() {
     if (Platform.OS === 'web') return; // RevenueCat does not run on the web
 
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
 
-    if (Platform.OS === 'ios') {
-        Purchases.configure({ apiKey: API_KEYS.apple });
-    } else if (Platform.OS === 'android') {
-        Purchases.configure({ apiKey: API_KEYS.google });
+    const apiKey = Platform.OS === 'ios' ? API_KEYS.apple : API_KEYS.google;
+
+    if (isPlaceholderKey(apiKey)) {
+        console.warn(
+            `[Purchases] RevenueCat ${Platform.OS} SDK key is missing or is still a placeholder. ` +
+            `Set EXPO_PUBLIC_RC_${Platform.OS === 'ios' ? 'APPLE' : 'GOOGLE'}_KEY in your .env and EAS secrets.`
+        );
+        return;
     }
+
+    if (!nativeBillingSyncEnabled) {
+        console.warn('[Purchases] Native billing sync is not enabled. RevenueCat checkout is disabled to avoid stale subscription state. Set EXPO_PUBLIC_NATIVE_BILLING_SYNC_ENABLED=true once your RevenueCat webhook is configured.');
+        return;
+    }
+
+    Purchases.configure({ apiKey });
 
     // Attempt to log in the user if a session exists
     const { data: { session } } = await supabase.auth.getSession();
@@ -33,6 +63,9 @@ export async function initializePurchases() {
  */
 export async function purchaseNativeSubscription(tier: string, isAnnual: boolean): Promise<boolean> {
     if (Platform.OS === 'web') throw new Error('Native purchasing is not supported on web.');
+    if (!nativeBillingSyncEnabled) {
+        throw new Error('Native billing is disabled until subscription syncing is configured on the backend.');
+    }
 
     try {
         const offerings = await Purchases.getOfferings();
@@ -76,6 +109,7 @@ export async function purchaseNativeSubscription(tier: string, isAnnual: boolean
  */
 export async function syncNativeEntitlements(): Promise<void> {
     if (Platform.OS === 'web') return;
+    if (!nativeBillingSyncEnabled) return;
     
     try {
         const customerInfo = await Purchases.getCustomerInfo();

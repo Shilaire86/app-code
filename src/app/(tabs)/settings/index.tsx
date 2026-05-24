@@ -1,12 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { checkPermissions, scheduleDailyCheckIn } from '@/lib/notifications';
+import { APP_CONFIG } from '@/lib/appConfig';
 
 const PRESET_TIMES_24H = ['06:00', '09:00', '12:00', '18:00', '20:00'] as const;
 const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian'] as const;
@@ -43,6 +44,11 @@ export default function SettingsScreen() {
     const { user } = useAuthStore();
     const { profile, tier } = useProfileStore();
     const router = useRouter();
+    const hydratedProfileIdRef = useRef<string | null>(null);
+    const signOut = useAuthStore(s => s.signOut);
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
+    const resetProfile = useProfileStore(s => s.reset);
+    const updateProfile = useProfileStore(s => s.updateProfile);
 
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [timezone, setTimezone] = useState(profile?.timezone || 'America/New_York');
@@ -53,6 +59,17 @@ export default function SettingsScreen() {
     const [savingReminder, setSavingReminder] = useState(false);
     const [subscription, setSubscription] = useState<SubscriptionSnapshot | null>(null);
     const [loadingSubscription, setLoadingSubscription] = useState(false);
+
+    useEffect(() => {
+        if (!profile?.id) return;
+        if (hydratedProfileIdRef.current === profile.id) return;
+
+        hydratedProfileIdRef.current = profile.id;
+        setFullName(profile.full_name || '');
+        setTimezone(profile.timezone || 'America/New_York');
+        setStreakNudgesEnabled(profile.streak_nudges_enabled ?? true);
+        setDietaryPreference(profile.dietary_preference || 'standard');
+    }, [profile?.id]);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -104,7 +121,7 @@ export default function SettingsScreen() {
             if (error) throw error;
 
             // Refresh profile in store
-            useProfileStore.getState().fetchProfile(user.id);
+            void fetchProfile(user.id);
             Alert.alert('Success', 'Profile updated successfully');
         } catch (error) {
             console.error('Error updating profile:', error);
@@ -125,8 +142,8 @@ export default function SettingsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         await supabase.auth.signOut();
-                        useAuthStore.getState().signOut();
-                        useProfileStore.getState().reset();
+                        signOut();
+                        resetProfile();
                         router.replace('/(auth)/login');
                     },
                 },
@@ -137,24 +154,32 @@ export default function SettingsScreen() {
     async function handleDeleteAccount() {
         Alert.alert(
             'Delete Account',
-            'This will permanently delete your account and ALL your data. This action cannot be undone.',
+            'This will request permanent deletion of your account and all associated data. This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Delete Forever',
+                    text: 'Request Deletion',
                     style: 'destructive',
                     onPress: () => {
                         Alert.alert(
                             'Final Confirmation',
-                            'Type DELETE to confirm account deletion',
+                            'To continue, open your email app and send a deletion request.',
                             [
                                 { text: 'Cancel', style: 'cancel' },
                                 {
-                                    text: 'Confirm',
+                                    text: 'Email Coach',
                                     style: 'destructive',
                                     onPress: async () => {
-                                        // TODO: Implement account deletion
-                                        Alert.alert('Info', 'Account deletion will be implemented in a future update');
+                                        const subject = encodeURIComponent('Account deletion request');
+                                        const body = encodeURIComponent(
+                                            `Please delete my The Becoming Method account for ${user?.email || 'my account'}.\n\nUser ID: ${user?.id || 'unknown'}\n`
+                                        );
+                                        const mailto = `mailto:${APP_CONFIG.coachEmail}?subject=${subject}&body=${body}`;
+                                        try {
+                                            await Linking.openURL(mailto);
+                                        } catch {
+                                            Alert.alert('Email unavailable', `Please email ${APP_CONFIG.coachEmail} to request deletion.`);
+                                        }
                                     },
                                 },
                             ]
@@ -177,7 +202,7 @@ export default function SettingsScreen() {
             if (error) throw error;
 
             // Optimistic local update so the UI reflects immediately.
-            useProfileStore.getState().updateProfile({ preferred_workout_time: hhmm });
+            void updateProfile({ preferred_workout_time: hhmm });
 
             const [hStr, mStr] = hhmm.split(':');
             const ok = await scheduleDailyCheckIn(Number(hStr), Number(mStr));

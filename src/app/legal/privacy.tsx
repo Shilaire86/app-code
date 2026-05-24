@@ -17,19 +17,19 @@ export default function PrivacyScreen() {
                 <Text style={styles.version}>Version: {LEGAL_VERSIONS.privacy}</Text>
                 <Text style={styles.h1}>Privacy Policy</Text>
                 <Text style={styles.p}>
-                    This Privacy Policy is provided for MVP/testing. It will be finalized before launch.
+                    The Becoming Method collects information you provide to create your account, deliver app features, and support your training experience.
                 </Text>
                 <Text style={styles.h2}>What We Collect</Text>
                 <Text style={styles.p}>
-                    We collect account information (email) and the data you choose to log (workouts, progress, messages).
+                    We may collect account information such as email address and content you choose to log, including workouts, progress updates, messages, and app preferences.
                 </Text>
                 <Text style={styles.h2}>How We Use Data</Text>
                 <Text style={styles.p}>
-                    We use your data to provide the app experience and improve features. We do not sell your personal data.
+                    We use this data to provide app functionality, support your training, and maintain service quality. We do not sell personal data.
                 </Text>
                 <Text style={styles.h2}>Security</Text>
                 <Text style={styles.p}>
-                    Data is stored securely and protected by access controls. No system is 100% secure.
+                    We use access controls and reasonable safeguards to protect data. No system is completely secure.
                 </Text>
             </ScrollView>
         </View>
@@ -44,4 +44,3 @@ const styles = StyleSheet.create({
     h2: { color: '#FFF', fontSize: 14, fontWeight: '900', marginTop: 12 },
     p: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18 },
 });
-

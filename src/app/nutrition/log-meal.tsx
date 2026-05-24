@@ -23,7 +23,7 @@ import { logMeal, saveMeal, MealType } from '@/services/nutrition';
 export default function LogMealScreen() {
     const router = useRouter();
     const { user } = useAuthStore();
-    const { profile } = useProfileStore();
+    const { tier } = useProfileStore();
 
     const [name, setName] = useState('');
     const [mealType, setMealType] = useState<MealType>('snack');
@@ -34,7 +34,7 @@ export default function LogMealScreen() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveToLibrary, setSaveToLibrary] = useState(false);
 
-    const canSaveMeals = isVip(profile?.tier);
+    const canSaveMeals = isVip(tier);
 
     const handleSave = async () => {
         if (!user?.id) return;

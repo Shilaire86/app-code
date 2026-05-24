@@ -23,29 +23,37 @@ export default function RegisterScreen() {
     const router = useRouter();
 
     async function handleRegister() {
-        if (!email || !password) {
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail || !password) {
             Alert.alert('Error', 'Please enter both email and password');
+            return;
+        }
+        if (password.length < 8) {
+            Alert.alert('Error', 'Password must be at least 8 characters.');
             return;
         }
 
         setLoading(true);
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName || null,
+        try {
+            const { error } = await supabase.auth.signUp({
+                email: trimmedEmail,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName.trim() || null,
+                    },
                 },
-            },
-        });
+            });
 
-        if (error) {
-            Alert.alert('Error', error.message);
-        } else {
-            Alert.alert('Success', 'Check your email to confirm your account.');
-            router.replace('/(auth)/login');
+            if (error) {
+                Alert.alert('Error', error.message);
+            } else {
+                Alert.alert('Success', 'Check your email to confirm your account.');
+                router.replace('/(auth)/login');
+            }
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     return (

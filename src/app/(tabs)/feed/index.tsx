@@ -21,6 +21,7 @@ const OfferCard = memo(({ offer }: { offer: any }) => (
 
 const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
     const router = useRouter();
+    const tier = useProfileStore(s => s.tier);
     const [comments, setComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState('');
@@ -58,7 +59,7 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
                 </View>
             ))}
             {user && (
-                hasEntitlement(useProfileStore.getState().tier, 'communityComments') ? (
+                hasEntitlement(tier, 'communityComments') ? (
                     <View style={styles.commentInputRow}>
                         <TextInput
                             style={styles.commentInput}
@@ -109,7 +110,8 @@ const PostCard = memo(({ item, isLiked, onToggleLike, user }: any) => {
 
         try {
             await onToggleLike(item.id);
-        } catch {
+        } catch (error) {
+            console.warn('[Feed] Failed to toggle like, restoring previous state:', error);
             setLiked(wasLiked);
             setLikeCount((c: number) => wasLiked ? c + 1 : c - 1);
         } finally {

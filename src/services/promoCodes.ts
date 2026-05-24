@@ -30,7 +30,6 @@ export type PromoValidationResult = {
  */
 export async function validatePromoCode(
     code: string,
-    userId: string,
     tier: string,
     period: string = 'monthly'
 ): Promise<PromoValidationResult> {
@@ -75,6 +74,11 @@ export async function validatePromoCode(
     }
 
     // Check if user already redeemed this code
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) {
+        return { valid: false, error: 'Not signed in.' };
+    }
+
     const { data: existing } = await supabase
         .from('promo_redemptions')
         .select('id')
@@ -101,12 +105,14 @@ export async function validatePromoCode(
  * Records a promo code redemption after a successful subscription.
  */
 export async function redeemPromoCode(
-    userId: string,
     promoCodeId: string,
     tierPurchased: string,
     periodPurchased: string,
     discountApplied: number
 ): Promise<void> {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) throw new Error('Not signed in.');
+
     // Insert redemption
     const { error: redeemError } = await supabase
         .from('promo_redemptions')
@@ -142,7 +148,10 @@ export async function redeemPromoCode(
 /**
  * Fetches the user's previous redemptions.
  */
-export async function getUserRedemptions(userId: string) {
+export async function getUserRedemptions() {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    if (!userId) throw new Error('Not signed in.');
+
     const { data, error } = await supabase
         .from('promo_redemptions')
         .select('*, promo_code:promo_codes(code, description, discount_type, discount_value)')

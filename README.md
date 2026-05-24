@@ -7,9 +7,9 @@ A transformational identity-shift platform built with Expo and React Native.
 - **Framework:** Expo SDK 54 + React Native
 - **Language:** TypeScript
 - **Navigation:** expo-router (file-based routing)
-- **State Management:** Zustand + React Query (to be added)
-- **Backend:** Supabase (to be configured)
-- **Payments:** Stripe (to be configured)
+- **State Management:** Zustand + cached query/services layer
+- **Backend:** Supabase
+- **Payments:** RevenueCat for native subscriptions, Stripe for web checkout
 
 ## Project Structure
 
@@ -113,16 +113,17 @@ import { Button } from '@/components/ui/Button';
 ✅ TypeScript configured
 ✅ expo-router set up
 ✅ Design system tokens created
-✅ Basic UI components (Button)
-✅ Project structure established
+✅ Core auth, profile bootstrap, and route guards implemented
+✅ Training, nutrition, progress, messaging, and admin surfaces implemented
+✅ Native and web billing flows scaffolded
+✅ Project glossary and architecture notes added
 
 ### Next Steps (Phase 1)
 
-- [ ] Set up Supabase client
-- [ ] Configure environment variables
-- [ ] Add authentication screens
-- [ ] Implement database schema
-- [ ] Set up RLS policies
+- [ ] Finalize Supabase schema and RLS policies
+- [ ] Connect billing sync/webhooks end to end
+- [ ] Replace remaining backend-bound placeholders with live implementations
+- [ ] Add broader integration coverage for auth, billing, and privileged flows
 
 ## Scripts
 

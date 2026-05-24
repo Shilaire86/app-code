@@ -12,6 +12,7 @@ export default function LegalAcceptScreen() {
     const router = useRouter();
     const { user } = useAuthStore();
     const { profile } = useProfileStore();
+    const updateProfile = useProfileStore(s => s.updateProfile);
 
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [agreePrivacy, setAgreePrivacy] = useState(false);
@@ -39,7 +40,7 @@ export default function LegalAcceptScreen() {
             const now = new Date().toISOString();
             const updates = {
                 legal_accepted_at: now,
-                legal_accepted_version: 'v1.0',
+                legal_accepted_version: LEGAL_VERSIONS.acceptance,
                 terms_accepted_at: now,
                 terms_accepted_version: LEGAL_VERSIONS.terms,
                 privacy_accepted_at: now,
@@ -55,7 +56,7 @@ export default function LegalAcceptScreen() {
             if (error) throw error;
 
             // Optimistic local update so gate passes immediately.
-            useProfileStore.getState().updateProfile(updates);
+            void updateProfile(updates);
             router.replace('/');
         } catch (e: any) {
             Alert.alert('Error', e?.message || 'Failed to save acceptance.');

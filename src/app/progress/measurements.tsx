@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function MeasurementLogScreen() {
     const { user } = useAuthStore();
     const router = useRouter();
+    const fetchProfile = useProfileStore(s => s.fetchProfile);
     const [weight, setWeight] = useState('');
     const [bodyFat, setBodyFat] = useState('');
     const [waist, setWaist] = useState('');
@@ -45,7 +46,7 @@ export default function MeasurementLogScreen() {
 
             // Refresh profile to ensure data consistency (points/stats)
             if (user) {
-                useProfileStore.getState().fetchProfile(user.id);
+                void fetchProfile(user.id);
             }
 
             Alert.alert("Recorded", "Your measurements have been updated. Your evolution is being tracked.");
