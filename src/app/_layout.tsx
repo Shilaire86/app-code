@@ -1,8 +1,14 @@
 import { Redirect, Stack, useSegments } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useFonts } from 'expo-font';
+import { Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
-import { theme } from '@/constants/theme';
+import { darkColors } from '@/constants/theme';
+// DiagnosticView renders before any hook context is available, so it reads
+// from the static darkColors palette directly. All other screens use useTheme().
+const theme = { colors: darkColors };
 import { scheduleDailyCheckIn, registerForPushNotificationsAsync, scheduleWeeklyProgressSummary } from '@/lib/notifications';
 import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
@@ -76,6 +82,15 @@ function DiagnosticView({ message, initialized, onForceClear }: { message: strin
 
 export default function RootLayout() {
     try {
+        const [fontsLoaded] = useFonts({
+            Outfit_400Regular,
+            Outfit_600SemiBold,
+            Outfit_700Bold,
+            Inter_400Regular,
+            Inter_500Medium,
+            Inter_600SemiBold,
+        });
+
         const { session, initialized } = useAuth();
         const segments = useSegments();
         const signOut = useAuthStore(s => s.signOut);
@@ -148,8 +163,8 @@ export default function RootLayout() {
         const inOnboardingGroup = isOnboardingGroup(currentSegment);
         const inLegalGroup = isLegalGroup(currentSegment);
 
-        if (!initialized) {
-            return <DiagnosticView message="Initializing authenticator..." initialized={initialized} onForceClear={forceClear} />;
+        if (!initialized || !fontsLoaded) {
+            return <DiagnosticView message={!fontsLoaded ? "Loading assets..." : "Initializing authenticator..."} initialized={initialized} onForceClear={forceClear} />;
         }
 
         if (shouldBlockForBootstrap({

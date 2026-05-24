@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useThemeStore, ThemeMode } from '@/stores/themeStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -11,7 +12,6 @@ import { APP_CONFIG } from '@/lib/appConfig';
 
 const PRESET_TIMES_24H = ['06:00', '09:00', '12:00', '18:00', '20:00'] as const;
 const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian'] as const;
-
 
 function toDisplayTime(hhmm: string | null | undefined) {
     const value = hhmm || '09:00';
@@ -41,6 +41,8 @@ type SubscriptionSnapshot = {
 };
 
 export default function SettingsScreen() {
+    const { colors, spacing, radius, typography, isDark } = useTheme();
+    const { themeMode, setThemeMode } = useThemeStore();
     const { user } = useAuthStore();
     const { profile, tier } = useProfileStore();
     const router = useRouter();
@@ -226,23 +228,24 @@ export default function SettingsScreen() {
     }
 
     const currentReminderDisplay = toDisplayTime(profile?.preferred_workout_time || null);
+    const placeholderColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <Stack.Screen
                 options={{
                     headerShown: true,
                     headerTitle: 'Settings',
-                    headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerStyle: { backgroundColor: colors.background },
+                    headerTintColor: colors.text,
                 }}
             />
 
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView contentContainerStyle={[styles.content, { padding: spacing.lg }]}>
                 {/* Upgrade Banner for Standard/Free users */}
                 {(tier === 'free' || tier === 'standard') && (
                     <TouchableOpacity
-                        style={styles.upgradeBanner}
+                        style={[styles.upgradeBanner, { borderRadius: radius.lg }]}
                         onPress={() => router.push('/subscribe')}
                     >
                         <View style={styles.upgradeContent}>
@@ -257,39 +260,39 @@ export default function SettingsScreen() {
                 )}
 
                 {/* Profile Section */}
-                <Text style={styles.sectionTitle}>Profile</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Profile</Text>
 
-                <View style={styles.card}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Full Name</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <View style={[styles.inputGroup, { marginBottom: spacing.lg }]}>
+                        <Text style={[styles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Full Name</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { borderRadius: radius.md, padding: spacing.md, color: colors.text, borderColor: colors.border }]}
                             placeholder="Your name"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            placeholderTextColor={placeholderColor}
                             value={fullName}
                             onChangeText={setFullName}
                         />
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email</Text>
-                        <Text style={styles.emailText}>{user?.email}</Text>
-                        <Text style={styles.helperText}>Email cannot be changed</Text>
+                    <View style={[styles.inputGroup, { marginBottom: spacing.lg }]}>
+                        <Text style={[styles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Email</Text>
+                        <Text style={[styles.emailText, { color: colors.text, padding: spacing.md }]}>{user?.email}</Text>
+                        <Text style={[styles.helperText, { color: colors.textTertiary }]}>Email cannot be changed</Text>
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Timezone</Text>
+                    <View style={[styles.inputGroup, { marginBottom: spacing.lg }]}>
+                        <Text style={[styles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Timezone</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { borderRadius: radius.md, padding: spacing.md, color: colors.text, borderColor: colors.border }]}
                             placeholder="America/New_York"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            placeholderTextColor={placeholderColor}
                             value={timezone}
                             onChangeText={setTimezone}
                         />
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.primaryButton, isSaving && styles.disabledButton]}
+                        style={[styles.primaryButton, { backgroundColor: colors.primary, padding: spacing.md, borderRadius: radius.md, marginTop: spacing.md }, isSaving && styles.disabledButton]}
                         onPress={handleSaveProfile}
                         disabled={isSaving}
                     >
@@ -299,61 +302,99 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Notifications Section */}
-                <Text style={styles.sectionTitle}>Notifications</Text>
+                {/* Theme Section */}
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Theme</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>App Theme</Text>
+                    <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Choose light, dark, or system default</Text>
+                    <View style={styles.presetRow}>
+                        {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => {
+                            const active = themeMode === mode;
+                            return (
+                                <TouchableOpacity
+                                    key={mode}
+                                    style={[
+                                        styles.presetButton,
+                                        { borderRadius: radius.md, borderColor: colors.border },
+                                        active && {
+                                            borderColor: colors.primary,
+                                            backgroundColor: colors.primary + '20',
+                                        },
+                                        { minWidth: '30%', flex: 1, alignItems: 'center' }
+                                    ]}
+                                    onPress={() => setThemeMode(mode)}
+                                >
+                                    <Text style={[styles.presetButtonText, { color: colors.textSecondary }, active && { color: colors.text, fontWeight: '800' }, { textTransform: 'capitalize' }]}>
+                                        {mode}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
 
-                <View style={styles.card}>
+                {/* Notifications Section */}
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Notifications</Text>
+
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
                     <View style={styles.settingRow}>
                         <View>
-                            <Text style={styles.settingLabel}>Push Notifications</Text>
-                            <Text style={styles.settingDesc}>Daily check-ins and reminders</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>Push Notifications</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Daily check-ins and reminders</Text>
                         </View>
                         <Switch
                             value={notificationsEnabled}
                             onValueChange={setNotificationsEnabled}
-                            trackColor={{ false: '#3e3e3e', true: theme.colors.primary }}
+                            trackColor={{ false: '#3e3e3e', true: colors.primary }}
                             thumbColor="#fff"
                         />
                     </View>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
                     <View style={styles.settingRow}>
                         <View>
-                            <Text style={styles.settingLabel}>Smart Streak Reminders</Text>
-                            <Text style={styles.settingDesc}>Nudges you when your streak is at risk</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>Smart Streak Reminders</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Nudges you when your streak is at risk</Text>
                         </View>
                         <Switch
                             value={streakNudgesEnabled}
                             onValueChange={setStreakNudgesEnabled}
-                            trackColor={{ false: '#3e3e3e', true: theme.colors.primary }}
+                            trackColor={{ false: '#3e3e3e', true: colors.primary }}
                             thumbColor="#fff"
                         />
                     </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>Workout Reminders</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Workout Reminders</Text>
 
-                <View style={styles.card}>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
                     <View style={styles.settingRow}>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.settingLabel}>Daily reminder</Text>
-                            <Text style={styles.settingDesc}>Current: {currentReminderDisplay}</Text>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>Daily reminder</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Current: {currentReminderDisplay}</Text>
                         </View>
                     </View>
 
-                    <Text style={[styles.helperText, { marginTop: 12 }]}>Set reminder time</Text>
+                    <Text style={[styles.helperText, { color: colors.textTertiary, marginTop: 12 }]}>Set reminder time</Text>
                     <View style={styles.presetRow}>
                         {PRESET_TIMES_24H.map((t) => {
                             const active = (profile?.preferred_workout_time || '09:00') === t;
                             return (
                                 <TouchableOpacity
                                     key={t}
-                                    style={[styles.presetButton, active && styles.presetButtonActive]}
+                                    style={[
+                                        styles.presetButton,
+                                        { borderRadius: radius.md, borderColor: colors.border },
+                                        active && {
+                                            borderColor: colors.primary,
+                                            backgroundColor: colors.primary + '20',
+                                        }
+                                    ]}
                                     onPress={() => setReminderTime(t)}
                                     disabled={savingReminder}
                                 >
-                                    <Text style={[styles.presetButtonText, active && styles.presetButtonTextActive]}>
+                                    <Text style={[styles.presetButtonText, { color: colors.textSecondary }, active && { color: colors.text, fontWeight: '800' }]}>
                                         {toDisplayTime(t)}
                                     </Text>
                                 </TouchableOpacity>
@@ -361,15 +402,15 @@ export default function SettingsScreen() {
                         })}
                     </View>
                     {!!savingReminder && (
-                        <Text style={[styles.helperText, { marginTop: 10 }]}>Saving...</Text>
+                        <Text style={[styles.helperText, { color: colors.textTertiary, marginTop: 10 }]}>Saving...</Text>
                     )}
                 </View>
 
-                <Text style={styles.sectionTitle}>Nutrition</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Nutrition</Text>
 
-                <View style={styles.card}>
-                    <Text style={styles.settingLabel}>Dietary Preference</Text>
-                    <Text style={styles.settingDesc}>Used to personalize smart food suggestions</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>Dietary Preference</Text>
+                    <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Used to personalize smart food suggestions</Text>
                     
                     <View style={styles.presetRow}>
                         {DIETARY_PREFERENCES.map((pref) => {
@@ -377,11 +418,19 @@ export default function SettingsScreen() {
                             return (
                                 <TouchableOpacity
                                     key={pref}
-                                    style={[styles.presetButton, active && styles.presetButtonActive, { minWidth: '45%' }]}
+                                    style={[
+                                        styles.presetButton,
+                                        { borderRadius: radius.md, borderColor: colors.border },
+                                        active && {
+                                            borderColor: colors.primary,
+                                            backgroundColor: colors.primary + '20',
+                                        },
+                                        { minWidth: '45%' }
+                                    ]}
                                     onPress={() => setDietaryPreference(pref)}
                                     disabled={isSaving}
                                 >
-                                    <Text style={[styles.presetButtonText, active && styles.presetButtonTextActive, { textTransform: 'capitalize' }]}>
+                                    <Text style={[styles.presetButtonText, { color: colors.textSecondary }, active && { color: colors.text, fontWeight: '800' }, { textTransform: 'capitalize' }]}>
                                         {pref}
                                     </Text>
                                 </TouchableOpacity>
@@ -391,108 +440,109 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Account Actions */}
-                <Text style={styles.sectionTitle}>Account</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Account</Text>
 
-                <View style={styles.card}>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
                     <View style={styles.subscriptionHeaderRow}>
-                        <Text style={styles.settingLabel}>Current plan</Text>
+                        <Text style={[styles.settingLabel, { color: colors.text }]}>Current plan</Text>
                         <Text style={styles.subscriptionBadge}>{(subscription?.tier ?? tier).toUpperCase()}</Text>
                     </View>
-                    <Text style={styles.settingDesc}>
+                    <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
                         Status: {subscription?.status ?? (tier === 'free' ? 'free' : 'active')}
                     </Text>
-                    <Text style={styles.settingDesc}>
+                    <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
                         Trial ends: {formatDateLabel(subscription?.trial_end)}
                     </Text>
-                    <Text style={styles.settingDesc}>
+                    <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
                         Next billing date: {formatDateLabel(subscription?.current_period_end)}
                     </Text>
                     {(subscription?.cancel_at_period_end ?? false) ? (
                         <Text style={styles.subscriptionCancelNote}>Cancellation scheduled at period end.</Text>
                     ) : null}
                     {loadingSubscription ? (
-                        <Text style={styles.helperText}>Refreshing subscription details...</Text>
+                        <Text style={[styles.helperText, { color: colors.textTertiary }]}>Refreshing subscription details...</Text>
                     ) : null}
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
                     <TouchableOpacity
-                        style={styles.actionButton}
+                        style={[styles.actionButton, { paddingVertical: spacing.md }]}
                         onPress={() => router.push('/subscribe')}
                     >
-                        <Ionicons name="card-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>
+                        <Ionicons name="card-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>
                             {tier !== 'free' ? 'Manage Subscription' : 'Choose a Subscription'}
                         </Text>
                     </TouchableOpacity>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
-                    <TouchableOpacity style={styles.actionButton} onPress={handleSignOut}>
-                        <Ionicons name="log-out-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Sign Out</Text>
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={handleSignOut}>
+                        <Ionicons name="log-out-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Sign Out</Text>
                     </TouchableOpacity>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
-                    <TouchableOpacity style={styles.actionButton} onPress={handleDeleteAccount}>
-                        <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                        <Text style={[styles.actionText, { color: theme.colors.error }]}>
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={handleDeleteAccount}>
+                        <Ionicons name="trash-outline" size={20} color={colors.error} />
+                        <Text style={[styles.actionText, { color: colors.error }]}>
                             Delete Account
                         </Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* App Info */}
-                <Text style={styles.sectionTitle}>Help</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Help</Text>
 
-                <View style={styles.card}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/help/quick-start')}>
-                        <Ionicons name="help-circle-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Help & Quick Start Guide</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/help/quick-start')}>
+                        <Ionicons name="help-circle-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Help & Quick Start Guide</Text>
                     </TouchableOpacity>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/help/report-issue')}>
-                        <Ionicons name="chatbox-ellipses-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Report an Issue</Text>
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/help/report-issue')}>
+                        <Ionicons name="chatbox-ellipses-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Report an Issue</Text>
                     </TouchableOpacity>
                 </View>
 
-                <Text style={styles.sectionTitle}>Legal</Text>
+                {/* Legal Section */}
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Legal</Text>
 
-                <View style={styles.card}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/legal/terms')}>
-                        <Ionicons name="document-text-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Terms of Service</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/legal/terms')}>
+                        <Ionicons name="document-text-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Terms of Service</Text>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/legal/privacy')}>
-                        <Ionicons name="shield-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Privacy Policy</Text>
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/legal/privacy')}>
+                        <Ionicons name="shield-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Privacy Policy</Text>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/legal/disclaimer')}>
-                        <Ionicons name="warning-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Health Disclaimer</Text>
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/legal/disclaimer')}>
+                        <Ionicons name="warning-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Health Disclaimer</Text>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/legal/community')}>
-                        <Ionicons name="people-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Community Guidelines</Text>
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/legal/community')}>
+                        <Ionicons name="people-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Community Guidelines</Text>
                     </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/legal/affiliate')}>
-                        <Ionicons name="pricetag-outline" size={20} color={theme.colors.text} />
-                        <Text style={styles.actionText}>Affiliate Disclosure</Text>
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                    <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={() => router.push('/legal/affiliate')}>
+                        <Ionicons name="pricetag-outline" size={20} color={colors.text} />
+                        <Text style={[styles.actionText, { color: colors.text }]}>Affiliate Disclosure</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* App Info */}
-                <View style={styles.footer}>
+                <View style={[styles.footer, { marginTop: spacing.xxl, marginBottom: spacing.xl }]}>
                     <Text style={styles.footerText}>The Becoming Method</Text>
-                    <Text style={styles.footerText}>Version 1.0.1</Text>
+                    <Text style={[styles.footerText, { color: colors.textTertiary }]}>Version 1.0.1</Text>
                 </View>
             </ScrollView>
         </View>
@@ -502,63 +552,38 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
     },
-    content: {
-        padding: theme.spacing.lg,
-    },
+    content: {},
     sectionTitle: {
-        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 1.5,
-        marginTop: theme.spacing.xl,
-        marginBottom: theme.spacing.md,
     },
     card: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.xl,
-        padding: theme.spacing.lg,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
     },
-    inputGroup: {
-        marginBottom: theme.spacing.lg,
-    },
+    inputGroup: {},
     label: {
-        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '700',
-        marginBottom: theme.spacing.sm,
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
     input: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: theme.radius.md,
-        padding: theme.spacing.md,
-        color: theme.colors.text,
+        backgroundColor: 'rgba(128,128,128,0.06)',
         fontSize: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
     },
     emailText: {
-        color: theme.colors.text,
         fontSize: 16,
-        padding: theme.spacing.md,
     },
     helperText: {
-        color: theme.colors.textTertiary,
         fontSize: 12,
         marginTop: 4,
     },
     primaryButton: {
-        backgroundColor: theme.colors.primary,
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
         alignItems: 'center',
-        marginTop: theme.spacing.md,
     },
     disabledButton: {
         opacity: 0.5,
@@ -574,12 +599,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     settingLabel: {
-        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '600',
     },
     settingDesc: {
-        color: theme.colors.textSecondary,
         fontSize: 12,
         marginTop: 2,
     },
@@ -595,9 +618,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 999,
-        backgroundColor: 'rgba(0,187,255,0.2)',
+        backgroundColor: 'rgba(197,168,128,0.2)',
         borderWidth: 1,
-        borderColor: 'rgba(0,187,255,0.35)',
+        borderColor: 'rgba(197,168,128,0.35)',
     },
     subscriptionCancelNote: {
         color: '#FFB74D',
@@ -608,49 +631,34 @@ const styles = StyleSheet.create({
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: theme.spacing.md,
         gap: 12,
     },
     actionText: {
-        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '600',
     },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        marginVertical: theme.spacing.sm,
     },
     presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
     presetButton: {
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.10)',
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: 'rgba(128,128,128,0.05)',
         paddingHorizontal: 12,
         paddingVertical: 10,
-        borderRadius: theme.radius.md,
         minHeight: 44,
         justifyContent: 'center',
     },
-    presetButtonActive: {
-        borderColor: 'rgba(0,187,255,0.35)',
-        backgroundColor: 'rgba(0,187,255,0.14)',
-    },
-    presetButtonText: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800' },
-    presetButtonTextActive: { color: '#FFF' },
+    presetButtonText: { fontSize: 12, fontWeight: '800' },
     footer: {
         alignItems: 'center',
-        marginTop: theme.spacing.xxl,
-        marginBottom: theme.spacing.xl,
     },
     footerText: {
-        color: theme.colors.textTertiary,
         fontSize: 12,
         marginTop: 4,
     },
     upgradeBanner: {
         backgroundColor: 'rgba(255, 215, 0, 0.1)',
-        borderRadius: theme.radius.lg,
         padding: 16,
         marginBottom: 8,
         flexDirection: 'row',

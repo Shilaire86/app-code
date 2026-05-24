@@ -1,6 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { View, Text } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SectionHeader — The Becoming Method design system v2
+// Uses the new `label` typography token instead of ad-hoc inline styles.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface SectionHeaderProps {
     title: string;
@@ -8,28 +13,23 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, description }: SectionHeaderProps) {
+    const { colors, spacing, typography } = useTheme();
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>{title}</Text>
-            {description && <Text style={styles.description}>{description}</Text>}
+        <View style={{ marginBottom: spacing.md }}>
+            <Text style={[typography.label, { color: colors.textSecondary }]}>
+                {title}
+            </Text>
+            {description && (
+                <Text
+                    style={[
+                        typography.caption,
+                        { color: colors.textTertiary, marginTop: 3 },
+                    ]}
+                >
+                    {description}
+                </Text>
+            )}
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        marginBottom: theme.spacing.md,
-    },
-    title: {
-        color: theme.colors.text,
-        fontSize: 14,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    description: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
-        marginTop: 2,
-    },
-});

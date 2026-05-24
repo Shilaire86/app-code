@@ -6,7 +6,11 @@ import {
     StyleSheet,
     TextInputProps,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input — The Becoming Method design system v2
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -21,26 +25,75 @@ export const Input = ({
     style,
     ...props
 }: InputProps) => {
+    const { colors, spacing, radius, typography } = useTheme();
+
     return (
-        <View style={styles.container}>
-            {label && <Text style={styles.label}>{label}</Text>}
+        <View style={[styles.container, { marginBottom: spacing.md }]}>
+            {label && (
+                <Text
+                    style={[
+                        typography.label,
+                        {
+                            color:        colors.textSecondary,
+                            marginBottom: spacing.sm,
+                        },
+                    ]}
+                >
+                    {label}
+                </Text>
+            )}
             <View
                 style={[
                     styles.inputContainer,
-                    error ? styles.inputError : null,
-                    props.multiline ? styles.multiline : null,
+                    {
+                        backgroundColor: colors.surface,
+                        borderRadius:    radius.md,
+                        borderColor:     error ? colors.error : colors.borderMid,
+                        paddingHorizontal: spacing.md,
+                    },
+                    props.multiline && {
+                        height:     100,
+                        paddingTop: spacing.sm,
+                    },
                 ]}
             >
                 <TextInput
-                    style={[styles.input, style]}
-                    placeholderTextColor={theme.colors.textTertiary}
+                    style={[
+                        styles.input,
+                        { ...typography.body, color: colors.text },
+                        props.multiline && { textAlignVertical: 'top' },
+                        style,
+                    ]}
+                    placeholderTextColor={colors.textTertiary}
                     {...props}
                 />
             </View>
             {error ? (
-                <Text style={styles.errorText}>{error}</Text>
+                <Text
+                    style={[
+                        typography.caption,
+                        {
+                            color:      colors.error,
+                            marginTop:  spacing.xs,
+                            marginLeft: spacing.xs,
+                        },
+                    ]}
+                >
+                    {error}
+                </Text>
             ) : helperText ? (
-                <Text style={styles.helperText}>{helperText}</Text>
+                <Text
+                    style={[
+                        typography.caption,
+                        {
+                            color:      colors.textSecondary,
+                            marginTop:  spacing.xs,
+                            marginLeft: spacing.xs,
+                        },
+                    ]}
+                >
+                    {helperText}
+                </Text>
             ) : null}
         </View>
     );
@@ -48,47 +101,14 @@ export const Input = ({
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: theme.spacing.md,
         width: '100%',
-    },
-    label: {
-        ...theme.typography.bodySmall,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.xs,
-        marginLeft: theme.spacing.xs,
     },
     inputContainer: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.md,
         borderWidth: 1,
-        borderColor: theme.colors.border,
-        minHeight: 56,
+        minHeight:   52,
         justifyContent: 'center',
-        paddingHorizontal: theme.spacing.md,
     },
     input: {
-        ...theme.typography.body,
-        color: theme.colors.text,
         width: '100%',
-    },
-    inputError: {
-        borderColor: theme.colors.error,
-    },
-    multiline: {
-        height: 100,
-        paddingTop: theme.spacing.sm,
-        textAlignVertical: 'top',
-    },
-    errorText: {
-        ...theme.typography.caption,
-        color: theme.colors.error,
-        marginTop: theme.spacing.xs,
-        marginLeft: theme.spacing.xs,
-    },
-    helperText: {
-        ...theme.typography.caption,
-        color: theme.colors.textSecondary,
-        marginTop: theme.spacing.xs,
-        marginLeft: theme.spacing.xs,
     },
 });

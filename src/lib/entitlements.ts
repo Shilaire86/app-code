@@ -129,7 +129,7 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
     },
 
     // ─────────────────────────────────────────────────────────────────
-    // STANDARD ($9.99/mo) — The Foundation.
+    // STANDARD ($14.99/mo) — The Foundation.
     // Every tool needed to execute consistently. Missing: intelligence.
     // ─────────────────────────────────────────────────────────────────
     standard: {
@@ -166,7 +166,7 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
     },
 
     // ─────────────────────────────────────────────────────────────────
-    // VIP ($19.99/mo) — The Method.
+    // VIP ($29.99/mo) — The Method.
     // Standard gives tools to show up. VIP makes the app think with you.
     // ─────────────────────────────────────────────────────────────────
     vip: {
@@ -203,7 +203,7 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
     },
 
     // ─────────────────────────────────────────────────────────────────
-    // ELITE ($99.99/mo — Coming Soon) — The Partnership.
+    // ELITE ($199.99/mo — Coming Soon) — The Partnership.
     // A human gets involved. Everything in VIP + 1:1 coaching.
     // ─────────────────────────────────────────────────────────────────
     elite: {
@@ -241,9 +241,9 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
 };
 
 export const PRICING: Partial<Record<SubscriptionTier, { priceText: string; period: 'month' }>> = {
-    standard: { priceText: '$9.99/mo', period: 'month' },
-    vip: { priceText: '$19.99/mo', period: 'month' },
-    elite: { priceText: '$99.99/mo', period: 'month' },
+    standard: { priceText: '$14.99/mo', period: 'month' },
+    vip: { priceText: '$29.99/mo', period: 'month' },
+    elite: { priceText: '$199.99/mo', period: 'month' },
 };
 
 export function isVip(tier: SubscriptionTier | null | undefined): boolean {
