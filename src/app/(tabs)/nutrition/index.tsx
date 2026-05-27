@@ -28,6 +28,8 @@ import {
     FoodSuggestion
 } from '@/services/nutrition';
 import { getActiveInsights, resolveInsight, generateInsights, NutritionInsight } from '@/services/nutritionInsights';
+import * as ImagePicker from 'expo-image-picker';
+import { estimateMealFromPhoto } from '@/services/mealVision';
 
 export default function NutritionDashboard() {
     const theme = useTheme();
@@ -42,6 +44,7 @@ export default function NutritionDashboard() {
     const [insights, setInsights] = useState<NutritionInsight[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [scanning, setScanning] = useState(false);
 
     const today = new Date().toISOString().split('T')[0];
     const canAccessNutrition = hasEntitlement(tier, 'nutritionEnabled');
@@ -105,6 +108,67 @@ export default function NutritionDashboard() {
                     }
                 }
             }
+        ]);
+    };
+
+    const runScan = async (source: 'camera' | 'library') => {
+        try {
+            const perm = source === 'camera'
+                ? await ImagePicker.requestCameraPermissionsAsync()
+                : await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!perm.granted) {
+                Alert.alert(
+                    'Permission Needed',
+                    `Please allow ${source === 'camera' ? 'camera' : 'photo library'} access to scan meals.`
+                );
+                return;
+            }
+
+            const opts: ImagePicker.ImagePickerOptions = {
+                mediaTypes: ['images'],
+                base64: true,
+                quality: 0.5,
+                allowsEditing: false,
+            };
+            const result = source === 'camera'
+                ? await ImagePicker.launchCameraAsync(opts)
+                : await ImagePicker.launchImageLibraryAsync(opts);
+
+            if (result.canceled || !result.assets?.[0]?.base64) return;
+            const asset = result.assets[0];
+            const mediaType = asset.mimeType === 'image/png'
+                ? 'image/png'
+                : asset.mimeType === 'image/webp'
+                    ? 'image/webp'
+                    : 'image/jpeg';
+
+            setScanning(true);
+            const est = await estimateMealFromPhoto(asset.base64!, mediaType);
+            setScanning(false);
+
+            router.push({
+                pathname: '/nutrition/log-meal',
+                params: {
+                    name: est.name,
+                    calories: String(est.calories),
+                    protein: String(est.protein_g),
+                    carbs: String(est.carbs_g),
+                    fat: String(est.fat_g),
+                    confidence: est.confidence,
+                    fromScan: '1',
+                },
+            });
+        } catch (err) {
+            setScanning(false);
+            Alert.alert('Scan Failed', err instanceof Error ? err.message : 'Could not analyze the photo.');
+        }
+    };
+
+    const handleScanMeal = () => {
+        Alert.alert('Scan a Meal', 'Snap a photo of your meal and AI will estimate the macros.', [
+            { text: 'Take Photo', onPress: () => runScan('camera') },
+            { text: 'Choose from Library', onPress: () => runScan('library') },
+            { text: 'Cancel', style: 'cancel' },
         ]);
     };
 
@@ -199,6 +263,14 @@ export default function NutritionDashboard() {
     return (
         <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
+
+            {scanning && (
+                <View style={styles.scanOverlay}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.scanOverlayText}>Analyzing your meal…</Text>
+                    <Text style={styles.scanOverlaySub}>Estimating macros from your photo</Text>
+                </View>
+            )}
 
             <View style={styles.header}>
                 <View>
@@ -311,9 +383,20 @@ export default function NutritionDashboard() {
                     </View>
                 </View>
 
+                {/* Scan a Meal (VIP + Elite) */}
+                {isVip(tier) && (
+                    <TouchableOpacity style={styles.scanBtn} onPress={handleScanMeal} disabled={scanning}>
+                        <Ionicons name="camera" size={20} color="#000" />
+                        <Text style={styles.scanBtnText}>SCAN A MEAL</Text>
+                        <View style={styles.scanBadge}>
+                            <Text style={styles.scanBadgeText}>AI</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
+
                 {/* Action Buttons */}
                 <View style={styles.actionRow}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[styles.addLogBtn, isVip(tier) && styles.actionBtnHalf]}
                         onPress={() => router.push('/nutrition/log-meal')}
                     >
@@ -322,7 +405,7 @@ export default function NutritionDashboard() {
                     </TouchableOpacity>
 
                     {isVip(tier) && (
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.myMealsBtn, styles.actionBtnHalf]}
                             onPress={() => router.push('/nutrition/saved-meals')}
                         >
@@ -331,6 +414,22 @@ export default function NutritionDashboard() {
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {/* Tools */}
+                <Text style={styles.sectionLabel}>TOOLS</Text>
+                <TouchableOpacity
+                    style={styles.toolRow}
+                    onPress={() => router.push('/nutrition/calculator')}
+                >
+                    <View style={styles.toolIconBox}>
+                        <Ionicons name="calculator-outline" size={20} color={colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.toolTitle}>Macro Calculator</Text>
+                        <Text style={styles.toolSub}>Recalculate your daily calorie & macro targets</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
 
                 {/* Smart Suggestions (VIP+) */}
                 {suggestions.length > 0 && (
@@ -622,6 +721,82 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         fontSize: 14,
         fontWeight: '800',
         letterSpacing: 1,
+    },
+    toolRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 32,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    toolIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: radius.sm,
+        backgroundColor: colors.primarySoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toolTitle: {
+        color: colors.text,
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    toolSub: {
+        color: colors.textSecondary,
+        fontSize: 12,
+        marginTop: 2,
+    },
+    scanBtn: {
+        backgroundColor: colors.primary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        height: 56,
+        borderRadius: 16,
+        marginBottom: 12,
+    },
+    scanBtnText: {
+        color: '#000',
+        fontSize: 15,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    scanBadge: {
+        backgroundColor: 'rgba(0,0,0,0.18)',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        marginLeft: 4,
+    },
+    scanBadgeText: {
+        color: '#000',
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 0.5,
+    },
+    scanOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 100,
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    scanOverlayText: {
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: '800',
+        marginTop: 8,
+    },
+    scanOverlaySub: {
+        color: colors.textSecondary,
+        fontSize: 14,
     },
     suggestionsSection: {
         marginBottom: 32,

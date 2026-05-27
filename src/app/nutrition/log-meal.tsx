@@ -14,23 +14,32 @@ import {
 } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, Stack } from 'expo-router';
+import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { isVip } from '@/lib/entitlements';
 import { logMeal, saveMeal, MealType } from '@/services/nutrition';
 
+const asStr = (v: string | string[] | undefined): string =>
+    Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
+
 export default function LogMealScreen() {
     const router = useRouter();
     const { user } = useAuthStore();
     const { tier } = useProfileStore();
+    // Fields can be pre-filled by the AI meal scanner (fromScan=1) for review.
+    const params = useLocalSearchParams<{
+        name?: string; calories?: string; protein?: string; carbs?: string;
+        fat?: string; confidence?: string; fromScan?: string;
+    }>();
+    const fromScan = asStr(params.fromScan) === '1';
 
-    const [name, setName] = useState('');
+    const [name, setName] = useState(asStr(params.name));
     const [mealType, setMealType] = useState<MealType>('snack');
-    const [calories, setCalories] = useState('');
-    const [protein, setProtein] = useState('');
-    const [carbs, setCarbs] = useState('');
-    const [fat, setFat] = useState('');
+    const [calories, setCalories] = useState(asStr(params.calories));
+    const [protein, setProtein] = useState(asStr(params.protein));
+    const [carbs, setCarbs] = useState(asStr(params.carbs));
+    const [fat, setFat] = useState(asStr(params.fat));
     const [isSaving, setIsSaving] = useState(false);
     const [saveToLibrary, setSaveToLibrary] = useState(false);
 
@@ -109,6 +118,16 @@ export default function LogMealScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
+                {fromScan && (
+                    <View style={styles.scanBanner}>
+                        <Ionicons name="sparkles" size={18} color={theme.colors.primary} />
+                        <Text style={styles.scanBannerText}>
+                            AI estimate from your photo
+                            {asStr(params.confidence) ? ` · ${asStr(params.confidence)} confidence` : ''}. Review and adjust before saving.
+                        </Text>
+                    </View>
+                )}
+
                 <View style={styles.section}>
                     <Text style={styles.label}>MEAL NAME</Text>
                     <TextInput
@@ -241,6 +260,25 @@ const styles = StyleSheet.create({
     section: {
         paddingHorizontal: theme.spacing.lg,
         marginBottom: 24,
+    },
+    scanBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginHorizontal: theme.spacing.lg,
+        marginBottom: 20,
+        padding: 14,
+        borderRadius: 12,
+        backgroundColor: theme.colors.primarySoft,
+        borderWidth: 1,
+        borderColor: theme.colors.primary,
+    },
+    scanBannerText: {
+        flex: 1,
+        color: theme.colors.text,
+        fontSize: 13,
+        lineHeight: 18,
+        textTransform: 'capitalize',
     },
     label: {
         color: theme.colors.textTertiary,
