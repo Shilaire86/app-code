@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useProfileStore } from '@/stores/profileStore';
@@ -10,6 +10,9 @@ import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { canAccessContentTier } from '@/lib/entitlements';
 
 export default function ProgramDetailScreen() {
+    const theme = useTheme();
+    const { colors, spacing, radius, typography } = theme;
+    const styles = createStyles(theme);
     const { id } = useLocalSearchParams();
     const [program, setProgram] = useState<any>(null);
     const [workouts, setWorkouts] = useState<any[]>([]);
@@ -98,7 +101,7 @@ export default function ProgramDetailScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -109,7 +112,7 @@ export default function ProgramDetailScreen() {
                 <Stack.Screen options={{
                     headerShown: true,
                     headerTitle: 'Programs',
-                    headerStyle: { backgroundColor: theme.colors.background },
+                    headerStyle: { backgroundColor: colors.background },
                     headerTintColor: '#FFF',
                 }} />
                 <Text style={styles.notAvailableTitle}>Program not available</Text>
@@ -145,7 +148,7 @@ export default function ProgramDetailScreen() {
                 <View style={styles.content}>
                     <View style={styles.titleRow}>
                         <Text style={styles.title}>{program.name}</Text>
-                        <View style={[styles.badge, { backgroundColor: (theme.colors as any)[program.difficulty] || theme.colors.primary }]}>
+                        <View style={[styles.badge, { backgroundColor: (colors as any)[program.difficulty] || colors.primary }]}>
                             <Text style={styles.badgeText}>{program.difficulty.toUpperCase()}</Text>
                         </View>
                     </View>
@@ -154,11 +157,11 @@ export default function ProgramDetailScreen() {
 
                     <View style={styles.statsRow}>
                         <View style={styles.stat}>
-                            <Ionicons name="calendar-outline" size={18} color={theme.colors.textSecondary} />
+                            <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
                             <Text style={styles.statText}>{program.duration_weeks} Weeks</Text>
                         </View>
                         <View style={styles.stat}>
-                            <Ionicons name="layers-outline" size={18} color={theme.colors.textSecondary} />
+                            <Ionicons name="layers-outline" size={18} color={colors.textSecondary} />
                             <Text style={styles.statText}>{getTierLabel(program.tier_required)} Tier</Text>
                         </View>
                     </View>
@@ -187,7 +190,7 @@ export default function ProgramDetailScreen() {
                                         <Text style={styles.workoutDetails}>Week {workout.week_number} • Day {workout.day_number}</Text>
                                     </View>
                                     {hasAccess ? (
-                                        <Ionicons name="play-circle-outline" size={24} color={theme.colors.primary} />
+                                        <Ionicons name="play-circle-outline" size={24} color={colors.primary} />
                                     ) : (
                                         <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.3)" />
                                     )}
@@ -197,7 +200,7 @@ export default function ProgramDetailScreen() {
                     </View>
 
                     {!hasAccess && (
-                        <View style={{ marginTop: theme.spacing.md }}>
+                        <View style={{ marginTop: spacing.md }}>
                             <UpgradePrompt
                                 title="Unlock this program"
                                 body="This program is part of a higher tier. Upgrade to access workouts and stay consistent."
@@ -226,10 +229,10 @@ export default function ProgramDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius' | 'typography'>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     centered: {
         justifyContent: 'center',
@@ -242,15 +245,15 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     notAvailableText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         textAlign: 'center',
         marginTop: 6,
         marginBottom: 14,
-        paddingHorizontal: theme.spacing.xl,
+        paddingHorizontal: spacing.xl,
     },
     notAvailableButton: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.md,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
         paddingHorizontal: 18,
         paddingVertical: 12,
         borderWidth: 1,
@@ -280,9 +283,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         marginTop: -30,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
     },
@@ -290,19 +293,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: theme.spacing.md,
+        marginBottom: spacing.md,
     },
     title: {
-        fontSize: theme.typography.h2.fontSize,
-        fontWeight: theme.typography.h2.fontWeight as any,
-        color: theme.colors.text,
+        fontSize: typography.h2.fontSize,
+        fontWeight: typography.h2.fontWeight as any,
+        color: colors.text,
         flex: 1,
-        marginRight: theme.spacing.md,
+        marginRight: spacing.md,
     },
     badge: {
-        paddingHorizontal: theme.spacing.sm,
+        paddingHorizontal: spacing.sm,
         paddingVertical: 4,
-        borderRadius: theme.radius.sm,
+        borderRadius: radius.sm,
     },
     badgeText: {
         color: '#FFF',
@@ -310,15 +313,15 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     description: {
-        color: theme.colors.textSecondary,
-        fontSize: theme.typography.body.fontSize,
+        color: colors.textSecondary,
+        fontSize: typography.body.fontSize,
         lineHeight: 24,
-        marginBottom: theme.spacing.lg,
+        marginBottom: spacing.lg,
     },
     statsRow: {
         flexDirection: 'row',
-        gap: theme.spacing.xl,
-        marginBottom: theme.spacing.xxl,
+        gap: spacing.xl,
+        marginBottom: spacing.xxl,
     },
     stat: {
         flexDirection: 'row',
@@ -326,26 +329,26 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     statText: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 14,
         fontWeight: '500',
     },
     section: {
-        marginTop: theme.spacing.md,
+        marginTop: spacing.md,
     },
     sectionTitle: {
-        color: theme.colors.text,
-        fontSize: theme.typography.h3.fontSize,
-        fontWeight: theme.typography.h3.fontWeight as any,
-        marginBottom: theme.spacing.lg,
+        color: colors.text,
+        fontSize: typography.h3.fontSize,
+        fontWeight: typography.h3.fontWeight as any,
+        marginBottom: spacing.lg,
     },
     workoutItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
-        marginBottom: theme.spacing.md,
+        backgroundColor: colors.surface,
+        padding: spacing.md,
+        borderRadius: radius.md,
+        marginBottom: spacing.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
@@ -356,10 +359,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.05)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: theme.spacing.md,
+        marginRight: spacing.md,
     },
     workoutNumberText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 14,
         fontWeight: '700',
     },
@@ -367,17 +370,17 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     workoutName: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 15,
         fontWeight: '600',
     },
     workoutDetails: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         marginTop: 2,
     },
     emptyText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontStyle: 'italic',
         textAlign: 'center',
         marginTop: 20,
@@ -387,18 +390,18 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         paddingBottom: 40,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.05)',
         alignItems: 'center',
     },
     startButton: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         width: '100%',
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
+        padding: spacing.md,
+        borderRadius: radius.md,
         alignItems: 'center',
     },
     startText: {
@@ -407,10 +410,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     upgradeButton: {
-        backgroundColor: theme.colors.secondary,
+        backgroundColor: colors.secondary,
         width: '100%',
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
+        padding: spacing.md,
+        borderRadius: radius.md,
         alignItems: 'center',
     },
     upgradeText: {
@@ -419,8 +422,8 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     footerNote: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
-        marginTop: theme.spacing.sm,
+        marginTop: spacing.sm,
     },
 });

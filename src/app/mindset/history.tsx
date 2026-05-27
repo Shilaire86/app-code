@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,8 @@ export default function JournalHistoryScreen() {
     const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
     useEffect(() => {
         if (user) fetchEntries();
@@ -69,13 +71,13 @@ export default function JournalHistoryScreen() {
             >
                 <View style={styles.entryHeader}>
                     <View style={styles.dateContainer}>
-                        <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
+                        <Ionicons name="calendar-outline" size={16} color={colors.primary} />
                         <Text style={styles.dateText}>{formatDate(item.entry_date)}</Text>
                     </View>
                     <Ionicons
                         name={isExpanded ? 'chevron-up' : 'chevron-down'}
                         size={20}
-                        color={theme.colors.textSecondary}
+                        color={colors.textSecondary}
                     />
                 </View>
 
@@ -84,8 +86,8 @@ export default function JournalHistoryScreen() {
                         {item.gratitude && (
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="heart-outline" size={16} color="#FF6B6B" />
-                                    <Text style={[styles.sectionLabel, { color: '#FF6B6B' }]}>Gratitude</Text>
+                                    <Ionicons name="heart-outline" size={16} color={colors.error} />
+                                    <Text style={[styles.sectionLabel, { color: colors.error }]}>Gratitude</Text>
                                 </View>
                                 <Text style={styles.sectionText}>{item.gratitude}</Text>
                             </View>
@@ -93,8 +95,8 @@ export default function JournalHistoryScreen() {
                         {item.intention && (
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="compass-outline" size={16} color="#4ECDC4" />
-                                    <Text style={[styles.sectionLabel, { color: '#4ECDC4' }]}>Intention</Text>
+                                    <Ionicons name="compass-outline" size={16} color={colors.progress} />
+                                    <Text style={[styles.sectionLabel, { color: colors.progress }]}>Intention</Text>
                                 </View>
                                 <Text style={styles.sectionText}>{item.intention}</Text>
                             </View>
@@ -102,8 +104,8 @@ export default function JournalHistoryScreen() {
                         {item.reflection && (
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="bulb-outline" size={16} color="#FFEAA7" />
-                                    <Text style={[styles.sectionLabel, { color: '#FFEAA7' }]}>Reflection</Text>
+                                    <Ionicons name="bulb-outline" size={16} color={colors.primary} />
+                                    <Text style={[styles.sectionLabel, { color: colors.primary }]}>Reflection</Text>
                                 </View>
                                 <Text style={styles.sectionText}>{item.reflection}</Text>
                             </View>
@@ -121,7 +123,13 @@ export default function JournalHistoryScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'Mindset Journal',
+                    headerStyle: { backgroundColor: colors.background },
+                    headerTintColor: colors.text,
+                }} />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -131,18 +139,18 @@ export default function JournalHistoryScreen() {
             <Stack.Screen options={{
                 headerShown: true,
                 headerTitle: 'Mindset Journal',
-                headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
                 headerRight: () => (
                     <TouchableOpacity onPress={() => router.push('/mindset/new')}>
-                        <Ionicons name="add" size={28} color={theme.colors.primary} />
+                        <Ionicons name="add" size={28} color={colors.primary} />
                     </TouchableOpacity>
                 )
             }} />
 
             {entries.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="journal-outline" size={60} color="rgba(255,255,255,0.1)" />
+                    <Ionicons name="journal-outline" size={60} color={colors.borderHard} />
                     <Text style={styles.emptyText}>No journal entries yet</Text>
                     <Text style={styles.emptySubtext}>Start your mindset practice today</Text>
                     <TouchableOpacity
@@ -185,124 +193,123 @@ export default function JournalHistoryScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-    },
-    centered: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statsBar: {
-        flexDirection: 'row',
-        backgroundColor: theme.colors.surface,
-        margin: theme.spacing.md,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.lg,
-    },
-    statItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    statDivider: {
-        width: 1,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        marginVertical: -theme.spacing.sm,
-    },
-    statValue: {
-        color: theme.colors.primary,
-        fontSize: 24,
-        fontWeight: '700',
-    },
-    statLabel: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
-    },
-    list: {
-        padding: theme.spacing.md,
-        paddingTop: 0,
-    },
-    entryCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.md,
-        marginBottom: theme.spacing.sm,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-    },
-    entryHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    dateContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    dateText: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    previewText: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
-        marginTop: theme.spacing.sm,
-        lineHeight: 20,
-    },
-    entryContent: {
-        marginTop: theme.spacing.md,
-        gap: theme.spacing.md,
-    },
-    section: {
-        gap: 4,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    sectionLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    sectionText: {
-        color: '#FFF',
-        fontSize: 14,
-        lineHeight: 20,
-        paddingLeft: 22,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: theme.spacing.xl,
-    },
-    emptyText: {
-        color: '#FFF',
-        fontSize: 18,
-        fontWeight: '600',
-        marginTop: theme.spacing.lg,
-    },
-    emptySubtext: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
-        marginTop: theme.spacing.xs,
-        marginBottom: theme.spacing.lg,
-    },
-    ctaButton: {
-        flexDirection: 'row',
-        backgroundColor: theme.colors.primary,
-        paddingHorizontal: theme.spacing.xl,
-        paddingVertical: theme.spacing.md,
-        borderRadius: theme.radius.md,
-        alignItems: 'center',
-        gap: 8,
-    },
-    ctaText: {
-        color: '#FFF',
-        fontWeight: '700',
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        centered: {
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        statsBar: {
+            flexDirection: 'row',
+            backgroundColor: colors.surface,
+            margin: spacing.md,
+            borderRadius: radius.lg,
+            padding: spacing.lg,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        statItem: {
+            flex: 1,
+            alignItems: 'center',
+        },
+        statDivider: {
+            width: 1,
+            backgroundColor: colors.borderMid,
+            marginVertical: -spacing.sm,
+        },
+        statValue: {
+            ...typography.h2,
+            color: colors.primary,
+        },
+        statLabel: {
+            ...typography.caption,
+            color: colors.textSecondary,
+        },
+        list: {
+            padding: spacing.md,
+            paddingTop: 0,
+        },
+        entryCard: {
+            backgroundColor: colors.surface,
+            borderRadius: radius.lg,
+            padding: spacing.md,
+            marginBottom: spacing.sm,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        entryHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        dateContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        dateText: {
+            ...typography.bodySmallMedium,
+            color: colors.text,
+        },
+        previewText: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            marginTop: spacing.sm,
+            lineHeight: 20,
+        },
+        entryContent: {
+            marginTop: spacing.md,
+            gap: spacing.md,
+        },
+        section: {
+            gap: 4,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+        sectionLabel: {
+            ...typography.captionMedium,
+        },
+        sectionText: {
+            ...typography.bodySmall,
+            color: colors.text,
+            lineHeight: 20,
+            paddingLeft: 22,
+        },
+        emptyContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: spacing.xl,
+        },
+        emptyText: {
+            ...typography.h3,
+            color: colors.text,
+            marginTop: spacing.lg,
+        },
+        emptySubtext: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            marginTop: spacing.xs,
+            marginBottom: spacing.lg,
+        },
+        ctaButton: {
+            flexDirection: 'row',
+            backgroundColor: colors.primary,
+            paddingHorizontal: spacing.xl,
+            paddingVertical: spacing.md,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            gap: 8,
+        },
+        ctaText: {
+            ...typography.buttonSm,
+            color: '#FFF',
+        },
+    });

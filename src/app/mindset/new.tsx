@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -17,6 +17,8 @@ export default function NewMindsetScreen() {
     const [reflection, setReflection] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [prompts, setPrompts] = useState(() => getDailyPrompts());
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
     const refreshPrompt = (category: 'gratitude' | 'intention' | 'reflection') => {
         setPrompts(prev => ({
@@ -64,8 +66,8 @@ export default function NewMindsetScreen() {
             <Stack.Screen options={{
                 headerShown: true,
                 headerTitle: 'New Entry',
-                headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -73,11 +75,11 @@ export default function NewMindsetScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={styles.sectionLabel}>
-                            <Ionicons name="heart" size={18} color="#FF6B6B" />
-                            <Text style={[styles.labelText, { color: '#FF6B6B' }]}>Gratitude</Text>
+                            <Ionicons name="heart" size={18} color={colors.error} />
+                            <Text style={[styles.labelText, { color: colors.error }]}>Gratitude</Text>
                         </View>
                         <TouchableOpacity onPress={() => refreshPrompt('gratitude')}>
-                            <Ionicons name="refresh" size={18} color={theme.colors.textSecondary} />
+                            <Ionicons name="refresh" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.promptText}>{prompts.gratitude.text}</Text>
@@ -86,7 +88,7 @@ export default function NewMindsetScreen() {
                         multiline
                         numberOfLines={3}
                         placeholder="What are you grateful for?"
-                        placeholderTextColor="rgba(255,255,255,0.2)"
+                        placeholderTextColor={colors.textTertiary}
                         value={gratitude}
                         onChangeText={setGratitude}
                     />
@@ -96,11 +98,11 @@ export default function NewMindsetScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={styles.sectionLabel}>
-                            <Ionicons name="compass" size={18} color="#4ECDC4" />
-                            <Text style={[styles.labelText, { color: '#4ECDC4' }]}>Intention</Text>
+                            <Ionicons name="compass" size={18} color={colors.progress} />
+                            <Text style={[styles.labelText, { color: colors.progress }]}>Intention</Text>
                         </View>
                         <TouchableOpacity onPress={() => refreshPrompt('intention')}>
-                            <Ionicons name="refresh" size={18} color={theme.colors.textSecondary} />
+                            <Ionicons name="refresh" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.promptText}>{prompts.intention.text}</Text>
@@ -109,7 +111,7 @@ export default function NewMindsetScreen() {
                         multiline
                         numberOfLines={3}
                         placeholder="What is your intention today?"
-                        placeholderTextColor="rgba(255,255,255,0.2)"
+                        placeholderTextColor={colors.textTertiary}
                         value={intention}
                         onChangeText={setIntention}
                     />
@@ -119,11 +121,11 @@ export default function NewMindsetScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={styles.sectionLabel}>
-                            <Ionicons name="bulb" size={18} color="#FFEAA7" />
-                            <Text style={[styles.labelText, { color: '#FFEAA7' }]}>Reflection</Text>
+                            <Ionicons name="bulb" size={18} color={colors.primary} />
+                            <Text style={[styles.labelText, { color: colors.primary }]}>Reflection</Text>
                         </View>
                         <TouchableOpacity onPress={() => refreshPrompt('reflection')}>
-                            <Ionicons name="refresh" size={18} color={theme.colors.textSecondary} />
+                            <Ionicons name="refresh" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
                     <Text style={styles.promptText}>{prompts.reflection.text}</Text>
@@ -132,7 +134,7 @@ export default function NewMindsetScreen() {
                         multiline
                         numberOfLines={3}
                         placeholder="What insights do you have?"
-                        placeholderTextColor="rgba(255,255,255,0.2)"
+                        placeholderTextColor={colors.textTertiary}
                         value={reflection}
                         onChangeText={setReflection}
                     />
@@ -154,65 +156,62 @@ export default function NewMindsetScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-    },
-    content: {
-        padding: theme.spacing.lg,
-    },
-    section: {
-        marginBottom: theme.spacing.xl,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: theme.spacing.sm,
-    },
-    sectionLabel: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    labelText: {
-        fontSize: 14,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    promptText: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
-        fontStyle: 'italic',
-        marginBottom: theme.spacing.sm,
-        lineHeight: 20,
-    },
-    textArea: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.md,
-        padding: theme.spacing.md,
-        color: theme.colors.text,
-        fontSize: 16,
-        textAlignVertical: 'top',
-        minHeight: 80,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-    },
-    submitButton: {
-        backgroundColor: theme.colors.primary,
-        padding: theme.spacing.lg,
-        borderRadius: theme.radius.md,
-        alignItems: 'center',
-        marginTop: theme.spacing.md,
-    },
-    submitDisabled: {
-        opacity: 0.5,
-    },
-    submitText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        content: {
+            padding: spacing.lg,
+        },
+        section: {
+            marginBottom: spacing.xl,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: spacing.sm,
+        },
+        sectionLabel: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        labelText: {
+            ...typography.label,
+        },
+        promptText: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            fontStyle: 'italic',
+            marginBottom: spacing.sm,
+            lineHeight: 20,
+        },
+        textArea: {
+            backgroundColor: colors.surface,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            color: colors.text,
+            fontSize: 16,
+            textAlignVertical: 'top',
+            minHeight: 80,
+            borderWidth: 1,
+            borderColor: colors.borderMid,
+        },
+        submitButton: {
+            backgroundColor: colors.primary,
+            padding: spacing.lg,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            marginTop: spacing.md,
+        },
+        submitDisabled: {
+            opacity: 0.5,
+        },
+        submitText: {
+            ...typography.button,
+            color: '#FFF',
+        },
+    });

@@ -1,6 +1,6 @@
 import React, { memo, useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useCachedQuery } from '@/hooks/useCachedQuery';
 import { fetchAffiliateOffers, fetchCoachPosts, toggleLike, fetchUserLikes, fetchComments, addComment, fetchRecentActivities } from '@/services/feed';
@@ -9,17 +9,24 @@ import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
 import { useRouter } from 'expo-router';
 
-const OfferCard = memo(({ offer }: { offer: any }) => (
-    <TouchableOpacity key={offer.id} style={styles.offerCard}>
-        <View style={styles.offerTag}>
-            <Text style={styles.tagText}>{offer.tier_required?.toUpperCase()}</Text>
-        </View>
-        <Text style={styles.offerTitle} numberOfLines={1}>{offer.title}</Text>
-        <Text style={styles.offerDesc} numberOfLines={2}>{offer.description}</Text>
-    </TouchableOpacity>
-));
+const OfferCard = memo(({ offer }: { offer: any }) => {
+    const theme = useTheme();
+    const styles = createStyles(theme);
+    return (
+        <TouchableOpacity key={offer.id} style={styles.offerCard}>
+            <View style={styles.offerTag}>
+                <Text style={styles.tagText}>{offer.tier_required?.toUpperCase()}</Text>
+            </View>
+            <Text style={styles.offerTitle} numberOfLines={1}>{offer.title}</Text>
+            <Text style={styles.offerDesc} numberOfLines={2}>{offer.description}</Text>
+        </TouchableOpacity>
+    );
+});
 
 const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
+    const theme = useTheme();
+    const { colors } = theme;
+    const styles = createStyles(theme);
     const router = useRouter();
     const tier = useProfileStore(s => s.tier);
     const [comments, setComments] = useState<any[]>([]);
@@ -48,7 +55,7 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
         }
     };
 
-    if (loading) return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 10 }} />;
+    if (loading) return <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 10 }} />;
 
     return (
         <View style={styles.commentContainer}>
@@ -71,9 +78,9 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
                         />
                         <TouchableOpacity onPress={handleAddComment} disabled={submitting}>
                             {submitting ? (
-                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                                <ActivityIndicator size="small" color={colors.primary} />
                             ) : (
-                                <Ionicons name="send" size={20} color={theme.colors.primary} />
+                                <Ionicons name="send" size={20} color={colors.primary} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -92,6 +99,9 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
 };
 
 const PostCard = memo(({ item, isLiked, onToggleLike, user }: any) => {
+    const theme = useTheme();
+    const { colors } = theme;
+    const styles = createStyles(theme);
     const [likeCount, setLikeCount] = useState(item.like_count || 0);
     const [liked, setLiked] = useState(isLiked);
     const [liking, setLiking] = useState(false);
@@ -137,14 +147,14 @@ const PostCard = memo(({ item, isLiked, onToggleLike, user }: any) => {
                     <Ionicons
                         name={liked ? "heart" : "heart-outline"}
                         size={20}
-                        color={liked ? theme.colors.primary : theme.colors.textSecondary}
+                        color={liked ? colors.primary : colors.textSecondary}
                     />
-                    <Text style={[styles.actionText, liked && { color: theme.colors.primary }]}>
+                    <Text style={[styles.actionText, liked && { color: colors.primary }]}>
                         {likeCount > 0 ? `${likeCount} Respect` : 'Respect'}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton} onPress={() => setShowComments(!showComments)}>
-                    <Ionicons name="chatbubble-outline" size={18} color={theme.colors.textSecondary} />
+                    <Ionicons name="chatbubble-outline" size={18} color={colors.textSecondary} />
                     <Text style={styles.actionText}>Comment</Text>
                 </TouchableOpacity>
             </View>
@@ -162,7 +172,10 @@ const ACTIVITY_ICONS: Record<string, { name: string; color: string }> = {
 };
 
 const ActivityCard = memo(({ activity }: { activity: any }) => {
-    const iconInfo = ACTIVITY_ICONS[activity.activity_type] || { name: 'ellipse-outline', color: theme.colors.textSecondary };
+    const theme = useTheme();
+    const { colors } = theme;
+    const styles = createStyles(theme);
+    const iconInfo = ACTIVITY_ICONS[activity.activity_type] || { name: 'ellipse-outline', color: colors.textSecondary };
 
     const renderContent = () => {
         switch (activity.activity_type) {
@@ -209,6 +222,9 @@ const ActivityCard = memo(({ activity }: { activity: any }) => {
 });
 
 export default function FeedScreen() {
+    const theme = useTheme();
+    const { colors, spacing } = theme;
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const [likedPosts, setLikedPosts] = useState<string[]>([]);
@@ -258,7 +274,7 @@ export default function FeedScreen() {
     if ((postsLoading || activitiesLoading || offersLoading) && feed.length === 0) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} />
+                <ActivityIndicator color={colors.primary} />
             </View>
         );
     }
@@ -278,7 +294,7 @@ export default function FeedScreen() {
                 </View>
             )}
 
-            <Text style={[styles.sectionTitle, { marginLeft: theme.spacing.lg, marginTop: theme.spacing.xl }]}>Latest Activity</Text>
+            <Text style={[styles.sectionTitle, { marginLeft: spacing.lg, marginTop: spacing.xl }]}>Latest Activity</Text>
         </View>
     );
 
@@ -309,10 +325,10 @@ export default function FeedScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius' | 'typography'>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     centered: {
         justifyContent: 'center',
@@ -320,39 +336,39 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingTop: 60,
-        paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.md,
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
     },
     title: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 28,
         fontWeight: '800',
     },
     list: {
-        paddingBottom: theme.spacing.xl,
+        paddingBottom: spacing.xl,
     },
     offersSection: {
-        marginTop: theme.spacing.md,
+        marginTop: spacing.md,
     },
     sectionTitle: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 1.5,
-        marginBottom: theme.spacing.md,
-        marginLeft: theme.spacing.lg,
+        marginBottom: spacing.md,
+        marginLeft: spacing.lg,
     },
     offersRow: {
-        paddingLeft: theme.spacing.lg,
-        paddingRight: theme.spacing.lg,
-        gap: theme.spacing.md,
+        paddingLeft: spacing.lg,
+        paddingRight: spacing.lg,
+        gap: spacing.md,
     },
     offerCard: {
         width: 220,
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.md,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
@@ -365,41 +381,41 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     tagText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 10,
         fontWeight: '800',
     },
     offerTitle: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 16,
         fontWeight: '700',
         marginBottom: 4,
     },
     offerDesc: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
     },
     postCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.xl,
-        padding: theme.spacing.lg,
-        marginHorizontal: theme.spacing.lg,
-        marginBottom: theme.spacing.xl,
+        backgroundColor: colors.surface,
+        borderRadius: radius.xl,
+        padding: spacing.lg,
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.xl,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
     authorRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: theme.spacing.lg,
+        marginBottom: spacing.lg,
         gap: 12,
     },
     avatar: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -409,32 +425,32 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     authorName: {
-        color: theme.colors.text,
+        color: colors.text,
         fontWeight: '700',
         fontSize: 14,
     },
     date: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
     },
     postTitle: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 18,
         fontWeight: '800',
         marginBottom: 8,
     },
     postContent: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 15,
         lineHeight: 22,
-        marginBottom: theme.spacing.lg,
+        marginBottom: spacing.lg,
     },
     actions: {
         flexDirection: 'row',
         gap: 20,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.05)',
-        paddingTop: theme.spacing.md,
+        paddingTop: spacing.md,
     },
     actionButton: {
         flexDirection: 'row',
@@ -442,13 +458,13 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     actionText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '600',
     },
     commentContainer: {
-        marginTop: theme.spacing.md,
-        paddingTop: theme.spacing.md,
+        marginTop: spacing.md,
+        paddingTop: spacing.md,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.02)',
     },
@@ -456,13 +472,13 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     commentAuthor: {
-        color: theme.colors.text,
+        color: colors.text,
         fontWeight: '700',
         fontSize: 12,
         marginBottom: 2,
     },
     commentText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
     },
@@ -502,10 +518,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.02)',
-        padding: theme.spacing.md,
-        marginHorizontal: theme.spacing.lg,
-        marginBottom: theme.spacing.md,
-        borderRadius: theme.radius.lg,
+        padding: spacing.md,
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.md,
+        borderRadius: radius.lg,
         gap: 12,
     },
     activityAvatar: {
@@ -517,12 +533,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     activityAvatarText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 14,
         fontWeight: '700',
     },
     activityText: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 13,
         lineHeight: 18,
     },
@@ -531,7 +547,7 @@ const styles = StyleSheet.create({
         color: '#FFF',
     },
     activityDate: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 10,
         marginTop: 2,
     },

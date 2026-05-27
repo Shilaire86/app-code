@@ -3,13 +3,15 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 
 export default function IdentityScreen() {
     const [fullName, setFullName] = useState('');
     const { updateProfile, profile } = useProfileStore();
     const router = useRouter();
+    const { colors, spacing, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, typography });
 
     const handleContinue = async () => {
         if (fullName.trim() && profile) {
@@ -38,27 +40,28 @@ export default function IdentityScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        padding: theme.spacing.lg,
-        justifyContent: 'space-between',
-    },
-    content: {
-        marginTop: theme.spacing.xxl,
-    },
-    title: {
-        ...theme.typography.h1,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-        ...theme.typography.body,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.lg,
-    },
-    button: {
-        marginBottom: theme.spacing.xl,
-    },
-});
+const createStyles = ({ colors, spacing, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: spacing.lg,
+            justifyContent: 'space-between',
+        },
+        content: {
+            marginTop: spacing.xxl,
+        },
+        title: {
+            ...typography.h1,
+            color: colors.text,
+            marginBottom: spacing.sm,
+        },
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginBottom: spacing.lg,
+        },
+        button: {
+            marginBottom: spacing.xl,
+        },
+    });

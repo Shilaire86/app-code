@@ -1,8 +1,8 @@
 import { Redirect, Stack, useSegments } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useFonts } from 'expo-font';
-import { Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { BarlowCondensed_600SemiBold, BarlowCondensed_700Bold, BarlowCondensed_800ExtraBold } from '@expo-google-fonts/barlow-condensed';
+import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { darkColors } from '@/constants/theme';
@@ -63,7 +63,7 @@ function DiagnosticView({ message, initialized, onForceClear }: { message: strin
                 <View style={{ marginTop: 40, width: '100%', maxWidth: 400, gap: 10 }}>
                     <Text style={{ color: '#FF4444', textAlign: 'center', marginBottom: 10 }}>Taking longer than expected?</Text>
                     <TouchableOpacity
-                        onPress={onForceClear}
+                         onPress={onForceClear}
                         style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center' }}
                     >
                         <Text style={{ color: '#FFF', textAlign: 'center', fontWeight: 'bold' }}>Clear Session & Restart</Text>
@@ -83,12 +83,12 @@ function DiagnosticView({ message, initialized, onForceClear }: { message: strin
 export default function RootLayout() {
     try {
         const [fontsLoaded] = useFonts({
-            Outfit_400Regular,
-            Outfit_600SemiBold,
-            Outfit_700Bold,
-            Inter_400Regular,
-            Inter_500Medium,
-            Inter_600SemiBold,
+            BarlowCondensed_600SemiBold,
+            BarlowCondensed_700Bold,
+            BarlowCondensed_800ExtraBold,
+            DMSans_400Regular,
+            DMSans_500Medium,
+            DMSans_700Bold,
         });
 
         const { session, initialized } = useAuth();

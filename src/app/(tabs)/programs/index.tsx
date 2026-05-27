@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { canAccessTier } from '@/lib/tier-gating';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +23,8 @@ const ProgramCard = memo(({
     onPress: (id: string) => void;
     onUpgrade: () => void;
 }) => {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const hasAccess = canAccessTier(tier, item.tier_required);
 
     return (
@@ -73,6 +75,9 @@ const ProgramCard = memo(({
 });
 
 export default function ProgramsScreen() {
+    const theme = useTheme();
+    const { colors, spacing, radius, typography } = theme;
+    const styles = createStyles(theme);
     const { tier } = useProfileStore();
     const { profile, setSeenHint } = useProfileStore();
     const router = useRouter();
@@ -133,7 +138,7 @@ export default function ProgramsScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -183,7 +188,7 @@ export default function ProgramsScreen() {
                         onPress={() => canDoQuick ? router.push('/workout/quick') : router.push('/subscribe')}
                     >
                         <View style={styles.quickIconBg}>
-                            <Ionicons name="flash" size={24} color={theme.colors.primary} />
+                            <Ionicons name="flash" size={24} color={colors.primary} />
                         </View>
                         <View style={styles.quickContent}>
                             <Text style={styles.quickTitle}>Quick Workout</Text>
@@ -274,7 +279,7 @@ export default function ProgramsScreen() {
                                         style={styles.deleteBtn}
                                         onPress={() => handleDeleteProgram(prog.id, prog.name)}
                                     >
-                                        <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                                        <Ionicons name="trash-outline" size={18} color={colors.error} />
                                     </TouchableOpacity>
                                 </TouchableOpacity>
                             ))}
@@ -335,42 +340,42 @@ export default function ProgramsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius' | 'typography'>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     centered: {
         justifyContent: 'center',
         alignItems: 'center',
     },
     header: {
-        padding: theme.spacing.lg,
-        paddingTop: theme.spacing.xxl,
+        padding: spacing.lg,
+        paddingTop: spacing.xxl,
     },
     title: {
-        color: theme.colors.text,
-        fontSize: theme.typography.h1.fontSize,
-        fontWeight: theme.typography.h1.fontWeight as any,
+        color: colors.text,
+        fontSize: typography.h1.fontSize,
+        fontWeight: typography.h1.fontWeight as any,
     },
     subtitle: {
-        color: theme.colors.textSecondary,
-        fontSize: theme.typography.body.fontSize,
-        marginTop: theme.spacing.xs,
+        color: colors.textSecondary,
+        fontSize: typography.body.fontSize,
+        marginTop: spacing.xs,
     },
     listContent: {
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         paddingTop: 0,
     },
     hintWrap: {
-        paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.md,
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
     },
     emptyCard: {
-        marginHorizontal: theme.spacing.lg,
-        marginBottom: theme.spacing.lg,
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         paddingVertical: 28,
@@ -378,18 +383,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     emptyTitle: { color: '#FFF', fontSize: 16, fontWeight: '900', marginTop: 10, textAlign: 'center' },
-    emptyBody: { color: theme.colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 18 },
+    emptyBody: { color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 18 },
     emptyButton: {
         marginTop: 14,
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         paddingHorizontal: 18,
         paddingVertical: 10,
-        borderRadius: theme.radius.md,
+        borderRadius: radius.md,
         minHeight: 44,
         justifyContent: 'center',
     },
     emptyButtonText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
-    emptyHelper: { color: theme.colors.textSecondary, marginTop: 14, fontSize: 12, textAlign: 'center' },
+    emptyHelper: { color: colors.textSecondary, marginTop: 14, fontSize: 12, textAlign: 'center' },
     adminButton: {
         marginTop: 10,
         backgroundColor: 'rgba(0,187,255,0.10)',
@@ -397,15 +402,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 18,
         paddingVertical: 10,
-        borderRadius: theme.radius.md,
+        borderRadius: radius.md,
         minHeight: 44,
         justifyContent: 'center',
     },
-    adminButtonText: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' },
+    adminButtonText: { color: colors.primary, fontSize: 13, fontWeight: '900' },
     programCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        marginBottom: theme.spacing.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        marginBottom: spacing.lg,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
@@ -427,7 +432,7 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 10,
         fontWeight: '800',
-        marginTop: theme.spacing.sm,
+        marginTop: spacing.sm,
         letterSpacing: 1,
     },
     upgradeInlineButton: {
@@ -436,7 +441,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 999,
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
@@ -445,40 +450,40 @@ const styles = StyleSheet.create({
     },
     upgradeInlineText: { color: '#FFF', fontSize: 12, fontWeight: '900' },
     programInfo: {
-        padding: theme.spacing.md,
+        padding: spacing.md,
     },
     programName: {
-        color: theme.colors.text,
-        fontSize: theme.typography.h3.fontSize,
-        fontWeight: theme.typography.h3.fontWeight as any,
+        color: colors.text,
+        fontSize: typography.h3.fontSize,
+        fontWeight: typography.h3.fontWeight as any,
     },
     programDetails: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         marginTop: 4,
     },
     tags: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginTop: theme.spacing.md,
-        gap: theme.spacing.xs,
+        marginTop: spacing.md,
+        gap: spacing.xs,
     },
     tag: {
         backgroundColor: 'rgba(255,255,255,0.05)',
-        paddingHorizontal: theme.spacing.sm,
+        paddingHorizontal: spacing.sm,
         paddingVertical: 4,
-        borderRadius: theme.radius.sm,
+        borderRadius: radius.sm,
     },
     tagText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 10,
         fontWeight: '600',
     },
     tabBar: {
         flexDirection: 'row',
-        paddingHorizontal: theme.spacing.lg,
-        marginBottom: theme.spacing.md,
-        gap: theme.spacing.md,
+        paddingHorizontal: spacing.lg,
+        marginBottom: spacing.md,
+        gap: spacing.md,
     },
     tab: {
         paddingVertical: 8,
@@ -494,27 +499,27 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(0,187,255,0.3)',
     },
     tabText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 13,
         fontWeight: '600',
     },
     activeTabText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontWeight: '700',
     },
     myProgramsContainer: {
         flex: 1,
-        paddingHorizontal: theme.spacing.lg,
+        paddingHorizontal: spacing.lg,
     },
     quickWorkoutCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
         padding: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
-        marginBottom: theme.spacing.xl,
+        marginBottom: spacing.xl,
     },
     quickIconBg: {
         width: 48,
@@ -534,14 +539,14 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     quickSub: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         marginTop: 2,
     },
     quickLock: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
@@ -559,13 +564,13 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     emptyMyTitle: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 15,
         fontWeight: '700',
         marginTop: 12,
     },
     emptyMyBody: {
-        color: theme.colors.textTertiary,
+        color: colors.textTertiary,
         fontSize: 12,
         textAlign: 'center',
         marginTop: 8,
@@ -574,30 +579,30 @@ const styles = StyleSheet.create({
     createProgramCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
         padding: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
-        marginBottom: theme.spacing.lg,
+        marginBottom: spacing.lg,
     },
     userProgramsSection: {
-        marginTop: theme.spacing.md,
+        marginTop: spacing.md,
     },
     sectionLabel: {
-        color: theme.colors.textTertiary,
+        color: colors.textTertiary,
         fontSize: 11,
         fontWeight: '800',
         letterSpacing: 1,
-        marginBottom: theme.spacing.md,
+        marginBottom: spacing.md,
     },
     userProgramRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
         padding: 16,
-        marginBottom: theme.spacing.sm,
+        marginBottom: spacing.sm,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.06)',
     },
@@ -610,7 +615,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     userProgramMeta: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         marginTop: 2,
     },

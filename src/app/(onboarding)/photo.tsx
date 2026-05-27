@@ -1,12 +1,14 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 
 export default function PhotoScreen() {
     const { updateProfile, profile } = useProfileStore();
     const router = useRouter();
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
     const finishOnboarding = async () => {
         if (profile) {
@@ -52,56 +54,57 @@ export default function PhotoScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        padding: theme.spacing.lg,
-        justifyContent: 'space-between',
-    },
-    content: {
-        marginTop: theme.spacing.xxl,
-    },
-    title: {
-        ...theme.typography.h1,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-        ...theme.typography.body,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.lg,
-    },
-    placeholder: {
-        minHeight: 240,
-        borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        backgroundColor: theme.colors.surface,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: theme.spacing.lg,
-        gap: theme.spacing.md,
-    },
-    placeholderTitle: {
-        ...theme.typography.h3,
-        color: theme.colors.text,
-        textAlign: 'center',
-    },
-    placeholderText: {
-        ...theme.typography.bodySmall,
-        color: theme.colors.textTertiary,
-        textAlign: 'center',
-        maxWidth: 280,
-    },
-    cameraButton: {
-        width: '100%',
-    },
-    actions: {
-        gap: theme.spacing.md,
-        marginBottom: theme.spacing.xl,
-    },
-    actionButton: {
-        width: '100%',
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: spacing.lg,
+            justifyContent: 'space-between',
+        },
+        content: {
+            marginTop: spacing.xxl,
+        },
+        title: {
+            ...typography.h1,
+            color: colors.text,
+            marginBottom: spacing.sm,
+        },
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginBottom: spacing.lg,
+        },
+        placeholder: {
+            minHeight: 240,
+            borderRadius: radius.lg,
+            borderWidth: 1,
+            borderColor: colors.borderMid,
+            backgroundColor: colors.surface,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing.lg,
+            gap: spacing.md,
+        },
+        placeholderTitle: {
+            ...typography.h3,
+            color: colors.text,
+            textAlign: 'center',
+        },
+        placeholderText: {
+            ...typography.bodySmall,
+            color: colors.textTertiary,
+            textAlign: 'center',
+            maxWidth: 280,
+        },
+        cameraButton: {
+            width: '100%',
+        },
+        actions: {
+            gap: spacing.md,
+            marginBottom: spacing.xl,
+        },
+        actionButton: {
+            width: '100%',
+        },
+    });

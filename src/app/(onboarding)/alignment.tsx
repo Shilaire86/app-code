@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function AlignmentScreen() {
     const router = useRouter();
+    const { colors, spacing, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, typography });
 
     return (
         <View style={styles.container}>
@@ -27,31 +29,32 @@ export default function AlignmentScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        padding: theme.spacing.lg,
-        justifyContent: 'space-between',
-    },
-    content: {
-        marginTop: theme.spacing.xxl,
-    },
-    title: {
-        ...theme.typography.h1,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-        ...theme.typography.body,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.md,
-    },
-    body: {
-        ...theme.typography.bodySmall,
-        color: theme.colors.textTertiary,
-    },
-    button: {
-        marginBottom: theme.spacing.xl,
-    },
-});
+const createStyles = ({ colors, spacing, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: spacing.lg,
+            justifyContent: 'space-between',
+        },
+        content: {
+            marginTop: spacing.xxl,
+        },
+        title: {
+            ...typography.h1,
+            color: colors.text,
+            marginBottom: spacing.sm,
+        },
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginBottom: spacing.md,
+        },
+        body: {
+            ...typography.bodySmall,
+            color: colors.textTertiary,
+        },
+        button: {
+            marginBottom: spacing.xl,
+        },
+    });

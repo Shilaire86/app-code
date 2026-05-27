@@ -1,36 +1,45 @@
 import React, { useState, useEffect, memo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 
-const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item: any, onPress: (id: string) => void, formatDate: any, formatDuration: any }) => (
-    <TouchableOpacity
-        style={styles.historyCard}
-        onPress={() => onPress(item.id)}
-    >
-        <View style={styles.cardHeader}>
-            <Text style={styles.workoutName}>
-                {item.workouts?.name || 'Custom Workout'}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
-        </View>
-        <View style={styles.cardFooter}>
-            <View style={styles.meta}>
-                <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} />
-                <Text style={styles.metaText}>{formatDate(item.started_at)}</Text>
+const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item: any, onPress: (id: string) => void, formatDate: any, formatDuration: any }) => {
+    const theme = useTheme();
+    const { colors } = theme;
+    const styles = createStyles(theme);
+
+    return (
+        <TouchableOpacity
+            style={styles.historyCard}
+            onPress={() => onPress(item.id)}
+        >
+            <View style={styles.cardHeader}>
+                <Text style={styles.workoutName}>
+                    {item.workouts?.name || 'Custom Workout'}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
             </View>
-            <View style={styles.meta}>
-                <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                <Text style={styles.metaText}>{formatDuration(item.duration_seconds)}</Text>
+            <View style={styles.cardFooter}>
+                <View style={styles.meta}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                    <Text style={styles.metaText}>{formatDate(item.started_at)}</Text>
+                </View>
+                <View style={styles.meta}>
+                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                    <Text style={styles.metaText}>{formatDuration(item.duration_seconds)}</Text>
+                </View>
             </View>
-        </View>
-    </TouchableOpacity>
-));
+        </TouchableOpacity>
+    );
+});
 
 export default function WorkoutHistoryScreen() {
+    const theme = useTheme();
+    const { colors, spacing, radius } = theme;
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
     const [history, setHistory] = useState<any[]>([]);
@@ -122,7 +131,7 @@ export default function WorkoutHistoryScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} />
+                <ActivityIndicator color={colors.primary} />
             </View>
         );
     }
@@ -157,7 +166,7 @@ export default function WorkoutHistoryScreen() {
                             style={styles.prButton}
                             onPress={() => router.push('/history/prs')}
                         >
-                            <Ionicons name="trophy-outline" size={20} color={theme.colors.primary} />
+                            <Ionicons name="trophy-outline" size={20} color={colors.primary} />
                             <Text style={styles.prButtonText}>PRs</Text>
                         </TouchableOpacity>
                     </View>
@@ -190,10 +199,10 @@ export default function WorkoutHistoryScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius'>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     centered: {
         justifyContent: 'center',
@@ -201,8 +210,8 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingTop: 60,
-        paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.md,
+        paddingHorizontal: spacing.lg,
+        paddingBottom: spacing.md,
     },
     headerRow: {
         flexDirection: 'row',
@@ -215,7 +224,7 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     title: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 28,
         fontWeight: '800',
     },
@@ -225,7 +234,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,107,107,0.10)',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: theme.radius.full,
+        borderRadius: radius.full,
         gap: 6,
         borderWidth: 1,
         borderColor: 'rgba(255,107,107,0.18)',
@@ -245,22 +254,22 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,102,0,0.1)',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: theme.radius.full,
+        borderRadius: radius.full,
         gap: 6,
     },
     prButtonText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 14,
         fontWeight: '700',
     },
     list: {
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
     },
     historyCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.md,
-        marginBottom: theme.spacing.md,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
@@ -268,16 +277,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: theme.spacing.sm,
+        marginBottom: spacing.sm,
     },
     workoutName: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
     cardFooter: {
         flexDirection: 'row',
-        gap: theme.spacing.lg,
+        gap: spacing.lg,
     },
     meta: {
         flexDirection: 'row',
@@ -285,7 +294,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     metaText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
     },
     emptyContainer: {
@@ -293,14 +302,14 @@ const styles = StyleSheet.create({
         marginTop: 100,
     },
     emptyText: {
-        color: theme.colors.textSecondary,
-        marginVertical: theme.spacing.lg,
+        color: colors.textSecondary,
+        marginVertical: spacing.lg,
     },
     ctaButton: {
-        backgroundColor: theme.colors.primary,
-        paddingHorizontal: theme.spacing.xl,
-        paddingVertical: theme.spacing.md,
-        borderRadius: theme.radius.md,
+        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
+        borderRadius: radius.md,
     },
     ctaText: {
         color: '#FFF',

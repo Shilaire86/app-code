@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 
 const REFLECTION_QUESTIONS = [
-    { id: 'wins', label: 'Wins', icon: 'trophy', color: '#FFD700', prompt: 'What victories did you achieve this week?' },
-    { id: 'challenges', label: 'Challenges', icon: 'barbell', color: '#FF6B6B', prompt: 'What obstacles did you face and how did you overcome them?' },
-    { id: 'lessons', label: 'Lessons', icon: 'bulb', color: '#4ECDC4', prompt: 'What did you learn about yourself?' },
-    { id: 'focus', label: 'Next Week Focus', icon: 'arrow-forward', color: '#45B7D1', prompt: 'What will you focus on next week?' },
+    { id: 'wins',       label: 'Wins',            icon: 'trophy',        colorKey: 'mindset',  prompt: 'What victories did you achieve this week?' },
+    { id: 'challenges', label: 'Challenges',       icon: 'barbell',       colorKey: 'error',    prompt: 'What obstacles did you face and how did you overcome them?' },
+    { id: 'lessons',    label: 'Lessons',          icon: 'bulb',          colorKey: 'progress', prompt: 'What did you learn about yourself?' },
+    { id: 'focus',      label: 'Next Week Focus',  icon: 'arrow-forward', colorKey: 'info',     prompt: 'What will you focus on next week?' },
 ];
 
 export default function WeeklyReflectionScreen() {
@@ -20,8 +20,11 @@ export default function WeeklyReflectionScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [existingReflection, setExistingReflection] = useState<any>(null);
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
-    // Get current week start date (Sunday)
+    const getColor = (key: string): string => (colors as any)[key] || colors.primary;
+
     const getWeekStart = () => {
         const now = new Date();
         const dayOfWeek = now.getDay();
@@ -106,7 +109,13 @@ export default function WeeklyReflectionScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'Weekly Reflection',
+                    headerStyle: { backgroundColor: colors.background },
+                    headerTintColor: colors.text,
+                }} />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -116,34 +125,39 @@ export default function WeeklyReflectionScreen() {
             <Stack.Screen options={{
                 headerShown: true,
                 headerTitle: 'Weekly Reflection',
-                headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.weekBadge}>
-                    <Ionicons name="calendar" size={16} color={theme.colors.primary} />
-                    <Text style={styles.weekText}>Week of {new Date(getWeekStart()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
+                    <Ionicons name="calendar" size={16} color={colors.primary} />
+                    <Text style={styles.weekText}>
+                        Week of {new Date(getWeekStart()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Text>
                 </View>
 
-                {REFLECTION_QUESTIONS.map((q) => (
-                    <View key={q.id} style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name={q.icon as any} size={18} color={q.color} />
-                            <Text style={[styles.labelText, { color: q.color }]}>{q.label}</Text>
+                {REFLECTION_QUESTIONS.map((q) => {
+                    const qColor = getColor(q.colorKey);
+                    return (
+                        <View key={q.id} style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name={q.icon as any} size={18} color={qColor} />
+                                <Text style={[styles.labelText, { color: qColor }]}>{q.label}</Text>
+                            </View>
+                            <Text style={styles.promptText}>{q.prompt}</Text>
+                            <TextInput
+                                style={styles.textArea}
+                                multiline
+                                numberOfLines={3}
+                                placeholder="Write your thoughts..."
+                                placeholderTextColor={colors.textTertiary}
+                                value={answers[q.id] || ''}
+                                onChangeText={(text) => setAnswers({ ...answers, [q.id]: text })}
+                            />
                         </View>
-                        <Text style={styles.promptText}>{q.prompt}</Text>
-                        <TextInput
-                            style={styles.textArea}
-                            multiline
-                            numberOfLines={3}
-                            placeholder="Write your thoughts..."
-                            placeholderTextColor="rgba(255,255,255,0.2)"
-                            value={answers[q.id] || ''}
-                            onChangeText={(text) => setAnswers({ ...answers, [q.id]: text })}
-                        />
-                    </View>
-                ))}
+                    );
+                })}
 
                 <TouchableOpacity
                     style={[styles.submitButton, isSubmitting && styles.submitDisabled]}
@@ -163,80 +177,78 @@ export default function WeeklyReflectionScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-    },
-    centered: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    content: {
-        padding: theme.spacing.lg,
-    },
-    weekBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        backgroundColor: theme.colors.surface,
-        paddingVertical: theme.spacing.sm,
-        paddingHorizontal: theme.spacing.md,
-        borderRadius: theme.radius.md,
-        alignSelf: 'center',
-        marginBottom: theme.spacing.xl,
-    },
-    weekText: {
-        color: '#FFF',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    section: {
-        marginBottom: theme.spacing.lg,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: theme.spacing.xs,
-    },
-    labelText: {
-        fontSize: 14,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    promptText: {
-        color: theme.colors.textSecondary,
-        fontSize: 13,
-        fontStyle: 'italic',
-        marginBottom: theme.spacing.sm,
-    },
-    textArea: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.md,
-        padding: theme.spacing.md,
-        color: theme.colors.text,
-        fontSize: 16,
-        textAlignVertical: 'top',
-        minHeight: 80,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-    },
-    submitButton: {
-        backgroundColor: theme.colors.primary,
-        padding: theme.spacing.lg,
-        borderRadius: theme.radius.md,
-        alignItems: 'center',
-        marginTop: theme.spacing.md,
-    },
-    submitDisabled: {
-        opacity: 0.5,
-    },
-    submitText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        centered: {
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        content: {
+            padding: spacing.lg,
+        },
+        weekBadge: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            backgroundColor: colors.surface,
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignSelf: 'center',
+            marginBottom: spacing.xl,
+        },
+        weekText: {
+            ...typography.bodySmallMedium,
+            color: colors.text,
+        },
+        section: {
+            marginBottom: spacing.lg,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: spacing.xs,
+        },
+        labelText: {
+            ...typography.label,
+        },
+        promptText: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            fontStyle: 'italic',
+            marginBottom: spacing.sm,
+        },
+        textArea: {
+            backgroundColor: colors.surface,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            color: colors.text,
+            fontSize: 16,
+            textAlignVertical: 'top',
+            minHeight: 80,
+            borderWidth: 1,
+            borderColor: colors.borderMid,
+        },
+        submitButton: {
+            backgroundColor: colors.primary,
+            padding: spacing.lg,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            marginTop: spacing.md,
+        },
+        submitDisabled: {
+            opacity: 0.5,
+        },
+        submitText: {
+            ...typography.button,
+            color: '#FFF',
+        },
+    });

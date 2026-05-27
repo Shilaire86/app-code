@@ -9,7 +9,7 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -30,6 +30,9 @@ import {
 import { getActiveInsights, resolveInsight, generateInsights, NutritionInsight } from '@/services/nutritionInsights';
 
 export default function NutritionDashboard() {
+    const theme = useTheme();
+    const { colors, spacing, radius, typography } = theme;
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const { profile, tier } = useProfileStore();
@@ -108,7 +111,7 @@ export default function NutritionDashboard() {
     if (!profile || (loading && !refreshing)) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -122,7 +125,7 @@ export default function NutritionDashboard() {
                         <Text style={styles.headerTitle}>Nutrition</Text>
                     </View>
                 </View>
-                <View style={{ flex: 1, padding: theme.spacing.lg, justifyContent: 'center' }}>
+                <View style={{ flex: 1, padding: spacing.lg, justifyContent: 'center' }}>
                      <UpgradePrompt 
                          title="Upgrade to Access Nutrition"
                          body="The Dynamic Nutrition System helps you hit your macros and guarantees results. Upgrade to gain full access to macro tracking, meal libraries, and smart food suggestions."
@@ -178,8 +181,8 @@ export default function NutritionDashboard() {
             case 'protein': return '#FF6B6B';
             case 'carbs': return '#4ECDC4';
             case 'fat': return '#FECA57';
-            case 'done': return theme.colors.primary;
-            default: return theme.colors.textSecondary;
+            case 'done': return colors.primary;
+            default: return colors.textSecondary;
         }
     };
 
@@ -207,11 +210,11 @@ export default function NutritionDashboard() {
                 <View style={styles.headerActions}>
                     {isVip(tier) && (
                         <TouchableOpacity onPress={() => router.push('/nutrition/adherence')} style={styles.headerBtn}>
-                            <Ionicons name="stats-chart" size={20} color={theme.colors.primary} />
+                            <Ionicons name="stats-chart" size={20} color={colors.primary} />
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={() => router.push('/nutrition/calculator')} style={styles.headerBtn}>
-                        <Ionicons name="options-outline" size={24} color={theme.colors.textSecondary} />
+                        <Ionicons name="options-outline" size={24} color={colors.textSecondary} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -221,7 +224,7 @@ export default function NutritionDashboard() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.primary} />
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
                 }
             >
                 {/* Elite Insights */}
@@ -230,7 +233,7 @@ export default function NutritionDashboard() {
                         {insights.map(insight => (
                             <View key={insight.id} style={styles.insightCard}>
                                 <View style={styles.insightHeader}>
-                                    <Ionicons name="sparkles" size={20} color={theme.colors.primary} />
+                                    <Ionicons name="sparkles" size={20} color={colors.primary} />
                                     <Text style={styles.insightTitle}>{insight.title}</Text>
                                 </View>
                                 <Text style={styles.insightMessage}>{insight.message}</Text>
@@ -380,7 +383,7 @@ export default function NutritionDashboard() {
                                     style={styles.deleteBtn}
                                     onPress={() => handleDelete(log.id, log.name)}
                                 >
-                                    <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                                    <Ionicons name="trash-outline" size={18} color={colors.error} />
                                 </TouchableOpacity>
                             </View>
                         ))
@@ -391,18 +394,18 @@ export default function NutritionDashboard() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius' | 'typography'>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: theme.spacing.lg,
+        paddingHorizontal: spacing.lg,
         paddingTop: 60,
-        paddingBottom: theme.spacing.md,
+        paddingBottom: spacing.md,
     },
     headerTitle: {
         color: '#FFF',
@@ -410,7 +413,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     headerDate: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 14,
         marginTop: 2,
     },
@@ -425,14 +428,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         paddingBottom: 40,
     },
     emptyState: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: theme.spacing.xl,
+        padding: spacing.xl,
     },
     emptyTitle: {
         color: '#FFF',
@@ -442,14 +445,14 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     emptyText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 15,
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: 30,
     },
     calcButton: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -464,10 +467,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     overviewCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.lg,
-        marginBottom: theme.spacing.lg,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing.lg,
+        marginBottom: spacing.lg,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
@@ -475,10 +478,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: theme.spacing.xl,
+        marginBottom: spacing.xl,
     },
     statLabel: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 13,
         fontWeight: '600',
         textTransform: 'uppercase',
@@ -500,7 +503,7 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(0,187,255,0.2)',
     },
     goalPillText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 12,
         fontWeight: '700',
         textTransform: 'capitalize',
@@ -514,22 +517,22 @@ const styles = StyleSheet.create({
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         borderRadius: 6,
     },
     progressRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: theme.spacing.xl,
+        marginBottom: spacing.xl,
     },
     progressText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
     },
     macrosContainer: {
         flexDirection: 'row',
-        gap: theme.spacing.md,
-        paddingTop: theme.spacing.md,
+        gap: spacing.md,
+        paddingTop: spacing.md,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.05)',
     },
@@ -543,7 +546,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     macroName: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         marginBottom: 8,
     },
@@ -559,8 +562,8 @@ const styles = StyleSheet.create({
     },
     emptyMealsBox: {
         backgroundColor: 'rgba(255,255,255,0.02)',
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.xl,
+        borderRadius: radius.lg,
+        padding: spacing.xl,
         alignItems: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
@@ -574,7 +577,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     emptyMealsText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 14,
         textAlign: 'center',
         lineHeight: 20,
@@ -589,7 +592,7 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     addLogBtn: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -648,7 +651,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     suggestionDesc: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
     },
@@ -656,14 +659,14 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     sectionLabel: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
         letterSpacing: 1.5,
         marginBottom: 16,
     },
     mealCard: {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: colors.surface,
         borderRadius: 16,
         padding: 16,
         flexDirection: 'row',
@@ -691,13 +694,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 6,
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 10,
         fontWeight: '700',
         textTransform: 'uppercase',
     },
     mealMacros: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 13,
     },
     deleteBtn: {
@@ -744,7 +747,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
     },
     insightDismissText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 13,
         fontWeight: '600',
     },

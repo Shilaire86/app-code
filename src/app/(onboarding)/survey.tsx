@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 
@@ -30,6 +30,8 @@ export default function SurveyScreen() {
     const [experience, setExperience] = useState<string>('beginner');
     const { updateProfile, profile } = useProfileStore();
     const router = useRouter();
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
     const toggleValue = (list: string[], value: string, setter: (next: string[]) => void) => {
         setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
@@ -129,52 +131,53 @@ export default function SurveyScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        paddingHorizontal: theme.spacing.lg,
-    },
-    content: {
-        paddingTop: theme.spacing.xxl,
-        paddingBottom: theme.spacing.xl,
-    },
-    title: {
-        ...theme.typography.h1,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-        ...theme.typography.body,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.lg,
-    },
-    optionGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: theme.spacing.sm,
-    },
-    optionChip: {
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.sm,
-        borderRadius: theme.radius.full,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-    },
-    optionChipActive: {
-        borderColor: theme.colors.primary,
-        backgroundColor: 'rgba(99,102,241,0.15)',
-    },
-    optionText: {
-        ...theme.typography.bodySmall,
-        color: theme.colors.textSecondary,
-        fontWeight: '600',
-    },
-    optionTextActive: {
-        color: theme.colors.text,
-    },
-    button: {
-        marginBottom: theme.spacing.xl,
-        marginTop: theme.spacing.md,
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            paddingHorizontal: spacing.lg,
+        },
+        content: {
+            paddingTop: spacing.xxl,
+            paddingBottom: spacing.xl,
+        },
+        title: {
+            ...typography.h1,
+            color: colors.text,
+            marginBottom: spacing.sm,
+        },
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginBottom: spacing.lg,
+        },
+        optionGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: spacing.sm,
+        },
+        optionChip: {
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            borderRadius: radius.full,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        optionChipActive: {
+            borderColor: colors.primary,
+            backgroundColor: colors.primarySoft,
+        },
+        optionText: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            fontWeight: '600',
+        },
+        optionTextActive: {
+            color: colors.primary,
+        },
+        button: {
+            marginBottom: spacing.xl,
+            marginTop: spacing.md,
+        },
+    });

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -37,6 +37,7 @@ export default function ActiveWorkoutScreen() {
     const userId = useAuthStore(s => s.user?.id ?? null);
     const setLevelUp = useProfileStore(s => s.setLevelUp);
     const fetchProfile = useProfileStore(s => s.fetchProfile);
+    const { colors, spacing, radius, typography } = useTheme();
 
     const errorHandledRef = useRef(false);
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -716,10 +717,12 @@ export default function ActiveWorkoutScreen() {
         );
     };
 
+    const styles = createStyles({ colors, spacing, radius, typography });
+
     if (loading || !workout) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator color={theme.colors.primary} size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
         );
     }
@@ -729,12 +732,12 @@ export default function ActiveWorkoutScreen() {
             <Stack.Screen options={{
                 headerShown: true,
                 headerTitle: 'Active Workout',
-                headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
-                headerLeft: () => null, // Prevent back navigation while active
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.text,
+                headerLeft: () => null,
                 headerRight: () => (
                     <TouchableOpacity onPress={handleDiscard}>
-                        <Text style={{ color: '#FF4444', fontWeight: '600' }}>Cancel</Text>
+                        <Text style={{ color: colors.error, fontWeight: '600' }}>Cancel</Text>
                     </TouchableOpacity>
                 )
             }} />
@@ -797,7 +800,7 @@ export default function ActiveWorkoutScreen() {
                                             style={styles.inlineSwapButton}
                                             onPress={() => handleShowSwap(ex)}
                                         >
-                                            <Ionicons name="swap-horizontal" size={14} color={theme.colors.primary} />
+                                            <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
                                             <Text style={styles.inlineSwapText}>Swap</Text>
                                         </TouchableOpacity>
                                     </View>
@@ -807,7 +810,7 @@ export default function ActiveWorkoutScreen() {
                                         style={styles.demoButton}
                                         onPress={() => Linking.openURL(ex.exercises.video_url)}
                                     >
-                                        <Ionicons name="play-circle-outline" size={18} color={theme.colors.primary} />
+                                        <Ionicons name="play-circle-outline" size={18} color={colors.primary} />
                                         <Text style={styles.demoText}>Demo</Text>
                                     </TouchableOpacity>
                                 )}
@@ -826,7 +829,7 @@ export default function ActiveWorkoutScreen() {
                                     style={styles.restButton}
                                     onPress={() => startRestTimer(ex.rest_seconds)}
                                 >
-                                    <Ionicons name="timer-outline" size={16} color={theme.colors.primary} />
+                                    <Ionicons name="timer-outline" size={16} color={colors.primary} />
                                     <Text style={styles.restButtonText}>
                                         Start Rest ({ex.rest_seconds}s)
                                     </Text>
@@ -849,7 +852,7 @@ export default function ActiveWorkoutScreen() {
                                         style={styles.inputBox}
                                         keyboardType="numeric"
                                         placeholder="0"
-                                        placeholderTextColor="rgba(255,255,255,0.2)"
+                                        placeholderTextColor={colors.textTertiary}
                                         value={log.weightLbs > 0 ? log.weightLbs.toString() : ''}
                                         onChangeText={(val) => {
                                             const index = setLogs.indexOf(log);
@@ -860,7 +863,7 @@ export default function ActiveWorkoutScreen() {
                                         style={styles.inputBox}
                                         keyboardType="numeric"
                                         placeholder="0"
-                                        placeholderTextColor="rgba(255,255,255,0.2)"
+                                        placeholderTextColor={colors.textTertiary}
                                         value={log.reps > 0 ? log.reps.toString() : ''}
                                         onChangeText={(val) => {
                                             const index = setLogs.indexOf(log);
@@ -871,7 +874,7 @@ export default function ActiveWorkoutScreen() {
                                         style={styles.inputBox}
                                         keyboardType="numeric"
                                         placeholder="-"
-                                        placeholderTextColor="rgba(255,255,255,0.2)"
+                                        placeholderTextColor={colors.textTertiary}
                                         value={log.rpe && log.rpe > 0 ? log.rpe.toString() : ''}
                                         onChangeText={(val) => {
                                             const index = setLogs.indexOf(log);
@@ -890,7 +893,7 @@ export default function ActiveWorkoutScreen() {
                                     weightLbs: 0
                                 })}
                             >
-                                <Ionicons name="add" size={18} color={theme.colors.primary} />
+                                <Ionicons name="add" size={18} color={colors.primary} />
                                 <Text style={styles.addSetText}>Add Set</Text>
                             </TouchableOpacity>
                         </View>
@@ -921,7 +924,7 @@ export default function ActiveWorkoutScreen() {
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Swap Exercise</Text>
                             <TouchableOpacity onPress={() => setSwapModalVisible(false)}>
-                                <Ionicons name="close" size={24} color={theme.colors.text} />
+                                <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
@@ -930,7 +933,7 @@ export default function ActiveWorkoutScreen() {
                         </Text>
 
                         {loadingAlternates ? (
-                            <ActivityIndicator color={theme.colors.primary} style={{ margin: 20 }} />
+                            <ActivityIndicator color={colors.primary} style={{ margin: 20 }} />
                         ) : availableAlternates.length > 0 ? (
                             <ScrollView style={styles.alternatesList}>
                                 {availableAlternates.map((alt) => (
@@ -945,13 +948,13 @@ export default function ActiveWorkoutScreen() {
                                                 Equipment: {alt.equipment?.join(', ') || 'None'}
                                             </Text>
                                         </View>
-                                        <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
+                                        <Ionicons name="chevron-forward" size={20} color={colors.primary} />
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
                         ) : (
                             <View style={styles.emptyAlternates}>
-                                <Ionicons name="information-circle-outline" size={32} color={theme.colors.textTertiary} />
+                                <Ionicons name="information-circle-outline" size={32} color={colors.textTertiary} />
                                 <Text style={styles.emptyText}>No specific alternatives found in the library.</Text>
                             </View>
                         )}
@@ -969,33 +972,31 @@ export default function ActiveWorkoutScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<typeof useTheme>, 'colors' | 'spacing' | 'radius' | 'typography'>) =>
+    StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     centered: {
         justifyContent: 'center',
         alignItems: 'center',
     },
     timerHeader: {
-        paddingVertical: theme.spacing.lg,
-        paddingHorizontal: theme.spacing.lg,
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomColor: colors.border,
     },
     timerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: theme.spacing.xs,
+        marginBottom: spacing.xs,
     },
     timerLabel: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+        ...typography.label,
+        color: colors.textSecondary,
     },
     headerControls: {
         flexDirection: 'row',
@@ -1006,13 +1007,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: colors.borderMid,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        borderRadius: theme.radius.md,
+        borderRadius: radius.md,
     },
     resumeButton: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: colors.primary,
     },
     controlButtonText: {
         color: '#FFF',
@@ -1023,71 +1024,63 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: theme.spacing.lg,
-        paddingVertical: theme.spacing.sm,
-        backgroundColor: 'rgba(57, 181, 74, 0.1)', // Subtle brand green background
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.sm,
+        backgroundColor: colors.successSoft,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(57, 181, 74, 0.2)',
+        borderBottomColor: colors.border,
     },
     restCancelButton: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: colors.borderMid,
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: theme.radius.sm,
+        borderRadius: radius.sm,
     },
     restLabel: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
+        ...typography.label,
+        color: colors.textSecondary,
     },
     restTime: {
-        color: theme.colors.text,
+        color: colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
     restCancel: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 12,
         fontWeight: '700',
     },
     programName: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
+        ...typography.label,
+        color: colors.textSecondary,
     },
     timerText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 32,
         fontWeight: '800',
-        fontFamily: 'System', // Use mono if available
         marginTop: 4,
     },
     scrollContent: {
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         paddingBottom: 100,
     },
     exerciseCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.lg,
-        padding: theme.spacing.md,
-        marginBottom: theme.spacing.xl,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        padding: spacing.md,
+        marginBottom: spacing.xl,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.border,
     },
     exerciseHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: theme.spacing.sm,
+        gap: spacing.sm,
     },
     exerciseName: {
-        color: theme.colors.text,
-        fontSize: 18,
-        fontWeight: '700',
+        ...typography.h4,
+        color: colors.text,
         flex: 1,
     },
     headerRightActions: {
@@ -1101,11 +1094,11 @@ const styles = StyleSheet.create({
         gap: 4,
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: theme.radius.full,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: radius.full,
+        backgroundColor: colors.surface,
     },
     swapText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '600',
     },
@@ -1115,13 +1108,13 @@ const styles = StyleSheet.create({
         gap: 4,
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: theme.radius.sm,
-        backgroundColor: 'rgba(57, 181, 74, 0.08)',
+        borderRadius: radius.sm,
+        backgroundColor: colors.primarySoft,
         borderWidth: 1,
-        borderColor: 'rgba(57, 181, 74, 0.15)',
+        borderColor: colors.borderMid,
     },
     inlineSwapText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 11,
         fontWeight: '700',
         textTransform: 'uppercase',
@@ -1132,55 +1125,54 @@ const styles = StyleSheet.create({
         gap: 6,
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: theme.radius.full,
+        borderRadius: radius.full,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: colors.borderMid,
     },
     demoText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 12,
         fontWeight: '600',
     },
     prescription: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
+        ...typography.bodySmall,
+        color: colors.textSecondary,
         marginTop: 4,
     },
     guidanceBox: {
-        marginTop: 8,
-        paddingVertical: 8,
+        marginTop: spacing.sm,
+        paddingVertical: spacing.sm,
         paddingHorizontal: 10,
-        backgroundColor: 'rgba(0,0,0,0.12)',
-        borderRadius: theme.radius.md,
+        backgroundColor: colors.surfaceElevated,
+        borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.border,
         gap: 4,
     },
     guidanceText: {
-        color: 'rgba(255,255,255,0.78)',
-        fontSize: 12,
-        fontWeight: '600',
+        ...typography.captionMedium,
+        color: colors.textSecondary,
     },
     restButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        marginTop: theme.spacing.sm,
+        marginTop: spacing.sm,
     },
     restButtonText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 12,
         fontWeight: '600',
     },
     setsHeader: {
         flexDirection: 'row',
-        marginTop: theme.spacing.lg,
-        marginBottom: theme.spacing.sm,
-        paddingHorizontal: theme.spacing.xs,
+        marginTop: spacing.lg,
+        marginBottom: spacing.sm,
+        paddingHorizontal: spacing.xs,
     },
     colLabel: {
         flex: 1,
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
         fontSize: 10,
         fontWeight: '700',
         textAlign: 'center',
@@ -1188,87 +1180,91 @@ const styles = StyleSheet.create({
     setRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: theme.spacing.sm,
+        marginBottom: spacing.sm,
     },
     setCircle: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.borderMid,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: theme.spacing.sm,
+        marginRight: spacing.sm,
     },
     setText: {
-        color: theme.colors.text,
+        color: colors.textSecondary,
         fontSize: 12,
         fontWeight: '700',
     },
     inputBox: {
         flex: 1,
-        height: 40,
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: theme.radius.sm,
+        height: 44,
+        backgroundColor: colors.surface,
+        borderRadius: radius.sm,
         marginHorizontal: 4,
         textAlign: 'center',
-        color: theme.colors.text,
+        color: colors.text,
+        fontSize: 16,
+        fontWeight: '600',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     addSetButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: theme.spacing.md,
-        padding: theme.spacing.sm,
+        marginTop: spacing.md,
+        padding: spacing.sm,
         borderWidth: 1,
         borderStyle: 'dashed',
-        borderColor: 'rgba(255,255,255,0.1)',
-        borderRadius: theme.radius.md,
+        borderColor: colors.borderMid,
+        borderRadius: radius.md,
     },
     addSetText: {
-        color: theme.colors.primary,
+        color: colors.primary,
         fontSize: 14,
         fontWeight: '600',
         marginLeft: 8,
     },
     inputText: {
-        color: theme.colors.textSecondary,
+        color: colors.textSecondary,
     },
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        padding: theme.spacing.lg,
+        padding: spacing.lg,
         paddingBottom: 40,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
+        borderTopColor: colors.border,
     },
     footerButtons: {
         flexDirection: 'row',
-        gap: theme.spacing.sm,
+        gap: spacing.sm,
     },
     stopButton: {
         flex: 1,
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
+        padding: spacing.md,
+        borderRadius: radius.md,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#FF4444',
-        backgroundColor: 'rgba(255,68,68,0.08)',
+        borderColor: colors.error,
+        backgroundColor: colors.errorSoft,
     },
     stopText: {
-        color: '#FF6B6B',
+        color: colors.error,
         fontSize: 16,
         fontWeight: '700',
     },
     finishButton: {
         flex: 1,
-        backgroundColor: theme.colors.primary,
-        padding: theme.spacing.md,
-        borderRadius: theme.radius.md,
+        backgroundColor: colors.primary,
+        padding: spacing.md,
+        borderRadius: radius.md,
         alignItems: 'center',
     },
     finishText: {
@@ -1282,10 +1278,10 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: theme.colors.surface,
-        borderTopLeftRadius: theme.radius.xl,
-        borderTopRightRadius: theme.radius.xl,
-        padding: theme.spacing.lg,
+        backgroundColor: colors.surfaceElevated,
+        borderTopLeftRadius: radius.xl,
+        borderTopRightRadius: radius.xl,
+        padding: spacing.lg,
         paddingBottom: 40,
         maxHeight: '80%',
     },
@@ -1293,40 +1289,39 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: theme.spacing.md,
+        marginBottom: spacing.md,
     },
     modalTitle: {
-        ...theme.typography.h3,
-        color: theme.colors.text,
+        ...typography.h3,
+        color: colors.text,
     },
     modalSubtitle: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
-        marginBottom: theme.spacing.lg,
+        ...typography.bodySmall,
+        color: colors.textSecondary,
+        marginBottom: spacing.lg,
     },
     alternatesList: {
-        marginBottom: theme.spacing.xl,
+        marginBottom: spacing.xl,
     },
     alternateItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: theme.spacing.md,
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: theme.radius.lg,
-        marginBottom: theme.spacing.sm,
+        padding: spacing.md,
+        backgroundColor: colors.surface,
+        borderRadius: radius.lg,
+        marginBottom: spacing.sm,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.03)',
+        borderColor: colors.border,
     },
     alternateName: {
-        color: theme.colors.text,
-        fontSize: 16,
-        fontWeight: '600',
+        ...typography.bodyMedium,
+        color: colors.text,
         marginBottom: 2,
     },
     alternateEquipment: {
-        color: theme.colors.textSecondary,
-        fontSize: 12,
+        ...typography.caption,
+        color: colors.textSecondary,
     },
     emptyAlternates: {
         alignItems: 'center',
@@ -1334,17 +1329,17 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     emptyText: {
-        color: theme.colors.textTertiary,
+        color: colors.textTertiary,
         textAlign: 'center',
         fontSize: 14,
     },
     cancelModalButton: {
-        padding: theme.spacing.md,
+        padding: spacing.md,
         alignItems: 'center',
     },
     cancelModalButtonText: {
-        color: theme.colors.textSecondary,
-        fontSize: 14,
+        ...typography.bodySmall,
+        color: colors.textSecondary,
         fontWeight: '600',
     },
 });

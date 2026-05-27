@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 
 const TIME_OPTIONS = [
@@ -15,6 +15,8 @@ export default function CommitmentScreen() {
     const [selectedTime, setSelectedTime] = useState<string>('07:00');
     const { updateProfile, profile } = useProfileStore();
     const router = useRouter();
+    const { colors, spacing, radius, typography } = useTheme();
+    const styles = createStyles({ colors, spacing, radius, typography });
 
     const handleContinue = async () => {
         if (profile) {
@@ -58,51 +60,52 @@ export default function CommitmentScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        padding: theme.spacing.lg,
-        justifyContent: 'space-between',
-    },
-    content: {
-        marginTop: theme.spacing.xxl,
-    },
-    title: {
-        ...theme.typography.h1,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-        ...theme.typography.body,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.lg,
-    },
-    options: {
-        flexDirection: 'row',
-        gap: theme.spacing.sm,
-    },
-    option: {
-        flex: 1,
-        paddingVertical: theme.spacing.md,
-        borderRadius: theme.radius.md,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        alignItems: 'center',
-    },
-    optionActive: {
-        borderColor: theme.colors.primary,
-        backgroundColor: 'rgba(99,102,241,0.15)',
-    },
-    optionText: {
-        ...theme.typography.bodySmall,
-        color: theme.colors.textSecondary,
-        fontWeight: '600',
-    },
-    optionTextActive: {
-        color: theme.colors.text,
-    },
-    button: {
-        marginBottom: theme.spacing.xl,
-    },
-});
+const createStyles = ({ colors, spacing, radius, typography }: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+            padding: spacing.lg,
+            justifyContent: 'space-between',
+        },
+        content: {
+            marginTop: spacing.xxl,
+        },
+        title: {
+            ...typography.h1,
+            color: colors.text,
+            marginBottom: spacing.sm,
+        },
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginBottom: spacing.lg,
+        },
+        options: {
+            flexDirection: 'row',
+            gap: spacing.sm,
+        },
+        option: {
+            flex: 1,
+            paddingVertical: spacing.md,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: 'center',
+        },
+        optionActive: {
+            borderColor: colors.primary,
+            backgroundColor: colors.primarySoft,
+        },
+        optionText: {
+            ...typography.bodySmall,
+            color: colors.textSecondary,
+            fontWeight: '600',
+        },
+        optionTextActive: {
+            color: colors.primary,
+        },
+        button: {
+            marginBottom: spacing.xl,
+        },
+    });
