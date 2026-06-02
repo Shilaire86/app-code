@@ -50,6 +50,8 @@ export default function ActiveWorkoutScreen() {
 
     // Swap feature state
     const [localExercises, setLocalExercises] = useState<any[]>([]);
+    const [checkedExtras, setCheckedExtras] = useState<Record<string, boolean>>({});
+    const toggleCheck = (id: string) => setCheckedExtras(prev => ({ ...prev, [id]: !prev[id] }));
     const [swapModalVisible, setSwapModalVisible] = useState(false);
     const [exerciseToSwap, setExerciseToSwap] = useState<any | null>(null);
     const [availableAlternates, setAvailableAlternates] = useState<any[]>([]);
@@ -157,7 +159,20 @@ export default function ActiveWorkoutScreen() {
         setLoadingAlternates(true);
 
         try {
-            // 1. Try explicit alternatives first (UUID array on the exercise row)
+            // 1. Use program-defined text alternatives (highest priority — curated per exercise)
+            const programAlts: string[] = ex.exercise_alternatives || [];
+            if (programAlts.length > 0) {
+                setAvailableAlternates(programAlts.map((name: string) => ({
+                    id: name,
+                    name,
+                    equipment: [],
+                    muscle_groups: [],
+                })));
+                setLoadingAlternates(false);
+                return;
+            }
+
+            // 2. Try explicit alternatives from exercises table (UUID array)
             const altIds = ex.exercises?.alternatives || [];
             if (altIds.length > 0) {
                 const { data: alts, error: altsError } = await supabase
@@ -360,16 +375,18 @@ export default function ActiveWorkoutScreen() {
 
         if (activeWorkoutId !== workoutId) {
             startWorkout(workoutId);
-            initialExercises.forEach((ex: any) => {
-                for (let i = 0; i < ex.sets; i++) {
-                    logSet({
-                        exerciseId: ex.exercises.id,
-                        setNumber: i + 1,
-                        reps: 0,
-                        weightLbs: 0,
-                    });
-                }
-            });
+            initialExercises
+                .filter((ex: any) => !ex.is_warmup && !ex.is_cooldown)
+                .forEach((ex: any) => {
+                    for (let i = 0; i < ex.sets; i++) {
+                        logSet({
+                            exerciseId: ex.exercises.id,
+                            setNumber: i + 1,
+                            reps: 0,
+                            weightLbs: 0,
+                        });
+                    }
+                });
         }
     }, [workoutId, data, activeWorkoutId, initialExercises, startWorkout, logSet]);
 
@@ -779,7 +796,46 @@ export default function ActiveWorkoutScreen() {
             )}
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {localExercises.map((ex) => {
+                {/* Warm-Up Section */}
+                {localExercises.some((e: any) => e.is_warmup) && (
+                    <View style={styles.sectionBlock}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Ionicons name="sunny-outline" size={14} color={colors.primary} />
+                            <Text style={styles.sectionHeaderText}>WARM-UP</Text>
+                        </View>
+                        {localExercises.filter((e: any) => e.is_warmup).map((ex: any) => (
+                            <View key={ex.id} style={styles.extraExCard}>
+                                <View style={styles.extraExInfo}>
+                                    <Text style={styles.extraExName}>{ex.exercises.name}</Text>
+                                    {ex.reps_target && (
+                                        <Text style={styles.extraExSub}>{ex.reps_target}</Text>
+                                    )}
+                                    {ex.notes && (
+                                        <Text style={styles.extraExNote}>{ex.notes}</Text>
+                                    )}
+                                </View>
+                                <TouchableOpacity onPress={() => toggleCheck(ex.id)}>
+                                    <Ionicons
+                                        name={checkedExtras[ex.id] ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                                        size={28}
+                                        color={checkedExtras[ex.id] ? colors.primary : 'rgba(255,255,255,0.25)'}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                {/* Main Work Section header — only shown when other sections are also present */}
+                {(localExercises.some((e: any) => e.is_warmup) || localExercises.some((e: any) => e.is_cooldown)) &&
+                    localExercises.some((e: any) => !e.is_warmup && !e.is_cooldown) && (
+                    <View style={styles.sectionHeaderRow}>
+                        <Ionicons name="barbell-outline" size={14} color={colors.primary} />
+                        <Text style={styles.sectionHeaderText}>MAIN WORK</Text>
+                    </View>
+                )}
+
+                {localExercises.filter((e: any) => !e.is_warmup && !e.is_cooldown).map((ex) => {
                     const exerciseSets = setLogs.filter(log => log.exerciseId === ex.exercises.id);
                     const last = historyByExerciseId[ex.exercises.id] ?? null;
                     const targetRepsRange = parseTargetRange(ex);
@@ -899,6 +955,33 @@ export default function ActiveWorkoutScreen() {
                         </View>
                     );
                 })}
+
+                {/* Post-Workout Section */}
+                {localExercises.some((e: any) => e.is_cooldown) && (
+                    <View style={styles.sectionBlock}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Ionicons name="leaf-outline" size={14} color="rgba(255,152,0,0.9)" />
+                            <Text style={[styles.sectionHeaderText, { color: 'rgba(255,152,0,0.9)' }]}>POST-WORKOUT</Text>
+                        </View>
+                        {localExercises.filter((e: any) => e.is_cooldown).map((ex: any) => (
+                            <View key={ex.id} style={styles.extraExCard}>
+                                <View style={styles.extraExInfo}>
+                                    <Text style={styles.extraExName}>{ex.exercises.name}</Text>
+                                    {ex.reps_target && (
+                                        <Text style={styles.extraExSub}>{ex.reps_target}</Text>
+                                    )}
+                                </View>
+                                <TouchableOpacity onPress={() => toggleCheck(ex.id)}>
+                                    <Ionicons
+                                        name={checkedExtras[ex.id] ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                                        size={28}
+                                        color={checkedExtras[ex.id] ? 'rgba(255,152,0,0.9)' : 'rgba(255,255,255,0.25)'}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </ScrollView>
 
             <View style={styles.footer}>
@@ -1063,6 +1146,51 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     scrollContent: {
         padding: spacing.lg,
         paddingBottom: 100,
+    },
+    sectionBlock: {
+        marginBottom: spacing.sm,
+    },
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: spacing.sm,
+        marginTop: spacing.md,
+    },
+    sectionHeaderText: {
+        color: colors.primary,
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.2,
+    },
+    extraExCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.md,
+        marginBottom: spacing.sm,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.06)',
+    },
+    extraExInfo: {
+        flex: 1,
+    },
+    extraExName: {
+        color: colors.text,
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    extraExSub: {
+        color: colors.textSecondary,
+        fontSize: 12,
+        marginTop: 2,
+    },
+    extraExNote: {
+        color: colors.textTertiary,
+        fontSize: 11,
+        marginTop: 2,
+        fontStyle: 'italic',
     },
     exerciseCard: {
         backgroundColor: colors.surface,

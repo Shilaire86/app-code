@@ -77,6 +77,10 @@ export async function fetchProgramDaySession(programDayId: string) {
             const matched = exerciseLookup[ex.exercise_name];
             return {
                 id: ex.id,
+                is_warmup: ex.is_warmup ?? false,
+                is_cooldown: ex.is_cooldown ?? false,
+                exercise_alternatives: ex.alternatives ?? [],
+                notes: ex.notes ?? null,
                 exercises: {
                     id: matched?.id || ex.id,
                     name: ex.exercise_name,

@@ -16,6 +16,7 @@ type ProgramDayExercise = {
     sets_target: number | null;
     reps_target: string | null;
     is_warmup?: boolean | null;
+    is_cooldown?: boolean | null;
     created_at: string;
 };
 
@@ -44,8 +45,12 @@ export default function AdminProgramStructureScreen() {
         () => [...exercises.filter(e => !!e.is_warmup)].sort((a, b) => (a.order_index - b.order_index) || (a.created_at > b.created_at ? 1 : -1)),
         [exercises]
     );
+    const cooldowns = useMemo(
+        () => [...exercises.filter(e => !!e.is_cooldown)].sort((a, b) => (a.order_index - b.order_index) || (a.created_at > b.created_at ? 1 : -1)),
+        [exercises]
+    );
     const mainWork = useMemo(
-        () => [...exercises.filter(e => !e.is_warmup)].sort((a, b) => (a.order_index - b.order_index) || (a.created_at > b.created_at ? 1 : -1)),
+        () => [...exercises.filter(e => !e.is_warmup && !e.is_cooldown)].sort((a, b) => (a.order_index - b.order_index) || (a.created_at > b.created_at ? 1 : -1)),
         [exercises]
     );
 
@@ -56,6 +61,9 @@ export default function AdminProgramStructureScreen() {
     const [repsTarget, setRepsTarget] = useState('');
     const [submittingExercise, setSubmittingExercise] = useState(false);
     const [submittingWarmup, setSubmittingWarmup] = useState(false);
+    const [cooldownName, setCooldownName] = useState('');
+    const [cooldownRepsTarget, setCooldownRepsTarget] = useState('');
+    const [submittingCooldown, setSubmittingCooldown] = useState(false);
     const [deletingDayId, setDeletingDayId] = useState<string | null>(null);
     const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
     const [deletingWeekId, setDeletingWeekId] = useState<string | null>(null);
@@ -142,7 +150,7 @@ export default function AdminProgramStructureScreen() {
         try {
             const { data, error } = await supabase
                 .from('program_day_exercises')
-                .select('id,program_day_id,order_index,exercise_name,sets_target,reps_target,is_warmup,created_at')
+                .select('id,program_day_id,order_index,exercise_name,sets_target,reps_target,is_warmup,is_cooldown,created_at')
                 .eq('program_day_id', dayId)
                 .order('order_index', { ascending: true })
                 .order('created_at', { ascending: true });
@@ -232,7 +240,7 @@ export default function AdminProgramStructureScreen() {
 
                 const attemptWithWarmup = await supabase
                     .from('program_day_exercises')
-                    .select('order_index,exercise_name,sets_target,reps_target,rir_target,rest_seconds,notes,is_warmup,created_at')
+                    .select('order_index,exercise_name,sets_target,reps_target,rir_target,rest_seconds,notes,is_warmup,is_cooldown,created_at')
                     .eq('program_day_id', d.id)
                     .order('order_index', { ascending: true })
                     .order('created_at', { ascending: true });
@@ -267,8 +275,8 @@ export default function AdminProgramStructureScreen() {
                         rest_seconds: ex.rest_seconds ?? null,
                         notes: ex.notes ?? null,
                     };
-                    // `is_warmup` may not exist in some DBs yet; include only if present in the row.
                     if (typeof ex.is_warmup === 'boolean') base.is_warmup = ex.is_warmup;
+                    if (typeof ex.is_cooldown === 'boolean') base.is_cooldown = ex.is_cooldown;
                     return base;
                 });
 
@@ -428,10 +436,7 @@ export default function AdminProgramStructureScreen() {
     async function toggleWarmup(ex: ProgramDayExercise) {
         const next = !ex.is_warmup;
         setErrorText(null);
-
-        // Optimistic update so UI reflects immediately.
         setExercises(prev => prev.map(p => (p.id === ex.id ? { ...p, is_warmup: next } : p)));
-
         try {
             const { error } = await supabase
                 .from('program_day_exercises')
@@ -439,9 +444,57 @@ export default function AdminProgramStructureScreen() {
                 .eq('id', ex.id);
             if (error) throw error;
         } catch (e: any) {
-            // Revert optimistic update on failure.
             setExercises(prev => prev.map(p => (p.id === ex.id ? { ...p, is_warmup: ex.is_warmup } : p)));
             setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to toggle warm-up.');
+        }
+    }
+
+    async function toggleCooldown(ex: ProgramDayExercise) {
+        const next = !ex.is_cooldown;
+        setErrorText(null);
+        setExercises(prev => prev.map(p => (p.id === ex.id ? { ...p, is_cooldown: next } : p)));
+        try {
+            const { error } = await supabase
+                .from('program_day_exercises')
+                .update({ is_cooldown: next })
+                .eq('id', ex.id);
+            if (error) throw error;
+        } catch (e: any) {
+            setExercises(prev => prev.map(p => (p.id === ex.id ? { ...p, is_cooldown: ex.is_cooldown } : p)));
+            setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to toggle post-workout.');
+        }
+    }
+
+    async function addCooldownExercise() {
+        if (!selectedDayId) return;
+        const name = cooldownName.trim();
+        if (!name) {
+            setErrorText('Post-workout stretch name is required.');
+            return;
+        }
+        setErrorText(null);
+        setSubmittingCooldown(true);
+        try {
+            const reps = cooldownRepsTarget.trim() ? cooldownRepsTarget.trim() : null;
+            const { error } = await supabase
+                .from('program_day_exercises')
+                .insert({
+                    program_day_id: selectedDayId,
+                    order_index: warmups.length + mainWork.length + cooldowns.length,
+                    exercise_name: name,
+                    sets_target: null,
+                    reps_target: reps,
+                    is_warmup: false,
+                    is_cooldown: true,
+                });
+            if (error) throw error;
+            setCooldownName('');
+            setCooldownRepsTarget('');
+            await fetchExercises(selectedDayId);
+        } catch (e: any) {
+            setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to add post-workout stretch.');
+        } finally {
+            setSubmittingCooldown(false);
         }
     }
 
@@ -797,6 +850,65 @@ export default function AdminProgramStructureScreen() {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
+
+                                {/* Post-Workout Stretches */}
+                                <View style={styles.subSection}>
+                                    <Text style={styles.subSectionTitle}>Post-Workout</Text>
+                                    {cooldowns.length === 0 ? (
+                                        <Text style={styles.emptyText}>No post-workout stretches yet.</Text>
+                                    ) : (
+                                        <View style={styles.list}>
+                                            {cooldowns.map(ex => (
+                                                <View key={ex.id} style={styles.listRow}>
+                                                    <View style={styles.listLeft}>
+                                                        <Text style={styles.listTitle}>{ex.exercise_name}</Text>
+                                                        <Text style={styles.listSub}>{ex.reps_target || '—'}</Text>
+                                                    </View>
+                                                    <TouchableOpacity
+                                                        style={styles.cooldownChip}
+                                                        onPress={() => toggleCooldown(ex)}
+                                                    >
+                                                        <Text style={styles.cooldownChipText}>Post-WO</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.smallIconButton, deletingExerciseId === ex.id && styles.smallIconButtonDisabled]}
+                                                        onPress={() => confirmDeleteExercise(ex)}
+                                                        disabled={deletingExerciseId === ex.id}
+                                                    >
+                                                        <Ionicons name="trash-outline" size={16} color="#FFF" />
+                                                    </TouchableOpacity>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    )}
+
+                                    <View style={styles.form}>
+                                        <Text style={styles.formTitle}>Add Post-Workout Stretch</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Stretch / movement name (required)"
+                                            placeholderTextColor="rgba(255,255,255,0.35)"
+                                            value={cooldownName}
+                                            onChangeText={setCooldownName}
+                                            editable={!!selectedDayId && !submittingCooldown}
+                                        />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Duration (e.g. 30 sec hold or 5 breaths)"
+                                            placeholderTextColor="rgba(255,255,255,0.35)"
+                                            value={cooldownRepsTarget}
+                                            onChangeText={setCooldownRepsTarget}
+                                            editable={!!selectedDayId && !submittingCooldown}
+                                        />
+                                        <TouchableOpacity
+                                            style={[styles.cooldownButton, (!selectedDayId || submittingCooldown) && styles.primaryButtonDisabled]}
+                                            onPress={addCooldownExercise}
+                                            disabled={!selectedDayId || submittingCooldown}
+                                        >
+                                            <Text style={styles.primaryButtonText}>{submittingCooldown ? 'Adding...' : 'Add Post-Workout'}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
                             </>
                         )}
                     </View>
@@ -1009,6 +1121,31 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 11,
         fontWeight: '900',
+    },
+    cooldownChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: 'rgba(255,152,0,0.18)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,152,0,0.35)',
+        minHeight: 36,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+    },
+    cooldownChipText: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: '900' as const,
+    },
+    cooldownButton: {
+        backgroundColor: 'rgba(255,152,0,0.85)',
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        borderRadius: theme.radius.md,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        minHeight: 44,
     },
     subSection: {
         gap: theme.spacing.md,

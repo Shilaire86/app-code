@@ -13,7 +13,7 @@ export type ScanCredits = {
 export async function fetchScanCredits(
     userId: string,
     tier: SubscriptionTier,
-): Promise<ScanCredits> {
+): Promise<ScanCredits | null> {
     const dailyLimit = ENTITLEMENTS[tier]?.dailyScanLimit ?? 0;
 
     const { data, error } = await supabase
@@ -22,6 +22,8 @@ export async function fetchScanCredits(
         .eq('user_id', userId)
         .maybeSingle();
 
+    // PGRST205 = table not in schema cache (migration not yet applied)
+    if (error?.code === 'PGRST205') return null;
     if (error) throw error;
 
     const today = new Date().toISOString().split('T')[0];
