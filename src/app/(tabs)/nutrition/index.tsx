@@ -15,6 +15,7 @@ import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { isVip, hasEntitlement } from '@/lib/entitlements';
+import { fetchScanCredits, ScanCredits } from '@/services/scanCredits';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { 
     getActiveTargets, 
@@ -45,6 +46,7 @@ export default function NutritionDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [scanning, setScanning] = useState(false);
+    const [scanCredits, setScanCredits] = useState<ScanCredits | null>(null);
 
     const today = new Date().toISOString().split('T')[0];
     const canAccessNutrition = hasEntitlement(tier, 'nutritionEnabled');
@@ -57,10 +59,13 @@ export default function NutritionDashboard() {
             return;
         }
         try {
-            const [fetchedTargets, fetchedLogs] = await Promise.all([
+            const canScan = hasEntitlement(tier, 'mealScanEnabled');
+            const [fetchedTargets, fetchedLogs, credits] = await Promise.all([
                 getActiveTargets(user.id),
-                fetchDailyLogs(user.id, today)
+                fetchDailyLogs(user.id, today),
+                canScan ? fetchScanCredits(user.id, tier) : Promise.resolve(null),
             ]);
+            if (credits) setScanCredits(credits);
             
             setTargets(fetchedTargets);
             setLogs(fetchedLogs);
@@ -146,6 +151,11 @@ export default function NutritionDashboard() {
             const est = await estimateMealFromPhoto(asset.base64!, mediaType);
             setScanning(false);
 
+            // Refresh credit count so the button updates immediately
+            if (user?.id && tier) {
+                fetchScanCredits(user.id, tier).then(setScanCredits).catch(() => {});
+            }
+
             router.push({
                 pathname: '/nutrition/log-meal',
                 params: {
@@ -160,7 +170,16 @@ export default function NutritionDashboard() {
             });
         } catch (err) {
             setScanning(false);
-            Alert.alert('Scan Failed', err instanceof Error ? err.message : 'Could not analyze the photo.');
+            const msg = err instanceof Error ? err.message : 'Could not analyze the photo.';
+            if (msg.includes('No scans remaining')) {
+                Alert.alert(
+                    'Daily Limit Reached',
+                    "You've used all your scans for today. Your credits reset at midnight.",
+                    [{ text: 'OK' }]
+                );
+            } else {
+                Alert.alert('Scan Failed', msg);
+            }
         }
     };
 
@@ -383,14 +402,21 @@ export default function NutritionDashboard() {
                     </View>
                 </View>
 
-                {/* Scan a Meal (VIP + Elite) */}
-                {isVip(tier) && (
+                {/* Scan a Meal (Standard+) */}
+                {hasEntitlement(tier, 'mealScanEnabled') && (
                     <TouchableOpacity style={styles.scanBtn} onPress={handleScanMeal} disabled={scanning}>
                         <Ionicons name="camera" size={20} color="#000" />
                         <Text style={styles.scanBtnText}>SCAN A MEAL</Text>
                         <View style={styles.scanBadge}>
                             <Text style={styles.scanBadgeText}>AI</Text>
                         </View>
+                        {scanCredits !== null && (
+                            <View style={styles.scanCreditPill}>
+                                <Text style={styles.scanCreditText}>
+                                    {scanCredits.totalRemaining} left
+                                </Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 )}
 
@@ -779,6 +805,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         fontSize: 10,
         fontWeight: '900',
         letterSpacing: 0.5,
+    },
+    scanCreditPill: {
+        backgroundColor: 'rgba(0,0,0,0.18)',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        marginLeft: 4,
+    },
+    scanCreditText: {
+        color: '#000',
+        fontSize: 10,
+        fontWeight: '700',
     },
     scanOverlay: {
         ...StyleSheet.absoluteFillObject,

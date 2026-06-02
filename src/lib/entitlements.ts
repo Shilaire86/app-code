@@ -42,6 +42,9 @@ export type EntitlementKey =
     | 'showRecommendationLogic'
     // Community
     | 'communityComments'
+    // AI meal scanning
+    | 'mealScanEnabled'
+    | 'dailyScanLimit'
     // Future / placeholders
     | 'macroSnapshotScansPerWeek';
 
@@ -86,6 +89,9 @@ export type TierEntitlements = {
     showRecommendationLogic: boolean;
     // Community
     communityComments: boolean;
+    // AI meal scanning
+    mealScanEnabled: boolean;
+    dailyScanLimit: number;
     // Future / placeholders
     macroSnapshotScansPerWeek: number;
 };
@@ -125,6 +131,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         advancedAnalytics: false,
         showRecommendationLogic: false,
         communityComments: false,
+        mealScanEnabled: false,
+        dailyScanLimit: 0,
         macroSnapshotScansPerWeek: 0,
     },
 
@@ -162,6 +170,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         advancedAnalytics: false,       // VIP+
         showRecommendationLogic: false, // VIP+
         communityComments: false,       // VIP+ (read-only for Standard)
+        mealScanEnabled: true,
+        dailyScanLimit: 1,
         macroSnapshotScansPerWeek: 0,
     },
 
@@ -199,6 +209,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         advancedAnalytics: true,
         showRecommendationLogic: true,  // "Why we recommended this" transparency
         communityComments: true,
+        mealScanEnabled: true,
+        dailyScanLimit: 3,
         macroSnapshotScansPerWeek: 0,
     },
 
@@ -236,6 +248,8 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
         advancedAnalytics: true,
         showRecommendationLogic: true,
         communityComments: true,
+        mealScanEnabled: true,
+        dailyScanLimit: 5,
         macroSnapshotScansPerWeek: 0,
     },
 };
