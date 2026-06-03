@@ -31,14 +31,14 @@ export default function TabsLayout() {
                     headerShown: false,
                     tabBarStyle: {
                         backgroundColor:  colors.surface,
-                        borderTopColor:   colors.borderMid,
+                        borderTopColor:   colors.borderHard,
                         borderTopWidth:   1,
                         paddingBottom:    12,
                         paddingTop:       10,
                         height:           68,
                     },
                     tabBarActiveTintColor:   colors.primary,
-                    tabBarInactiveTintColor: colors.textTertiary,
+                    tabBarInactiveTintColor: colors.textSecondary,
                     tabBarLabelStyle: {
                         fontSize:    10,
                         fontFamily:  'DMSans_700Bold',
@@ -61,6 +61,8 @@ export default function TabsLayout() {
             <Tabs.Screen name="nutrition/index"  options={{ title: 'Nutrition' }} />
             <Tabs.Screen name="history/index"    options={{ title: 'History' }} />
             <Tabs.Screen name="settings/index"   options={{ title: 'Settings' }} />
+            {/* Detail screens — navigable but hidden from the tab bar */}
+            <Tabs.Screen name="programs/[id]"    options={{ href: null }} />
             {/* Feed lives off the bar — reachable via the Home header icon */}
             <Tabs.Screen name="feed/index"       options={{ href: null, title: 'Feed' }} />
         </Tabs>

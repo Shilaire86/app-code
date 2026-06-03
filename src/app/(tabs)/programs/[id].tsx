@@ -2,12 +2,35 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
-import { useEffect, useState } from 'react';
+import { ComponentProps, useEffect, useState } from 'react';
 import { useProfileStore } from '@/stores/profileStore';
 import { getTierLabel } from '@/lib/tier-gating';
 import { Ionicons } from '@expo/vector-icons';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { canAccessContentTier } from '@/lib/entitlements';
+import type { ColorPalette } from '@/constants/theme';
+
+type IoniconsName = ComponentProps<typeof Ionicons>['name'];
+
+function getProgramVisual(item: any, colors: ColorPalette): { icon: IoniconsName; iconColor: string; bgColor: string } {
+    const goals: string[] = item?.goals ?? [];
+    const difficulty: string = item?.difficulty ?? 'intermediate';
+    if (goals.some((g: string) => ['Cardio', 'Endurance', 'HIIT'].includes(g)))
+        return { icon: 'pulse',   iconColor: colors.cardio,       bgColor: colors.cardioSoft };
+    if (goals.some((g: string) => ['Mobility', 'Flexibility', 'Yoga', 'Recovery'].includes(g)))
+        return { icon: 'leaf',    iconColor: colors.nutrition,    bgColor: colors.nutritionSoft };
+    if (goals.some((g: string) => ['Strength', 'Powerlifting', 'Power'].includes(g)))
+        return { icon: 'barbell', iconColor: colors.primary,      bgColor: colors.primarySoft };
+    if (goals.some((g: string) => ['Hypertrophy', 'Muscle', 'Bodybuilding', 'Efficiency'].includes(g)))
+        return { icon: 'body',    iconColor: colors.practitioner, bgColor: colors.practitionerSoft };
+    if (goals.some((g: string) => ['Weight Loss', 'Fat Loss'].includes(g)))
+        return { icon: 'flame',   iconColor: colors.warning,      bgColor: colors.warningSoft };
+    if (difficulty === 'beginner')
+        return { icon: 'walk',    iconColor: colors.success,      bgColor: colors.successSoft };
+    if (difficulty === 'advanced')
+        return { icon: 'trophy',  iconColor: colors.primary,      bgColor: colors.primarySoft };
+    return { icon: 'fitness',  iconColor: colors.practitioner, bgColor: colors.practitionerSoft };
+}
 
 export default function ProgramDetailScreen() {
     const theme = useTheme();
@@ -113,7 +136,7 @@ export default function ProgramDetailScreen() {
                     headerShown: true,
                     headerTitle: 'Programs',
                     headerStyle: { backgroundColor: colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: colors.text,
                 }} />
                 <Text style={styles.notAvailableTitle}>Program not available</Text>
                 <Text style={styles.notAvailableText}>This program is unpublished or cannot be found.</Text>
@@ -141,9 +164,14 @@ export default function ProgramDetailScreen() {
             }} />
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.headerImage}>
-                    <Ionicons name="fitness-outline" size={80} color="rgba(255,255,255,0.1)" />
-                </View>
+                {(() => {
+                    const visual = getProgramVisual(program, colors);
+                    return (
+                        <View style={[styles.headerImage, { backgroundColor: visual.bgColor }]}>
+                            <Ionicons name={visual.icon} size={80} color={visual.iconColor} style={{ opacity: 0.9 }} />
+                        </View>
+                    );
+                })()}
 
                 <View style={styles.content}>
                     <View style={styles.titleRow}>
@@ -192,7 +220,7 @@ export default function ProgramDetailScreen() {
                                     {hasAccess ? (
                                         <Ionicons name="play-circle-outline" size={24} color={colors.primary} />
                                     ) : (
-                                        <Ionicons name="lock-closed-outline" size={20} color="rgba(255,255,255,0.3)" />
+                                        <Ionicons name="lock-closed-outline" size={20} color={colors.textTertiary} />
                                     )}
                                 </TouchableOpacity>
                             ))
@@ -239,7 +267,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         alignItems: 'center',
     },
     notAvailableTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 10,
@@ -252,15 +280,15 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         paddingHorizontal: spacing.xl,
     },
     notAvailableButton: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.md,
         paddingHorizontal: 18,
         paddingVertical: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.12)',
+        borderColor: colors.borderMid,
     },
     notAvailableButtonText: {
-        color: '#FFF',
+        color: colors.text,
         fontWeight: '800',
     },
     backButton: {
@@ -345,18 +373,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     workoutItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         padding: spacing.md,
         borderRadius: radius.md,
         marginBottom: spacing.md,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     workoutNumber: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.secondarySoft,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: spacing.md,
@@ -394,7 +422,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         paddingBottom: 40,
         backgroundColor: colors.background,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
+        borderTopColor: colors.borderMid,
         alignItems: 'center',
     },
     startButton: {

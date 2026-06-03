@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SectionList, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { canAccessTier } from '@/lib/tier-gating';
@@ -11,6 +11,39 @@ import { HintCard } from '@/components/HintCard';
 import { hasEntitlement } from '@/lib/entitlements';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import type { ColorPalette } from '@/constants/theme';
+
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+// Unique icon per program — no icon repeated across tiers.
+const PROGRAM_ICON: Record<string, IoniconsName> = {
+    // Free tier
+    'Initiate':  'layers-outline',
+    'Ground':    'leaf-outline',
+    // Standard tier
+    'Ascend':    'trending-up-outline',
+    'Command':   'shield-outline',
+    'Surge':     'flash-outline',
+    // VIP tier
+    'Forge':     'flame-outline',
+    'Sovereign': 'trophy-outline',
+    'Embody':    'fitness-outline',
+    'Refine':    'infinite-outline',
+};
+
+// Tier-driven colors — all programs in the same tier share the same palette.
+function getTierVisual(tier: string, colors: ColorPalette): { iconColor: string; bgColor: string; borderColor: string } {
+    switch (tier) {
+        case 'standard': return { iconColor: colors.primary,        bgColor: colors.primarySoft,       borderColor: colors.primary + '55' };
+        case 'vip':      return { iconColor: colors.practitioner,   bgColor: colors.practitionerSoft,  borderColor: colors.practitioner + '55' };
+        case 'elite':    return { iconColor: '#8B5CF6',             bgColor: 'rgba(139,92,246,0.10)',  borderColor: 'rgba(139,92,246,0.35)' };
+        default:         return { iconColor: '#94A3B8',             bgColor: 'rgba(148,163,184,0.10)', borderColor: 'rgba(148,163,184,0.30)' };
+    }
+}
+
+const TIER_PRIORITY: Record<string, number> = { elite: 0, vip: 1, standard: 2, free: 3 };
+const TIER_LABELS: Record<string, string> = { elite: 'ELITE', vip: 'VIP', standard: 'STANDARD', free: 'FREE' };
+const DIFFICULTY_ORDER: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
 
 const ProgramCard = memo(({
     item,
@@ -24,16 +57,28 @@ const ProgramCard = memo(({
     onUpgrade: () => void;
 }) => {
     const theme = useTheme();
+    const { colors } = theme;
     const styles = createStyles(theme);
     const hasAccess = canAccessTier(tier, item.tier_required);
+    const visual = getTierVisual(item.tier_required, colors);
+    const icon = PROGRAM_ICON[item.name] ?? 'barbell-outline';
 
     return (
         <TouchableOpacity
-            style={styles.programCard}
+            style={[styles.programCard, {
+                borderColor: visual.borderColor,
+                borderTopColor: visual.iconColor,
+                borderTopWidth: 3,
+            }]}
             onPress={() => onPress(item.id)}
         >
-            <View style={styles.thumbnailPlaceholder}>
-                <Ionicons name="barbell-outline" size={40} color="rgba(255,255,255,0.1)" />
+            <View style={[styles.thumbnailPlaceholder, { backgroundColor: visual.bgColor }]}>
+                <Ionicons name={icon} size={64} color={visual.iconColor} style={{ opacity: 0.85 }} />
+                <View style={[styles.thumbnailTierBadge, { backgroundColor: visual.iconColor + '22' }]}>
+                    <Text style={[styles.thumbnailTierText, { color: visual.iconColor }]}>
+                        {item.tier_required?.toUpperCase()}
+                    </Text>
+                </View>
                 {!hasAccess && (
                     <View style={styles.lockOverlay}>
                         <Ionicons name="lock-closed" size={24} color="#FFF" />
@@ -41,9 +86,6 @@ const ProgramCard = memo(({
                         <TouchableOpacity
                             style={styles.upgradeInlineButton}
                             onPress={(e) => {
-                                // On web, prevent bubbling so this feels like a dedicated CTA.
-                                // On native, nested touchables may still bubble; it's OK if the parent
-                                // also navigates to the locked program (it will still be gated).
                                 // @ts-ignore
                                 e?.stopPropagation?.();
                                 onUpgrade();
@@ -90,6 +132,26 @@ export default function ProgramsScreen() {
         { staleTimeMs: 60_000 }
     );
     const programRows = programs ?? [];
+
+    const coachSections = React.useMemo(() => {
+        const groups: Record<string, any[]> = {};
+        (programRows as any[]).forEach((p: any) => {
+            const tier = p.tier_required || 'free';
+            if (!groups[tier]) groups[tier] = [];
+            groups[tier].push(p);
+        });
+        return Object.entries(groups)
+            .sort(([a], [b]) => (TIER_PRIORITY[a] ?? 99) - (TIER_PRIORITY[b] ?? 99))
+            .map(([tier, data]) => ({
+                title: TIER_LABELS[tier] || tier.toUpperCase(),
+                data: [...data].sort((a, b) => {
+                    const diffDelta = (DIFFICULTY_ORDER[b.difficulty] ?? 1) - (DIFFICULTY_ORDER[a.difficulty] ?? 1);
+                    if (diffDelta !== 0) return diffDelta;
+                    return (b.duration_weeks || 0) - (a.duration_weeks || 0);
+                }),
+            }));
+    }, [programRows]);
+
     const [activeTab, setActiveTab] = React.useState<'coach' | 'my'>('coach');
     const [userPrograms, setUserPrograms] = useState<any[]>([]);
     const userId = useAuthStore(s => s.user?.id ?? null);
@@ -98,7 +160,6 @@ export default function ProgramsScreen() {
     const canCreateProgram = hasEntitlement(tier, 'guidedProgramsEnabled');
     const canBuildOwn = hasEntitlement(tier, 'customProgramsEnabled');
 
-    // Fetch user-owned programs when switching to My Programs tab
     useEffect(() => {
         if (activeTab === 'my' && userId) {
             supabase
@@ -151,18 +212,20 @@ export default function ProgramsScreen() {
             </View>
 
             <View style={styles.tabBar}>
-                <TouchableOpacity 
-                    style={[styles.tab, activeTab === 'coach' && styles.activeTab]} 
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'coach' && styles.activeTab]}
                     onPress={() => setActiveTab('coach')}
                 >
                     <Text style={[styles.tabText, activeTab === 'coach' && styles.activeTabText]}>Coach-Led</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                    style={[styles.tab, activeTab === 'my' && styles.activeTab]} 
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'my' && styles.activeTab]}
                     onPress={() => setActiveTab('my')}
                 >
                     <Text style={[styles.tabText, activeTab === 'my' && styles.activeTabText]}>My Programs</Text>
-                    {!canDoQuick && <Ionicons name="lock-closed" size={12} color="rgba(255,255,255,0.4)" style={{ marginLeft: 6 }} />}
+                    {!canDoQuick && (
+                        <Ionicons name="lock-closed" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -177,13 +240,12 @@ export default function ProgramsScreen() {
                         }}
                         onDismiss={() => setSeenHint('programs_intro')}
                     />
-                    {/* Test reset: set `profiles.seen_hints` to '{}'::jsonb in Supabase */}
                 </View>
             )}
 
             {activeTab === 'my' && (
                 <ScrollView style={styles.myProgramsContainer} showsVerticalScrollIndicator={false}>
-                     <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.quickWorkoutCard}
                         onPress={() => canDoQuick ? router.push('/workout/quick') : router.push('/subscribe')}
                     >
@@ -195,12 +257,12 @@ export default function ProgramsScreen() {
                             <Text style={styles.quickSub}>Start a freeform session now</Text>
                         </View>
                         {!canDoQuick ? (
-                             <View style={styles.quickLock}>
+                            <View style={styles.quickLock}>
                                 <Ionicons name="sparkles" size={16} color="#FFF" />
                                 <Text style={styles.lockText}>Standard+</Text>
-                             </View>
+                            </View>
                         ) : (
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                         )}
                     </TouchableOpacity>
 
@@ -208,20 +270,20 @@ export default function ProgramsScreen() {
                         style={styles.createProgramCard}
                         onPress={() => canCreateProgram ? router.push('/programs/create') : router.push('/subscribe')}
                     >
-                        <View style={[styles.quickIconBg, { backgroundColor: 'rgba(0,255,128,0.1)' }]}>
-                            <Ionicons name="sparkles" size={24} color="#00FF80" />
+                        <View style={[styles.quickIconBg, { backgroundColor: colors.successSoft }]}>
+                            <Ionicons name="sparkles" size={24} color={colors.success} />
                         </View>
                         <View style={styles.quickContent}>
                             <Text style={styles.quickTitle}>Create Program</Text>
                             <Text style={styles.quickSub}>Auto-generate a multi-week plan</Text>
                         </View>
                         {!canCreateProgram ? (
-                             <View style={[styles.quickLock, { backgroundColor: '#00FF80' }]}>
-                                <Ionicons name="lock-closed" size={14} color="#000" />
-                                <Text style={[styles.lockText, { color: '#000' }]}>VIP+</Text>
-                             </View>
+                            <View style={[styles.quickLock, { backgroundColor: colors.success }]}>
+                                <Ionicons name="lock-closed" size={14} color="#FFF" />
+                                <Text style={styles.lockText}>VIP+</Text>
+                            </View>
                         ) : (
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                         )}
                     </TouchableOpacity>
 
@@ -229,20 +291,20 @@ export default function ProgramsScreen() {
                         style={styles.createProgramCard}
                         onPress={() => canBuildOwn ? router.push('/programs/build') : router.push('/subscribe')}
                     >
-                        <View style={[styles.quickIconBg, { backgroundColor: 'rgba(255,170,0,0.1)' }]}>
-                            <Ionicons name="construct" size={24} color="#FFAA00" />
+                        <View style={[styles.quickIconBg, { backgroundColor: colors.warningSoft }]}>
+                            <Ionicons name="construct" size={24} color={colors.warning} />
                         </View>
                         <View style={styles.quickContent}>
                             <Text style={styles.quickTitle}>Build Your Own</Text>
                             <Text style={styles.quickSub}>Full blank-canvas program builder</Text>
                         </View>
                         {!canBuildOwn ? (
-                             <View style={[styles.quickLock, { backgroundColor: '#FFAA00' }]}>
-                                <Ionicons name="lock-closed" size={14} color="#000" />
-                                <Text style={[styles.lockText, { color: '#000' }]}>VIP+</Text>
-                             </View>
+                            <View style={[styles.quickLock, { backgroundColor: colors.warning }]}>
+                                <Ionicons name="lock-closed" size={14} color="#FFF" />
+                                <Text style={styles.lockText}>VIP+</Text>
+                            </View>
                         ) : (
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                         )}
                     </TouchableOpacity>
 
@@ -250,14 +312,14 @@ export default function ProgramsScreen() {
                         style={styles.createProgramCard}
                         onPress={() => router.push('/cardio')}
                     >
-                        <View style={[styles.quickIconBg, { backgroundColor: 'rgba(255,152,0,0.1)' }]}>
-                            <Ionicons name="fitness" size={24} color="#FF9800" />
+                        <View style={[styles.quickIconBg, { backgroundColor: colors.cardioSoft }]}>
+                            <Ionicons name="fitness" size={24} color={colors.cardio} />
                         </View>
                         <View style={styles.quickContent}>
                             <Text style={styles.quickTitle}>Cardio</Text>
                             <Text style={styles.quickSub}>Browse protocols & weekly plan</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                     </TouchableOpacity>
 
                     {userPrograms.length > 0 && (
@@ -288,7 +350,7 @@ export default function ProgramsScreen() {
 
                     {userPrograms.length === 0 && (
                         <View style={styles.emptyMyPrograms}>
-                            <Ionicons name="albums-outline" size={40} color="rgba(255,255,255,0.05)" />
+                            <Ionicons name="albums-outline" size={40} color={colors.textTertiary} />
                             <Text style={styles.emptyMyTitle}>No custom programs yet</Text>
                             <Text style={styles.emptyMyBody}>
                                 Create a guided program or do a quick workout to get started.
@@ -301,7 +363,7 @@ export default function ProgramsScreen() {
             {activeTab === 'coach' && (
                 programRows.length === 0 ? (
                     <View style={styles.emptyCard}>
-                        <Ionicons name="barbell-outline" size={56} color="rgba(255,255,255,0.12)" />
+                        <Ionicons name="barbell-outline" size={56} color={colors.textTertiary} />
                         <Text style={styles.emptyTitle}>No programs available yet</Text>
                         <Text style={styles.emptyBody}>
                             New programs will appear here once they're published. Check back soon.
@@ -323,16 +385,19 @@ export default function ProgramsScreen() {
                         )}
                     </View>
                 ) : (
-                    <FlatList
-                        data={programRows}
-                        renderItem={renderProgram}
+                    <SectionList
+                        sections={coachSections}
                         keyExtractor={(item) => item.id}
+                        renderItem={renderProgram}
+                        renderSectionHeader={({ section: { title } }) => (
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionHeaderText}>{title}</Text>
+                            </View>
+                        )}
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
-                        initialNumToRender={5}
-                        maxToRenderPerBatch={5}
-                        windowSize={5}
-                        removeClippedSubviews={true}
+                        initialNumToRender={6}
+                        stickySectionHeadersEnabled={false}
                     />
                 )
             )}
@@ -366,6 +431,17 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     listContent: {
         padding: spacing.lg,
         paddingTop: 0,
+        paddingBottom: spacing.xxl,
+    },
+    sectionHeader: {
+        paddingTop: spacing.lg,
+        paddingBottom: spacing.sm,
+    },
+    sectionHeaderText: {
+        color: colors.textTertiary,
+        fontSize: 11,
+        fontWeight: '800' as const,
+        letterSpacing: 1.5,
     },
     hintWrap: {
         paddingHorizontal: spacing.lg,
@@ -374,15 +450,15 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     emptyCard: {
         marginHorizontal: spacing.lg,
         marginBottom: spacing.lg,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.borderMid,
         paddingVertical: 28,
         paddingHorizontal: 18,
         alignItems: 'center',
     },
-    emptyTitle: { color: '#FFF', fontSize: 16, fontWeight: '900', marginTop: 10, textAlign: 'center' },
+    emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 10, textAlign: 'center' },
     emptyBody: { color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 18 },
     emptyButton: {
         marginTop: 14,
@@ -397,8 +473,8 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     emptyHelper: { color: colors.textSecondary, marginTop: 14, fontSize: 12, textAlign: 'center' },
     adminButton: {
         marginTop: 10,
-        backgroundColor: 'rgba(0,187,255,0.10)',
-        borderColor: 'rgba(0,187,255,0.28)',
+        backgroundColor: colors.infoSoft,
+        borderColor: colors.info,
         borderWidth: 1,
         paddingHorizontal: 18,
         paddingVertical: 10,
@@ -406,21 +482,33 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         minHeight: 44,
         justifyContent: 'center',
     },
-    adminButtonText: { color: colors.primary, fontSize: 13, fontWeight: '900' },
+    adminButtonText: { color: colors.info, fontSize: 13, fontWeight: '900' },
     programCard: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         marginBottom: spacing.lg,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     thumbnailPlaceholder: {
         height: 160,
-        backgroundColor: 'rgba(255,255,255,0.03)',
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+    },
+    thumbnailTierBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: radius.full,
+    },
+    thumbnailTierText: {
+        fontSize: 9,
+        fontWeight: '800',
+        letterSpacing: 0.8,
     },
     lockOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -446,7 +534,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         alignItems: 'center',
         gap: 8,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.16)',
+        borderColor: colors.borderHard,
     },
     upgradeInlineText: { color: '#FFF', fontSize: 12, fontWeight: '900' },
     programInfo: {
@@ -469,10 +557,12 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         gap: spacing.xs,
     },
     tag: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.secondarySoft,
         paddingHorizontal: spacing.sm,
         paddingVertical: 4,
         borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     tagText: {
         color: colors.textSecondary,
@@ -489,14 +579,15 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         paddingVertical: 8,
         paddingHorizontal: 12,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.secondarySoft,
+        borderWidth: 1,
+        borderColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
     },
     activeTab: {
-        backgroundColor: 'rgba(0,187,255,0.15)',
-        borderWidth: 1,
-        borderColor: 'rgba(0,187,255,0.3)',
+        backgroundColor: colors.primarySoft,
+        borderColor: colors.primary,
     },
     tabText: {
         color: colors.textSecondary,
@@ -514,18 +605,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     quickWorkoutCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.borderMid,
         marginBottom: spacing.xl,
     },
     quickIconBg: {
         width: 48,
         height: 48,
         borderRadius: 12,
-        backgroundColor: 'rgba(0,187,255,0.1)',
+        backgroundColor: colors.primarySoft,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -534,7 +625,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         flex: 1,
     },
     quickTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
@@ -579,11 +670,11 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     createProgramCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.borderMid,
         marginBottom: spacing.lg,
     },
     userProgramsSection: {
@@ -599,18 +690,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     userProgramRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: 16,
         marginBottom: spacing.sm,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.06)',
+        borderColor: colors.borderMid,
     },
     userProgramInfo: {
         flex: 1,
     },
     userProgramName: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 15,
         fontWeight: '600',
     },

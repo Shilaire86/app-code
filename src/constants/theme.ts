@@ -1,7 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// The Becoming Method — Design System v5 (Forge)
-// Direction B: Deep charcoal · Burnished copper · Industrial edge
-// Headings: Barlow Condensed (condensed, bold, assertive)
+// The Becoming Method — Design System v6
+// Light  → Direction A "The Method": off-white · fire orange · editorial brutalism
+// Dark   → Direction B "Forge":      charcoal · burnished copper · industrial
+// Headings: Barlow Condensed (condensed, bold, uppercase) — both directions
 // Body:     DM Sans (clean, geometric, modern)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -30,44 +31,50 @@ export const radius = {
 } as const;
 
 // ─── Typography ──────────────────────────────────────────────────────────────
-// Headings: Barlow Condensed — condensed, bold, athletic
+// Headings: Barlow Condensed — condensed, bold, athletic, uppercase
 // Body:     DM Sans — clean, geometric, highly legible
+// Both directions use uppercase condensed headings with tight letter-spacing.
 
 export const typography = {
   display: {
-    fontFamily:    'BarlowCondensed_800ExtraBold',
-    fontSize:      48,
-    fontWeight:    '800' as const,
-    lineHeight:    52,
-    letterSpacing: 0.5,
+    fontFamily:     'BarlowCondensed_800ExtraBold',
+    fontSize:       48,
+    fontWeight:     '800' as const,
+    lineHeight:     50,
+    letterSpacing:  -0.5,
+    textTransform:  'uppercase' as const,
   },
   h1: {
-    fontFamily:    'BarlowCondensed_700Bold',
-    fontSize:      40,
-    fontWeight:    '700' as const,
-    lineHeight:    44,
-    letterSpacing: 0.3,
+    fontFamily:     'BarlowCondensed_800ExtraBold',
+    fontSize:       40,
+    fontWeight:     '800' as const,
+    lineHeight:     42,
+    letterSpacing:  -0.3,
+    textTransform:  'uppercase' as const,
   },
   h2: {
-    fontFamily:    'BarlowCondensed_700Bold',
-    fontSize:      32,
-    fontWeight:    '700' as const,
-    lineHeight:    36,
-    letterSpacing: 0.2,
+    fontFamily:     'BarlowCondensed_700Bold',
+    fontSize:       32,
+    fontWeight:     '700' as const,
+    lineHeight:     34,
+    letterSpacing:  -0.2,
+    textTransform:  'uppercase' as const,
   },
   h3: {
-    fontFamily:    'BarlowCondensed_600SemiBold',
-    fontSize:      26,
-    fontWeight:    '600' as const,
-    lineHeight:    30,
-    letterSpacing: 0.1,
+    fontFamily:     'BarlowCondensed_700Bold',
+    fontSize:       26,
+    fontWeight:     '700' as const,
+    lineHeight:     28,
+    letterSpacing:  0,
+    textTransform:  'uppercase' as const,
   },
   h4: {
-    fontFamily:    'BarlowCondensed_600SemiBold',
-    fontSize:      22,
-    fontWeight:    '600' as const,
-    lineHeight:    26,
-    letterSpacing: 0,
+    fontFamily:     'BarlowCondensed_600SemiBold',
+    fontSize:       22,
+    fontWeight:     '600' as const,
+    lineHeight:     24,
+    letterSpacing:  0,
+    textTransform:  'uppercase' as const,
   },
   body: {
     fontFamily:    'DMSans_400Regular',
@@ -163,9 +170,9 @@ export const shadows = {
   },
 } as const;
 
-// ─── Dark Palette — Forge ────────────────────────────────────────────────────
-// Base: Deep charcoal #1C1C1E   Accent: Burnished copper #B5622A
-// Text: Warm white #F0EDE8
+// ─── Dark Palette — Direction B "Forge" ──────────────────────────────────────
+// Base: Deep charcoal #1C1C1E   Cards: #141414 (darker/inset)
+// Accent: Burnished copper #B5622A   Text: Warm white #F0EDE8
 
 export const darkColors = {
   // ── Primary — Burnished copper ────────────────────────────────────────────
@@ -176,11 +183,11 @@ export const darkColors = {
   secondary:    '#F0EDE8',
   secondarySoft:'rgba(240,237,232,0.08)',
 
-  // ── Backgrounds ──────────────────────────────────────────────────────────
+  // ── Backgrounds — cards sit darker (inset industrial aesthetic) ───────────
   background:      '#1C1C1E',
-  surface:         '#1C1C1E',
-  surfaceElevated: '#2A2A2C',
-  neuInset:        '#101011',
+  surface:         '#1A1A1A',
+  surfaceElevated: '#141414',
+  neuInset:        '#0D0D0F',
 
   // ── Text ─────────────────────────────────────────────────────────────────
   text:          '#F0EDE8',
@@ -225,34 +232,34 @@ export const darkColors = {
   gallerySoft:   'rgba(255,159,10,0.10)',
 } as const;
 
-// ─── Light Palette — Forge ───────────────────────────────────────────────────
-// Base: Warm linen #EFE9E1   Accent: Deep copper #9B4E1C (readable on warm bg)
-// Text: Near-black with warm tint #1E1A16
+// ─── Light Palette — Direction A "The Method" ────────────────────────────────
+// Base: Off-white #F7F4EF   Accent: Fire orange #FF4B1F
+// Text: Near-black #1A1A1A   Editorial brutalism — hard borders, no shadows
 
 export const lightColors = {
-  // ── Primary — Deep copper (readable on warm linen) ────────────────────────
-  primary:      '#9B4E1C',
-  primaryLight: '#B5622A',
-  primarySoft:  'rgba(155,78,28,0.10)',
+  // ── Primary — Fire orange ─────────────────────────────────────────────────
+  primary:      '#FF4B1F',
+  primaryLight: '#FF6B45',
+  primarySoft:  'rgba(255,75,31,0.10)',
 
-  secondary:    '#1E1A16',
-  secondarySoft:'rgba(30,26,22,0.08)',
+  secondary:    '#1A1A1A',
+  secondarySoft:'rgba(26,26,26,0.06)',
 
   // ── Backgrounds ──────────────────────────────────────────────────────────
-  background:      '#EFE9E1',
-  surface:         '#EFE9E1',
-  surfaceElevated: '#E0D9D0',
-  neuInset:        '#D8D0C6',
+  background:      '#F7F4EF',
+  surface:         '#F7F4EF',
+  surfaceElevated: '#EDEDEA',
+  neuInset:        '#E4E1DC',
 
   // ── Text ─────────────────────────────────────────────────────────────────
-  text:          '#1E1A16',
-  textSecondary: 'rgba(30,26,22,0.52)',
-  textTertiary:  'rgba(30,26,22,0.30)',
+  text:          '#1A1A1A',
+  textSecondary: 'rgba(26,26,26,0.45)',
+  textTertiary:  'rgba(26,26,26,0.28)',
 
-  // ── Borders ──────────────────────────────────────────────────────────────
-  border:     'rgba(30,26,22,0.07)',
-  borderMid:  'rgba(30,26,22,0.14)',
-  borderHard: 'rgba(30,26,22,0.28)',
+  // ── Borders — borderHard is solid black for editorial card edges ──────────
+  border:     'rgba(26,26,26,0.08)',
+  borderMid:  'rgba(26,26,26,0.16)',
+  borderHard: '#1A1A1A',
 
   // ── Status ───────────────────────────────────────────────────────────────
   success:     '#2D8A4E',
@@ -271,14 +278,14 @@ export const lightColors = {
   practitionerSoft: 'rgba(37,99,235,0.10)',
   devoted:          '#A86400',
   devotedSoft:      'rgba(168,100,0,0.10)',
-  embodied:         '#9B4E1C',
-  embodiedSoft:     'rgba(155,78,28,0.10)',
+  embodied:         '#FF4B1F',
+  embodiedSoft:     'rgba(255,75,31,0.10)',
 
   // ── Feature Accents ──────────────────────────────────────────────────────
-  cardio:        '#C0400A',
-  cardioSoft:    'rgba(192,64,10,0.10)',
-  mindset:       '#9B4E1C',
-  mindsetSoft:   'rgba(155,78,28,0.10)',
+  cardio:        '#E03800',
+  cardioSoft:    'rgba(224,56,0,0.10)',
+  mindset:       '#A86400',
+  mindsetSoft:   'rgba(168,100,0,0.10)',
   progress:      '#2563EB',
   progressSoft:  'rgba(37,99,235,0.10)',
   nutrition:     '#2D8A4E',

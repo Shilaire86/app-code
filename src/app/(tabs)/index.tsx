@@ -1075,6 +1075,7 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         backgroundColor: colors.surfaceElevated,
         borderRadius: radius.xl,
         padding: spacing.lg,
+        marginTop: spacing.md,
         marginBottom: spacing.md,
         borderLeftWidth: 3,
         borderLeftColor: colors.nutrition,

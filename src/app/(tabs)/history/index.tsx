@@ -20,7 +20,7 @@ const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item:
                 <Text style={styles.workoutName}>
                     {item.workouts?.name || 'Custom Workout'}
                 </Text>
-                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.2)" />
+                <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </View>
             <View style={styles.cardFooter}>
                 <View style={styles.meta}>
@@ -156,7 +156,7 @@ export default function WorkoutHistoryScreen() {
                             onPress={confirmClear}
                             disabled={clearing}
                         >
-                            <Ionicons name="trash-outline" size={18} color={clearing ? 'rgba(255,255,255,0.35)' : '#FF6B6B'} />
+                            <Ionicons name="trash-outline" size={18} color={clearing ? colors.textTertiary : colors.error} />
                             <Text style={[styles.clearButtonText, clearing && styles.clearButtonTextDisabled]}>
                                 {clearing ? 'Clearing...' : 'Clear'}
                             </Text>
@@ -183,7 +183,7 @@ export default function WorkoutHistoryScreen() {
                 removeClippedSubviews={true}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="calendar-outline" size={48} color="rgba(255,255,255,0.1)" />
+                        <Ionicons name="calendar-outline" size={48} color={colors.textTertiary} />
                         <Text style={styles.emptyText}>No workouts logged yet.</Text>
                         <TouchableOpacity
                             style={styles.ctaButton}
@@ -246,7 +246,7 @@ const createStyles = ({ colors, spacing, radius }: Pick<ReturnType<typeof useThe
         fontWeight: '800',
     },
     clearButtonTextDisabled: {
-        color: 'rgba(255,255,255,0.35)',
+        color: colors.textTertiary,
     },
     prButton: {
         flexDirection: 'row',
@@ -266,12 +266,12 @@ const createStyles = ({ colors, spacing, radius }: Pick<ReturnType<typeof useThe
         padding: spacing.lg,
     },
     historyCard: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: spacing.md,
         marginBottom: spacing.md,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     cardHeader: {
         flexDirection: 'row',

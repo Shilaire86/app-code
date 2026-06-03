@@ -226,7 +226,7 @@ export default function NutritionDashboard() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: false }} />
                 <View style={styles.emptyState}>
-                    <Ionicons name="restaurant-outline" size={64} color="rgba(255,255,255,0.1)" />
+                    <Ionicons name="restaurant-outline" size={64} color={colors.textTertiary} />
                     <Text style={styles.emptyTitle}>Nutrition Targets</Text>
                     <Text style={styles.emptyText}>
                         You haven't set your daily macro targets yet. Use the macro calculator to find your starting point.
@@ -486,7 +486,7 @@ export default function NutritionDashboard() {
                     
                     {logs.length === 0 ? (
                         <View style={styles.emptyMealsBox}>
-                            <Ionicons name="cafe-outline" size={32} color="rgba(255,255,255,0.05)" />
+                            <Ionicons name="cafe-outline" size={32} color={colors.textTertiary} />
                             <Text style={styles.emptyMealsTitle}>No Meals Yet</Text>
                             <Text style={styles.emptyMealsText}>
                                 Start logging your meals to stay on track with your macro goals.
@@ -533,7 +533,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         paddingBottom: spacing.md,
     },
     headerTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 28,
         fontWeight: '800',
     },
@@ -563,7 +563,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         padding: spacing.xl,
     },
     emptyTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 24,
         fontWeight: '800',
         marginTop: 20,
@@ -592,12 +592,12 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         fontWeight: '700',
     },
     overviewCard: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: spacing.lg,
         marginBottom: spacing.lg,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     calorieOverview: {
         flexDirection: 'row',
@@ -614,18 +614,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         marginBottom: 4,
     },
     largeValue: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 48,
         fontWeight: '800',
         lineHeight: 52,
     },
     goalPill: {
-        backgroundColor: 'rgba(0,187,255,0.1)',
+        backgroundColor: colors.primarySoft,
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(0,187,255,0.2)',
+        borderColor: colors.primary,
     },
     goalPillText: {
         color: colors.primary,
@@ -635,7 +635,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     },
     progressBarBg: {
         height: 12,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: colors.secondarySoft,
         borderRadius: 6,
         marginBottom: 8,
         overflow: 'hidden',
@@ -659,13 +659,13 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         gap: spacing.md,
         paddingTop: spacing.md,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
+        borderTopColor: colors.borderMid,
     },
     macroCol: {
         flex: 1,
     },
     macroValue: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 18,
         fontWeight: '700',
         marginBottom: 2,
@@ -677,7 +677,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     },
     macroTrack: {
         height: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: colors.secondarySoft,
         borderRadius: 3,
         overflow: 'hidden',
     },
@@ -686,16 +686,16 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         borderRadius: 3,
     },
     emptyMealsBox: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: colors.surfaceElevated,
         borderRadius: radius.lg,
         padding: spacing.xl,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
         borderStyle: 'dashed',
     },
     emptyMealsTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 18,
         fontWeight: '700',
         marginTop: 16,
@@ -732,7 +732,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         letterSpacing: 1,
     },
     myMealsBtn: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.secondarySoft,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -740,10 +740,10 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         height: 56,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: colors.borderMid,
     },
     myMealsBtnText: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 14,
         fontWeight: '800',
         letterSpacing: 1,
@@ -752,12 +752,12 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: 16,
         padding: 16,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     toolIconBox: {
         width: 40,
@@ -840,7 +840,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         marginBottom: 32,
     },
     suggestionCard: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: colors.surfaceElevated,
         borderRadius: 16,
         padding: 16,
         width: 280,
@@ -848,7 +848,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         alignItems: 'center',
         gap: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     suggestionIcon: {
         width: 40,
@@ -858,7 +858,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         justifyContent: 'center',
     },
     suggestionTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 14,
         fontWeight: '700',
         marginBottom: 4,
@@ -879,14 +879,14 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         marginBottom: 16,
     },
     mealCard: {
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceElevated,
         borderRadius: 16,
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.borderMid,
     },
     mealInfo: {
         flex: 1,
@@ -898,12 +898,12 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         marginBottom: 4,
     },
     mealTitle: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
     mealTypeTag: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: colors.secondarySoft,
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 6,
@@ -945,7 +945,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         letterSpacing: 0.5,
     },
     insightMessage: {
-        color: 'rgba(255,255,255,0.7)',
+        color: colors.textSecondary,
         fontSize: 14,
         lineHeight: 22,
         marginBottom: 16,
