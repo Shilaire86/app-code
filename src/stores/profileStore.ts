@@ -9,6 +9,7 @@ const SELF_SERVICE_PROFILE_FIELDS = new Set([
     'full_name',
     'timezone',
     'streak_nudges_enabled',
+    'guide_enabled',
     'dietary_preference',
     'preferred_workout_time',
     'goals',

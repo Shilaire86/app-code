@@ -5,6 +5,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useGuide } from '@/hooks/useGuide';
+import { GuideBanner } from '@/components/GuideBanner';
 
 const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item: any, onPress: (id: string) => void, formatDate: any, formatDuration: any }) => {
     const theme = useTheme();
@@ -42,6 +44,7 @@ export default function WorkoutHistoryScreen() {
     const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
+    const { shouldShow, dismiss } = useGuide();
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [clearing, setClearing] = useState(false);
@@ -181,6 +184,22 @@ export default function WorkoutHistoryScreen() {
                 maxToRenderPerBatch={10}
                 windowSize={5}
                 removeClippedSubviews={true}
+                ListHeaderComponent={
+                    shouldShow('history_guide') ? (
+                        <GuideBanner
+                            title="Your Workout Log"
+                            body="Every completed workout is stored here. Tap any session to review your sets, reps, and weights. Use the PRs button in the header to see your all-time personal records."
+                            onDismiss={() => dismiss('history_guide')}
+                            primaryCta={{
+                                label: 'View Personal Records',
+                                onPress: () => {
+                                    dismiss('history_guide');
+                                    router.push('/history/prs');
+                                },
+                            }}
+                        />
+                    ) : null
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Ionicons name="calendar-outline" size={48} color={colors.textTertiary} />

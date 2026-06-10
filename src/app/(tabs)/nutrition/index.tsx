@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
+
+const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian', 'keto', 'paleo', 'carnivore'] as const;
 import {
     View,
     Text,
@@ -14,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { useGuide } from '@/hooks/useGuide';
+import { GuideBanner } from '@/components/GuideBanner';
 import { isVip, hasEntitlement } from '@/lib/entitlements';
 import { fetchScanCredits, ScanCredits } from '@/services/scanCredits';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
@@ -38,7 +42,8 @@ export default function NutritionDashboard() {
     const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
-    const { profile, tier } = useProfileStore();
+    const { profile, tier, updateProfile } = useProfileStore();
+    const { shouldShow, dismiss } = useGuide();
     const [targets, setTargets] = useState<NutritionTarget | null>(null);
     const [logs, setLogs] = useState<MealLog[]>([]);
     const [summary, setSummary] = useState<DailySummary>({ calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
@@ -318,6 +323,21 @@ export default function NutritionDashboard() {
                     <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
                 }
             >
+                {shouldShow('nutrition_guide') && (
+                    <GuideBanner
+                        title="Welcome to Nutrition"
+                        body="Your macro rings show today's calories, protein, carbs, and fat. Tap 'Log Meal' to add food — or use the AI scanner to estimate macros from a photo. Tap the sliders icon to adjust your daily targets."
+                        onDismiss={() => dismiss('nutrition_guide')}
+                        primaryCta={{
+                            label: 'Open Macro Calculator',
+                            onPress: () => {
+                                dismiss('nutrition_guide');
+                                router.push('/nutrition/calculator');
+                            },
+                        }}
+                    />
+                )}
+
                 {/* Elite Insights */}
                 {tier === 'elite' && insights.length > 0 && (
                     <View style={styles.insightsContainer}>
@@ -456,6 +476,29 @@ export default function NutritionDashboard() {
                     </View>
                     <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
+
+                {/* Dietary Preference */}
+                <Text style={styles.sectionLabel}>PREFERENCES</Text>
+                <View style={styles.prefCard}>
+                    <Text style={styles.prefLabel}>Dietary Preference</Text>
+                    <Text style={styles.prefDesc}>Personalizes your smart food suggestions</Text>
+                    <View style={styles.prefRow}>
+                        {DIETARY_PREFERENCES.map((pref) => {
+                            const active = (profile?.dietary_preference || 'standard') === pref;
+                            return (
+                                <TouchableOpacity
+                                    key={pref}
+                                    style={[styles.prefBtn, active && styles.prefBtnActive]}
+                                    onPress={() => updateProfile({ dietary_preference: pref })}
+                                >
+                                    <Text style={[styles.prefBtnText, active && styles.prefBtnTextActive]}>
+                                        {pref.charAt(0).toUpperCase() + pref.slice(1)}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
 
                 {/* Smart Suggestions (VIP+) */}
                 {suggestions.length > 0 && (
@@ -919,6 +962,51 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     deleteBtn: {
         padding: 8,
         marginLeft: 8,
+    },
+    prefCard: {
+        backgroundColor: colors.surfaceElevated,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 32,
+        borderWidth: 1,
+        borderColor: colors.borderMid,
+    },
+    prefLabel: {
+        color: colors.text,
+        fontSize: 15,
+        fontWeight: '700',
+        marginBottom: 2,
+    },
+    prefDesc: {
+        color: colors.textSecondary,
+        fontSize: 12,
+        marginBottom: 14,
+    },
+    prefRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    prefBtn: {
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: colors.borderMid,
+        backgroundColor: colors.secondarySoft,
+    },
+    prefBtnActive: {
+        borderColor: colors.primary,
+        backgroundColor: colors.primarySoft,
+    },
+    prefBtnText: {
+        color: colors.textSecondary,
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    prefBtnTextActive: {
+        color: colors.primary,
+        fontWeight: '800',
     },
     // Elite Insights
     insightsContainer: {

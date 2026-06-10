@@ -5,13 +5,14 @@ import { useThemeStore, ThemeMode } from '@/stores/themeStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { useGuide } from '@/hooks/useGuide';
 import { useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { checkPermissions, scheduleDailyCheckIn } from '@/lib/notifications';
 import { APP_CONFIG } from '@/lib/appConfig';
 
 const PRESET_TIMES_24H = ['06:00', '09:00', '12:00', '18:00', '20:00'] as const;
-const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian'] as const;
+const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian', 'keto', 'paleo', 'carnivore'] as const;
 
 function toDisplayTime(hhmm: string | null | undefined) {
     const value = hhmm || '09:00';
@@ -51,6 +52,7 @@ export default function SettingsScreen() {
     const fetchProfile = useProfileStore(s => s.fetchProfile);
     const resetProfile = useProfileStore(s => s.reset);
     const updateProfile = useProfileStore(s => s.updateProfile);
+    const { isEnabled: guideEnabled, resetAllHints } = useGuide();
 
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [timezone, setTimezone] = useState(profile?.timezone || 'America/New_York');
@@ -72,6 +74,27 @@ export default function SettingsScreen() {
         setStreakNudgesEnabled(profile.streak_nudges_enabled ?? true);
         setDietaryPreference(profile.dietary_preference || 'standard');
     }, [profile?.id]);
+
+    async function handleToggleGuide(value: boolean) {
+        await updateProfile({ guide_enabled: value });
+    }
+
+    async function handleResetGuide() {
+        Alert.alert(
+            'Reset Guide Tips',
+            'All dismissed tips will reappear. This is useful if you want to review the guide from the beginning.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Reset',
+                    onPress: async () => {
+                        await resetAllHints();
+                        Alert.alert('Done', 'Guide tips have been reset.');
+                    },
+                },
+            ]
+        );
+    }
 
     useEffect(() => {
         if (!user?.id) return;
@@ -490,6 +513,34 @@ export default function SettingsScreen() {
                             Delete Account
                         </Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* Guide Section */}
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.md }]}>Guide</Text>
+
+                <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
+                    <View style={styles.settingRow}>
+                        <View>
+                            <Text style={[styles.settingLabel, { color: colors.text }]}>App Guide</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Show tips that help you discover features</Text>
+                        </View>
+                        <Switch
+                            value={guideEnabled}
+                            onValueChange={handleToggleGuide}
+                            trackColor={{ false: '#3e3e3e', true: colors.primary }}
+                            thumbColor="#fff"
+                        />
+                    </View>
+
+                    {guideEnabled && (
+                        <>
+                            <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                            <TouchableOpacity style={[styles.actionButton, { paddingVertical: spacing.md }]} onPress={handleResetGuide}>
+                                <Ionicons name="refresh-outline" size={20} color={colors.text} />
+                                <Text style={[styles.actionText, { color: colors.text }]}>Reset Guide Tips</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
 
                 {/* App Info */}

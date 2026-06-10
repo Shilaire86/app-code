@@ -330,7 +330,6 @@ export function getSmartFoodSuggestions(
     const c = remaining.carbs_g;
     const f = remaining.fat_g;
 
-    // Check if basically done
     if (p <= 5 && c <= 10 && f <= 5) {
         return [{
             title: 'Targets Hit!',
@@ -342,89 +341,115 @@ export function getSmartFoodSuggestions(
     const isVegetarian = preference === 'vegetarian';
     const isVegan = preference === 'vegan';
     const isPescatarian = preference === 'pescatarian';
+    const isKeto = preference === 'keto';
+    const isPaleo = preference === 'paleo';
+    const isCarnivore = preference === 'carnivore';
 
     const meatOk = !isVegetarian && !isVegan && !isPescatarian;
     const fishOk = meatOk || isPescatarian;
-    const dairyOk = !isVegan;
-
-    // High Protein gap
+    // Paleo excludes dairy; carnivore allows it; keto allows it
+    const dairyOk = !isVegan && !isPaleo;
+    // High protein gap
     if (p > 25) {
-        if (meatOk) {
-            suggestions.push({
-                title: 'Chicken Breast or Turkey',
-                description: 'Lean poultry is the most efficient way to close that protein gap fast.',
-                macroFocus: 'protein'
-            });
+        if (isCarnivore) {
+            suggestions.push({ title: 'Ribeye, Ground Beef, or Organ Meat', description: 'Nutrient-dense animal proteins to close your protein gap efficiently.', macroFocus: 'protein' });
+        } else if (isPaleo) {
+            suggestions.push({ title: 'Chicken Breast, Grass-fed Beef, or Wild Salmon', description: 'Clean, whole-food paleo proteins to hit your target.', macroFocus: 'protein' });
+        } else if (isKeto) {
+            suggestions.push({ title: 'Chicken Breast, Ground Beef, or Tuna', description: 'Zero-carb protein sources to close a large gap without affecting ketosis.', macroFocus: 'protein' });
+        } else if (meatOk) {
+            suggestions.push({ title: 'Chicken Breast or Turkey', description: 'Lean poultry is the most efficient way to close a large protein gap.', macroFocus: 'protein' });
         } else if (fishOk) {
-            suggestions.push({
-                title: 'White Fish or Tuna',
-                description: 'Extremely lean protein sources to hit your target efficiently.',
-                macroFocus: 'protein'
-            });
+            suggestions.push({ title: 'White Fish, Tuna, or Shrimp', description: 'Extremely lean protein sources to hit your target efficiently.', macroFocus: 'protein' });
         } else if (dairyOk) {
-            suggestions.push({
-                title: 'Greek Yogurt or Cottage Cheese',
-                description: 'A great vegetarian option packed with slow-digesting protein.',
-                macroFocus: 'protein'
-            });
+            suggestions.push({ title: 'Greek Yogurt or Cottage Cheese', description: 'A great vegetarian option packed with slow-digesting protein.', macroFocus: 'protein' });
         } else {
-            suggestions.push({
-                title: 'Tofu, Seitan, or Plant Protein',
-                description: 'Combine plant proteins or grab a shake to hit your target.',
-                macroFocus: 'protein'
-            });
+            suggestions.push({ title: 'Tofu, Seitan, or Plant Protein Shake', description: 'Combine plant proteins or blend a shake to close the gap fast.', macroFocus: 'protein' });
+        }
+    } else if (p > 10) {
+        // Moderate protein gap
+        if (isCarnivore) {
+            suggestions.push({ title: 'Eggs, Bacon, or Beef Jerky', description: 'Quick animal-based protein to top up without adding any carbs.', macroFocus: 'protein' });
+        } else if (isPaleo) {
+            suggestions.push({ title: 'Hard-Boiled Eggs or Paleo Jerky', description: 'Portable whole-food snacks to close a moderate protein gap.', macroFocus: 'protein' });
+        } else if (isKeto) {
+            suggestions.push({ title: 'Eggs, Cheese, or Deli Meat', description: 'Quick, zero-carb protein options to top up your intake.', macroFocus: 'protein' });
+        } else if (meatOk) {
+            suggestions.push({ title: 'Turkey Mince or Hard-Boiled Eggs', description: 'A moderate protein top-up to fill your remaining gap without overeating.', macroFocus: 'protein' });
+        } else if (fishOk) {
+            suggestions.push({ title: 'Canned Tuna or Smoked Salmon', description: 'Quick, no-cook protein to close a moderate gap on the go.', macroFocus: 'protein' });
+        } else if (dairyOk) {
+            suggestions.push({ title: 'Boiled Eggs or Low-fat Cheese', description: 'Easy, portable options to top up your protein intake.', macroFocus: 'protein' });
+        } else {
+            suggestions.push({ title: 'Edamame, Chickpeas, or Lentils', description: 'Convenient plant-based proteins to close the remaining gap.', macroFocus: 'protein' });
         }
     }
 
-    // High Carbs gap
-    if (c > 30 && f < 10) {
-        suggestions.push({
-            title: 'Rice, Oats, or Fruit',
-            description: 'Clean, low-fat carbohydrate sources to fuel your training or recovery.',
-            macroFocus: 'carbs'
-        });
+    // Carbs gap — skip for carnivore; give diet-appropriate options for keto/paleo
+    if (!isCarnivore) {
+        if (c > 30) {
+            if (isKeto) {
+                suggestions.push({ title: 'Low-carb Veggies or Berries', description: 'Fill your remaining carb budget with fibrous greens or a small handful of berries.', macroFocus: 'carbs' });
+            } else if (isPaleo) {
+                suggestions.push({ title: 'Sweet Potato, Plantain, or Fresh Fruit', description: 'Whole-food paleo carbs to fuel your energy needs.', macroFocus: 'carbs' });
+            } else {
+                suggestions.push({ title: 'Rice, Sweet Potato, or Oats', description: 'Clean, energy-dense carbs to fuel your training or aid recovery.', macroFocus: 'carbs' });
+            }
+        } else if (c > 15 && f < 15) {
+            if (isKeto) {
+                suggestions.push({ title: 'Leafy Greens or Cucumber Slices', description: 'Low-carb veggies to fill your carb allotment without spiking insulin.', macroFocus: 'carbs' });
+            } else if (isPaleo) {
+                suggestions.push({ title: 'Apple, Banana, or Roasted Root Vegetables', description: 'Natural paleo carb sources to close the remaining gap.', macroFocus: 'carbs' });
+            } else {
+                suggestions.push({ title: 'Banana, Whole Grain Toast, or Rice Cakes', description: 'Light carbs to bridge the remaining gap without overshooting fat.', macroFocus: 'carbs' });
+            }
+        }
     }
 
-    // High Fat gap
-    if (f > 15 && p < 15 && c < 20) {
-        suggestions.push({
-            title: 'Nuts, Seeds, or Avocado',
-            description: 'Nutrient-dense healthy fats to hit your calorie goal without overshooting carbs or protein.',
-            macroFocus: 'fat'
-        });
-    }
-
-    // Balanced options
-    if (p > 15 && (c > 20 || f > 10)) {
-        if (meatOk) {
-            suggestions.push({
-                title: 'Lean Beef or Salmon with Sides',
-                description: 'A higher-fat protein source paired with moderate carbs.',
-                macroFocus: 'balanced'
-            });
-        } else if (dairyOk) {
-            suggestions.push({
-                title: 'Eggs on Toast',
-                description: 'A classic, balanced mix of protein, fats, and carbohydrates.',
-                macroFocus: 'balanced'
-            });
+    // High fat gap
+    if (f > 15 && p < 20) {
+        if (isKeto || isCarnivore) {
+            suggestions.push({ title: 'Butter, Heavy Cream, or Fatty Steak', description: 'High-fat staples to hit your fat target while keeping carbs at zero.', macroFocus: 'fat' });
+        } else if (isPaleo) {
+            suggestions.push({ title: 'Avocado, Coconut Oil, or Macadamia Nuts', description: 'Paleo-friendly fat sources to reach your daily target.', macroFocus: 'fat' });
         } else {
-            suggestions.push({
-                title: 'Tempeh or Beans with Quinoa',
-                description: 'A complete plant-based meal offering balanced macros.',
-                macroFocus: 'balanced'
-            });
+            suggestions.push({ title: 'Avocado, Mixed Nuts, or Nut Butter', description: 'Nutrient-dense healthy fats to hit your calorie target.', macroFocus: 'fat' });
+        }
+    } else if (f > 8 && p < 15) {
+        // Moderate fat gap
+        if (isKeto || isCarnivore) {
+            suggestions.push({ title: 'Cheese, Sour Cream, or Bacon', description: 'Easy fat sources to round out your remaining macro target.', macroFocus: 'fat' });
+        } else if (isPaleo) {
+            suggestions.push({ title: 'Olive Oil Dressing or Handful of Nuts', description: 'Clean paleo fats to fill the remaining gap.', macroFocus: 'fat' });
+        } else if (dairyOk) {
+            suggestions.push({ title: 'Whole Eggs or Full-fat Cheese', description: 'An easy way to add healthy fats and a bit of protein in one go.', macroFocus: 'fat' });
+        } else {
+            suggestions.push({ title: 'Seeds, Olive Oil Dressing, or Dark Chocolate', description: 'Simple plant-based fats to round out your remaining target.', macroFocus: 'fat' });
+        }
+    }
+
+    // Balanced — needs protein plus carbs or fat
+    if (p > 15 && (c > 20 || f > 10)) {
+        if (isCarnivore) {
+            suggestions.push({ title: 'Ribeye Steak and Eggs', description: 'The ultimate carnivore meal — rich in protein and fat to cover both gaps at once.', macroFocus: 'balanced' });
+        } else if (isKeto) {
+            suggestions.push({ title: 'Salmon with Butter and Asparagus', description: 'A keto-perfect plate: high-fat protein with low-carb greens.', macroFocus: 'balanced' });
+        } else if (isPaleo) {
+            suggestions.push({ title: 'Chicken Thighs with Sweet Potato and Greens', description: 'A complete paleo plate with whole-food carbs and clean protein.', macroFocus: 'balanced' });
+        } else if (meatOk) {
+            suggestions.push({ title: 'Lean Beef Bowl or Salmon with Rice', description: 'A complete meal hitting protein, healthy fats, and complex carbs at once.', macroFocus: 'balanced' });
+        } else if (fishOk) {
+            suggestions.push({ title: 'Tuna Pasta or Shrimp Stir-fry', description: 'A filling pescatarian meal to cover multiple macro gaps in one sitting.', macroFocus: 'balanced' });
+        } else if (dairyOk) {
+            suggestions.push({ title: 'Eggs on Toast with Avocado', description: 'A balanced mix of protein, healthy fats, and complex carbs.', macroFocus: 'balanced' });
+        } else {
+            suggestions.push({ title: 'Lentil Curry with Brown Rice', description: 'A complete plant-based meal with a solid macro spread.', macroFocus: 'balanced' });
         }
     }
 
     if (suggestions.length === 0) {
-       suggestions.push({
-           title: 'Mixed Snack or Protein Shake',
-           description: 'A small balanced snack can help you close out your remaining macros.',
-           macroFocus: 'balanced'
-       });
+        suggestions.push({ title: 'Mixed Snack or Protein Shake', description: 'A small balanced snack can help you close out your remaining macros.', macroFocus: 'balanced' });
     }
 
-    // Suggest max 2 items to avoid UI clutter
-    return suggestions.slice(0, 2);
+    return suggestions.slice(0, 4);
 }

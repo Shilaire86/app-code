@@ -2,6 +2,7 @@ import React, { memo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, SectionList, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
+import { useGuide } from '@/hooks/useGuide';
 import { canAccessTier } from '@/lib/tier-gating';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -121,9 +122,10 @@ export default function ProgramsScreen() {
     const { colors, spacing, radius, typography } = theme;
     const styles = createStyles(theme);
     const { tier } = useProfileStore();
-    const { profile, setSeenHint } = useProfileStore();
+    const { profile } = useProfileStore();
     const router = useRouter();
-    const seenProgramsIntro = !!profile?.seen_hints?.programs_intro;
+    const { shouldShow, dismiss } = useGuide();
+    const seenProgramsIntro = !shouldShow('programs_intro');
     const isAdminOrCoach = profile?.role === 'admin' || profile?.role === 'coach';
 
     const { data: programs, isLoading: loading, refetch } = useCachedQuery(
@@ -236,9 +238,9 @@ export default function ProgramsScreen() {
                         body="Programs are structured weeks + days. Pick one, then hit 'Start Workout' on your training days. Consistency earns points and stages."
                         primaryCta={{
                             label: 'Browse Programs',
-                            onPress: () => setSeenHint('programs_intro'),
+                            onPress: () => dismiss('programs_intro'),
                         }}
-                        onDismiss={() => setSeenHint('programs_intro')}
+                        onDismiss={() => dismiss('programs_intro')}
                     />
                 </View>
             )}

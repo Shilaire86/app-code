@@ -189,6 +189,152 @@ export async function fetchAffiliateOffers() {
     return data ?? [];
 }
 
+// ─── User posts ───────────────────────────────────────────────────────────────
+
+export type UserPostType = 'thread' | 'workout_share' | 'milestone_share';
+export type UserPostStatus = 'published' | 'flagged' | 'removed';
+
+export async function fetchUserPosts() {
+    const { data, error } = await supabase
+        .from('user_posts')
+        .select(`
+            *,
+            profiles (full_name, role),
+            user_post_likes(count)
+        `)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data ?? []).map(post => ({
+        ...post,
+        like_count: post.user_post_likes?.[0]?.count || 0,
+    }));
+}
+
+export async function fetchAllUserPosts() {
+    const { data, error } = await supabase
+        .from('user_posts')
+        .select(`
+            *,
+            profiles (full_name, role)
+        `)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+}
+
+export async function createUserPost(
+    authorId: string,
+    content: string,
+    postType: UserPostType,
+    title?: string,
+    activityData?: Record<string, any>,
+) {
+    const { data, error } = await supabase
+        .from('user_posts')
+        .insert({
+            author_id: authorId,
+            content,
+            post_type: postType,
+            title: title ?? null,
+            activity_data: activityData ?? null,
+        })
+        .select(`*, profiles (full_name, role)`)
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updateUserPostStatus(id: string, status: UserPostStatus) {
+    const { error } = await supabase
+        .from('user_posts')
+        .update({ status })
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+export async function deleteUserPost(id: string) {
+    const { error } = await supabase
+        .from('user_posts')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+export async function toggleUserPostLike(postId: string, userId: string) {
+    const { data: existing } = await supabase
+        .from('user_post_likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (existing) {
+        const { error } = await supabase
+            .from('user_post_likes')
+            .delete()
+            .eq('id', existing.id);
+        if (error) throw error;
+        return false;
+    } else {
+        const { error } = await supabase
+            .from('user_post_likes')
+            .insert({ post_id: postId, user_id: userId });
+        if (error) throw error;
+        return true;
+    }
+}
+
+export async function fetchUserPostLikes(userId: string) {
+    const { data, error } = await supabase
+        .from('user_post_likes')
+        .select('post_id')
+        .eq('user_id', userId);
+
+    if (error) throw error;
+    return (data ?? []).map(l => l.post_id);
+}
+
+export async function reportContent(
+    reporterId: string,
+    contentType: 'user_post' | 'comment',
+    contentId: string,
+    reason?: string,
+) {
+    const { error } = await supabase
+        .from('reported_content')
+        .insert({ reporter_id: reporterId, content_type: contentType, content_id: contentId, reason: reason ?? null });
+
+    if (error) throw error;
+}
+
+export async function fetchPendingReports() {
+    const { data, error } = await supabase
+        .from('reported_content')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+}
+
+export async function updateReportStatus(id: string, status: 'reviewed' | 'dismissed') {
+    const { error } = await supabase
+        .from('reported_content')
+        .update({ status })
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+// ─── Affiliate ────────────────────────────────────────────────────────────────
+
 export async function logAffiliateClick(userId: string, offerId: string, offerTitle: string) {
     try {
         await supabase

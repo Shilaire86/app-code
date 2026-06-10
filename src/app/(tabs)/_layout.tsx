@@ -64,7 +64,8 @@ export default function TabsLayout() {
             {/* Detail screens — navigable but hidden from the tab bar */}
             <Tabs.Screen name="programs/[id]"    options={{ href: null }} />
             {/* Feed lives off the bar — reachable via the Home header icon */}
-            <Tabs.Screen name="feed/index"       options={{ href: null, title: 'Feed' }} />
+            <Tabs.Screen name="feed/index"        options={{ href: null, title: 'Feed' }} />
+            <Tabs.Screen name="feed/new-post"     options={{ href: null, title: 'New Post' }} />
         </Tabs>
     );
 }

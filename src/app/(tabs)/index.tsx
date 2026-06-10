@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { useGuide } from '@/hooks/useGuide';
 import { useTheme } from '@/hooks/useTheme';
 import { calculateStageProgress } from '@/lib/stages/calculator';
 import { useRouter } from 'expo-router';
@@ -51,6 +52,7 @@ export default function HomeScreen() {
         setSeenHint,
         setSeenHintValue,
     } = useProfileStore();
+    const { shouldShow, dismiss } = useGuide();
     const router = useRouter();
     const isAdmin = profile?.role === 'admin';
 
@@ -131,8 +133,8 @@ export default function HomeScreen() {
     const progress = calculateStageProgress(activityCounts);
     const totalPoints = calculateTotalPoints(activityCounts);
     const stageCopy = getStageCopy(displayStage);
-    const seenStageHint = !!profile?.seen_hints?.stage_badge;
-    const seenMessagesHint = !!profile?.seen_hints?.messages_entry;
+    const seenStageHint = !shouldShow('stage_badge');
+    const seenMessagesHint = !shouldShow('messages_entry');
     const showUpgradeCard = (tier === 'free' || tier === 'standard') && !isVip(tier);
 
     const canAccessNutrition = hasEntitlement(tier, 'nutritionEnabled');
@@ -205,12 +207,13 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.headerActions}>
                     <TouchableOpacity
-                        style={styles.helpButton}
+                        style={styles.communityButton}
                         onPress={() => router.push('/(tabs)/feed')}
                         accessibilityRole="button"
                         accessibilityLabel="Open Community Feed"
                     >
-                        <Ionicons name="chatbubbles-outline" size={20} color={colors.textSecondary} />
+                        <Ionicons name="chatbubbles" size={16} color="#FFF" />
+                        <Text style={styles.communityButtonText}>Community</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.helpButton}
@@ -237,7 +240,7 @@ export default function HomeScreen() {
                 <HintCard
                     title="Your Becoming Stage"
                     body="Earn points by completing workouts, logging check-ins, and adding photos. Your Stage updates automatically as you progress. Workouts +5, Check-in +2, Photo +10."
-                    onDismiss={() => setSeenHint('stage_badge')}
+                    onDismiss={() => dismiss('stage_badge')}
                 />
             )}
 
@@ -572,11 +575,11 @@ export default function HomeScreen() {
                         primaryCta={{
                             label: 'Open Messages',
                             onPress: () => {
-                                setSeenHint('messages_entry');
+                                dismiss('messages_entry');
                                 router.push('/messages');
                             },
                         }}
-                        onDismiss={() => setSeenHint('messages_entry')}
+                        onDismiss={() => dismiss('messages_entry')}
                         dismissLabel="Got it"
                     />
                 )}
@@ -778,6 +781,25 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         shadowOpacity: isDark ? 0.50 : 0.09,
         shadowRadius: 5,
         elevation: 3,
+    },
+    communityButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: colors.primary,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 22,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.45,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    communityButtonText: {
+        color: '#FFF',
+        fontSize: 13,
+        fontWeight: '700',
     },
     centered: {
         justifyContent: 'center',

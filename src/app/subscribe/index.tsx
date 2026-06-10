@@ -494,9 +494,18 @@ export default function SubscribePlaceholderScreen() {
                 </View>
 
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Policies (preview)</Text>
+                    <Text style={styles.cardTitle}>Subscription Terms</Text>
                     <Text style={styles.bullet}>- {BILLING.cancellationPolicyText}</Text>
                     <Text style={styles.bullet}>- {BILLING.refundPolicyText}</Text>
+                    <View style={styles.legalLinks}>
+                        <TouchableOpacity onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
+                            <Text style={styles.legalLinkText}>Privacy Policy</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.legalDivider}>·</Text>
+                        <TouchableOpacity onPress={() => router.push('/legal/terms')} accessibilityRole="link">
+                            <Text style={styles.legalLinkText}>Terms of Use</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 <View style={styles.actionsRow}>
@@ -817,5 +826,21 @@ const styles = StyleSheet.create({
     promoFeedbackText: {
         fontSize: 13,
         fontWeight: '600',
+    },
+    legalLinks: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 4,
+    },
+    legalLinkText: {
+        color: theme.colors.primary,
+        fontSize: 13,
+        fontWeight: '700',
+        textDecorationLine: 'underline',
+    },
+    legalDivider: {
+        color: 'rgba(255,255,255,0.3)',
+        fontSize: 13,
     },
 });
