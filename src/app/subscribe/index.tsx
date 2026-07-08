@@ -263,7 +263,7 @@ export default function SubscribePlaceholderScreen() {
                         <Text style={styles.currentTierName}>
                             {getTierLabel(tier)}
                         </Text>
-                        <Text style={styles.currentTierStatus}>Active • Subscription is managed via Stripe</Text>
+                        <Text style={styles.currentTierStatus}>Active • Manage your subscription in Settings</Text>
                     </View>
                 )}
 
