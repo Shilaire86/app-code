@@ -220,8 +220,11 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
     },
 
     // ─────────────────────────────────────────────────────────────────
-    // ELITE ($199.99/mo — Coming Soon) — The Partnership.
-    // A human gets involved. Everything in VIP + 1:1 coaching.
+    // ELITE ($349.99/mo — By Request) — The Partnership.
+    // A human gets involved. Everything in VIP + 1:1 coaching: direct
+    // messaging, bespoke programming, a monthly virtual check-in, and
+    // 1 in-person session/month. Onboarded manually per client, not
+    // self-serve.
     // ─────────────────────────────────────────────────────────────────
     elite: {
         messagingEnabled: true,         // Direct coach messaging
@@ -263,7 +266,7 @@ export const ENTITLEMENTS: Record<SubscriptionTier, TierEntitlements> = {
 export const PRICING: Partial<Record<SubscriptionTier, { priceText: string; period: 'month' }>> = {
     standard: { priceText: '$14.99/mo', period: 'month' },
     vip: { priceText: '$29.99/mo', period: 'month' },
-    elite: { priceText: '$199.99/mo', period: 'month' },
+    elite: { priceText: '$349.99/mo', period: 'month' },
 };
 
 export function isVip(tier: SubscriptionTier | null | undefined): boolean {

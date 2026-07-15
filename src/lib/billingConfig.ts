@@ -35,8 +35,8 @@ export const BILLING: {
             annual: { priceText: '$299.99/yr', monthlyCost: '$25.00/mo', savings: 'Save $59.89', stripePriceId: stripePriceIdVipAnnual },
         },
         elite: {
-            monthly: { priceText: '$199.99/mo', stripePriceId: stripePriceIdElite },
-            annual: { priceText: '$2,000/yr', monthlyCost: '$166.67/mo', savings: 'Save $399.88', stripePriceId: stripePriceIdEliteAnnual },
+            monthly: { priceText: '$349.99/mo', stripePriceId: stripePriceIdElite },
+            annual: { priceText: '$3,599.99/yr', monthlyCost: '$300.00/mo', savings: 'Save $599.89', stripePriceId: stripePriceIdEliteAnnual },
         },
     },
     cancellationPolicyText: 'Cancel anytime. Access continues until the end of your billing period.',
