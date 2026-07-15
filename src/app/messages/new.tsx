@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { theme } from '@/constants/theme';
 import { createThread } from '@/services/messaging';
+import { useProfileStore } from '@/stores/profileStore';
+import { hasEntitlement } from '@/lib/entitlements';
 
 type Category = 'training' | 'program' | 'app_issue' | 'content' | 'other';
 
@@ -45,6 +47,8 @@ const CATEGORY_HELP: Record<Category, string[]> = {
 export default function NewMessageScreen() {
     const router = useRouter();
     const pathname = usePathname();
+    const { tier } = useProfileStore();
+    const canMessage = hasEntitlement(tier, 'messagingEnabled');
 
     const [category, setCategory] = useState<Category>('training');
     const [subject, setSubject] = useState('');
@@ -89,6 +93,28 @@ export default function NewMessageScreen() {
         } finally {
             setSubmitting(false);
         }
+    }
+
+    if (!canMessage) {
+        return (
+            <View style={styles.container}>
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'New message',
+                    headerStyle: { backgroundColor: theme.colors.background },
+                    headerTintColor: '#FFF',
+                }} />
+                <View style={styles.content}>
+                    <View style={styles.notice}>
+                        <Ionicons name="lock-closed-outline" size={18} color={theme.colors.primary} />
+                        <Text style={styles.noticeText}>1:1 coach messaging is an Elite feature. Upgrade to message your coach directly.</Text>
+                    </View>
+                    <TouchableOpacity style={styles.submit} onPress={() => router.push('/subscribe')}>
+                        <Text style={styles.submitText}>See Elite</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
     }
 
     return (

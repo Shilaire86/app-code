@@ -583,7 +583,7 @@ export default function HomeScreen() {
             <View style={styles.quickActions}>
                 <SectionHeader title="Support" />
 
-                {!seenMessagesHint && (
+                {!seenMessagesHint && hasEntitlement(tier, 'messagingEnabled') && (
                     <HintCard
                         title="Need help fast?"
                         body="Message your coach anytime. Choose a category so we can help quicker. Replies typically within 24-48h."
@@ -601,15 +601,15 @@ export default function HomeScreen() {
 
                 <View style={styles.actionGrid}>
                     <TouchableOpacity
-                        style={[styles.actionCard, { borderColor: colors.progressSoft }]}
-                        onPress={() => router.push('/messages')}
+                        style={[styles.actionCard, { borderColor: colors.progressSoft, opacity: hasEntitlement(tier, 'messagingEnabled') ? 1 : 0.8 }]}
+                        onPress={() => router.push(hasEntitlement(tier, 'messagingEnabled') ? '/messages' : '/subscribe')}
                     >
                         <View style={[styles.actionIcon, { backgroundColor: colors.progressSoft }]}>
-                            <Ionicons name="mail-outline" size={24} color={colors.primary} />
+                            <Ionicons name={hasEntitlement(tier, 'messagingEnabled') ? "mail-outline" : "lock-closed-outline"} size={24} color={colors.primary} />
                         </View>
                         <View style={styles.actionInfo}>
                             <Text style={styles.actionTitle}>Messages</Text>
-                            <Text style={styles.actionSubtitle}>Coach</Text>
+                            <Text style={styles.actionSubtitle}>{hasEntitlement(tier, 'messagingEnabled') ? 'Coach' : 'Elite Feature'}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>

@@ -5,6 +5,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
 import { listMyThreads, MessageThread } from '@/services/messaging';
+import { useProfileStore } from '@/stores/profileStore';
+import { hasEntitlement } from '@/lib/entitlements';
 
 function fmtDate(ts: string) {
     const d = new Date(ts);
@@ -24,6 +26,8 @@ function prettyCategory(category: string) {
 
 export default function MessagesIndexScreen() {
     const router = useRouter();
+    const { tier } = useProfileStore();
+    const canMessage = hasEntitlement(tier, 'messagingEnabled');
 
     const [loading, setLoading] = useState(true);
     const [errorText, setErrorText] = useState<string | null>(null);
@@ -46,11 +50,34 @@ export default function MessagesIndexScreen() {
     // Requirement: refresh on focus.
     useFocusEffect(
         useCallback(() => {
-            fetchThreads();
-        }, [fetchThreads])
+            if (canMessage) fetchThreads();
+        }, [fetchThreads, canMessage])
     );
 
     const data = useMemo(() => threads, [threads]);
+
+    if (!canMessage) {
+        return (
+            <View style={styles.container}>
+                <Stack.Screen options={{
+                    headerShown: true,
+                    headerTitle: 'Inbox',
+                    headerStyle: { backgroundColor: theme.colors.background },
+                    headerTintColor: '#FFF',
+                }} />
+                <View style={styles.centered}>
+                    <View style={styles.emptyCard}>
+                        <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                        <Text style={styles.emptyTitle}>1:1 coach messaging is an Elite feature</Text>
+                        <Text style={styles.emptyText}>Elite members get direct messaging with their coach for personalized program design, plateau troubleshooting, and accountability.</Text>
+                        <TouchableOpacity style={styles.newButton} onPress={() => router.push('/subscribe')}>
+                            <Text style={styles.newButtonText}>See Elite</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
