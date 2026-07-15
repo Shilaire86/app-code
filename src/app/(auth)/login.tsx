@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Alert,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -24,7 +16,7 @@ export default function LoginScreen() {
     async function handleAuth() {
         const trimmedEmail = email.trim();
         if (!trimmedEmail || !password) {
-            Alert.alert('Error', 'Please enter both email and password');
+            showAlert('Error', 'Please enter both email and password');
             return;
         }
 
@@ -34,7 +26,7 @@ export default function LoginScreen() {
                 email: trimmedEmail,
                 password,
             });
-            if (error) Alert.alert('Error', error.message);
+            if (error) showAlert('Error', error.message);
         } finally {
             setLoading(false);
         }

@@ -1,16 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
 const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian', 'keto', 'paleo', 'carnivore'] as const;
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    RefreshControl,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
@@ -104,7 +96,7 @@ export default function NutritionDashboard() {
     };
 
     const handleDelete = (logId: string, name: string) => {
-        Alert.alert('Delete Log', `Are you sure you want to delete "${name}"?`, [
+        showAlert('Delete Log', `Are you sure you want to delete "${name}"?`, [
             { text: 'Cancel', style: 'cancel' },
             { 
                 text: 'Delete', 
@@ -114,7 +106,7 @@ export default function NutritionDashboard() {
                         await deleteMealLog(logId);
                         loadData(); // Refresh
                     } catch (err) {
-                        Alert.alert('Error', 'Failed to delete meal log.');
+                        showAlert('Error', 'Failed to delete meal log.');
                     }
                 }
             }
@@ -127,7 +119,7 @@ export default function NutritionDashboard() {
                 ? await ImagePicker.requestCameraPermissionsAsync()
                 : await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!perm.granted) {
-                Alert.alert(
+                showAlert(
                     'Permission Needed',
                     `Please allow ${source === 'camera' ? 'camera' : 'photo library'} access to scan meals.`
                 );
@@ -177,19 +169,19 @@ export default function NutritionDashboard() {
             setScanning(false);
             const msg = err instanceof Error ? err.message : 'Could not analyze the photo.';
             if (msg.includes('No scans remaining')) {
-                Alert.alert(
+                showAlert(
                     'Daily Limit Reached',
                     "You've used all your scans for today. Your credits reset at midnight.",
                     [{ text: 'OK' }]
                 );
             } else {
-                Alert.alert('Scan Failed', msg);
+                showAlert('Scan Failed', msg);
             }
         }
     };
 
     const handleScanMeal = () => {
-        Alert.alert('Scan a Meal', 'Snap a photo of your meal and AI will estimate the macros.', [
+        showAlert('Scan a Meal', 'Snap a photo of your meal and AI will estimate the macros.', [
             { text: 'Take Photo', onPress: () => runScan('camera') },
             { text: 'Choose from Library', onPress: () => runScan('library') },
             { text: 'Cancel', style: 'cancel' },

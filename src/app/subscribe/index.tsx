@@ -206,8 +206,12 @@ export default function SubscribePlaceholderScreen() {
                     <Ionicons name="sparkles-outline" size={42} color={theme.colors.primary} />
                     <Text style={styles.title}>Choose Your Plan</Text>
                     <Text style={styles.body}>
-                        Start your {BILLING.trialDays}-day free trial on any paid plan. Cancel anytime.
+                        Start your {BILLING.trialDays}-day free trial on any paid plan.
                     </Text>
+                    <View style={styles.noCommitmentChip}>
+                        <Ionicons name="shield-checkmark-outline" size={14} color="#00b894" />
+                        <Text style={styles.noCommitmentChipText}>No commitment — cancel anytime</Text>
+                    </View>
                 </View>
 
                 {/* Monthly / Annual Toggle */}
@@ -524,6 +528,22 @@ const styles = StyleSheet.create({
     hero: { alignItems: 'center', gap: 10, paddingVertical: 16 },
     title: { color: '#FFF', fontSize: 22, fontWeight: '900' },
     body: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 18 },
+    noCommitmentChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(0,184,148,0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(0,184,148,0.3)',
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    noCommitmentChipText: {
+        color: '#00b894',
+        fontSize: 12,
+        fontWeight: '700',
+    },
     notice: {
         borderRadius: theme.radius.md,
         borderWidth: 1,

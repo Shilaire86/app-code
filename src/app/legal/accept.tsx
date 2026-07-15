@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
@@ -31,7 +32,7 @@ export default function LegalAcceptScreen() {
         if (saving) return;
 
         if (!agreeTerms || !agreePrivacy || !agreeDisclaimer) {
-            Alert.alert('Required', 'Please accept Terms, Privacy, and the Disclaimer to continue.');
+            showAlert('Required', 'Please accept Terms, Privacy, and the Disclaimer to continue.');
             return;
         }
 
@@ -59,7 +60,7 @@ export default function LegalAcceptScreen() {
             void updateProfile(updates);
             router.replace('/');
         } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Failed to save acceptance.');
+            showAlert('Error', e?.message || 'Failed to save acceptance.');
         } finally {
             setSaving(false);
         }

@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore, ThemeMode } from '@/stores/themeStore';
@@ -39,6 +40,7 @@ type SubscriptionSnapshot = {
     trial_end: string | null;
     current_period_end: string | null;
     cancel_at_period_end: boolean;
+    stripe_subscription_id: string | null;
 };
 
 export default function SettingsScreen() {
@@ -63,6 +65,7 @@ export default function SettingsScreen() {
     const [savingReminder, setSavingReminder] = useState(false);
     const [subscription, setSubscription] = useState<SubscriptionSnapshot | null>(null);
     const [loadingSubscription, setLoadingSubscription] = useState(false);
+    const [cancelingSubscription, setCancelingSubscription] = useState(false);
 
     useEffect(() => {
         if (!profile?.id) return;
@@ -80,7 +83,7 @@ export default function SettingsScreen() {
     }
 
     async function handleResetGuide() {
-        Alert.alert(
+        showAlert(
             'Reset Guide Tips',
             'All dismissed tips will reappear. This is useful if you want to review the guide from the beginning.',
             [
@@ -89,7 +92,7 @@ export default function SettingsScreen() {
                     text: 'Reset',
                     onPress: async () => {
                         await resetAllHints();
-                        Alert.alert('Done', 'Guide tips have been reset.');
+                        showAlert('Done', 'Guide tips have been reset.');
                     },
                 },
             ]
@@ -105,7 +108,7 @@ export default function SettingsScreen() {
             try {
                 const { data, error } = await supabase
                     .from('subscriptions')
-                    .select('tier, status, trial_end, current_period_end, cancel_at_period_end')
+                    .select('tier, status, trial_end, current_period_end, cancel_at_period_end, stripe_subscription_id')
                     .eq('user_id', user.id)
                     .maybeSingle();
 
@@ -147,17 +150,17 @@ export default function SettingsScreen() {
 
             // Refresh profile in store
             void fetchProfile(user.id);
-            Alert.alert('Success', 'Profile updated successfully');
+            showAlert('Success', 'Profile updated successfully');
         } catch (error) {
             console.error('Error updating profile:', error);
-            Alert.alert('Error', 'Failed to update profile');
+            showAlert('Error', 'Failed to update profile');
         } finally {
             setIsSaving(false);
         }
     }
 
     async function handleSignOut() {
-        Alert.alert(
+        showAlert(
             'Sign Out',
             'Are you sure you want to sign out?',
             [
@@ -177,7 +180,7 @@ export default function SettingsScreen() {
     }
 
     async function handleDeleteAccount() {
-        Alert.alert(
+        showAlert(
             'Delete Account',
             'This will request permanent deletion of your account and all associated data. This action cannot be undone.',
             [
@@ -186,7 +189,7 @@ export default function SettingsScreen() {
                     text: 'Request Deletion',
                     style: 'destructive',
                     onPress: () => {
-                        Alert.alert(
+                        showAlert(
                             'Final Confirmation',
                             'To continue, open your email app and send a deletion request.',
                             [
@@ -203,12 +206,83 @@ export default function SettingsScreen() {
                                         try {
                                             await Linking.openURL(mailto);
                                         } catch {
-                                            Alert.alert('Email unavailable', `Please email ${APP_CONFIG.coachEmail} to request deletion.`);
+                                            showAlert('Email unavailable', `Please email ${APP_CONFIG.coachEmail} to request deletion.`);
                                         }
                                     },
                                 },
                             ]
                         );
+                    },
+                },
+            ]
+        );
+    }
+
+    function openNativeSubscriptionManagement() {
+        const url = Platform.OS === 'ios'
+            ? 'itms-apps://apps.apple.com/account/subscriptions'
+            : 'https://play.google.com/store/account/subscriptions?package=com.thebecomingmethod.app';
+        Linking.openURL(url).catch(() => {
+            showAlert(
+                'Unable to open',
+                Platform.OS === 'ios'
+                    ? 'Open the App Store, tap your profile icon, then Subscriptions to manage or cancel.'
+                    : 'Open the Play Store, tap your profile icon, then Payments & subscriptions to manage or cancel.'
+            );
+        });
+    }
+
+    async function handleCancelSubscription() {
+        if (!subscription) return;
+
+        // Native purchases (RevenueCat via App Store / Play Store) can't be canceled
+        // from inside the app — only the platform's own subscription management can.
+        if (!subscription.stripe_subscription_id) {
+            openNativeSubscriptionManagement();
+            return;
+        }
+
+        showAlert(
+            'Cancel Subscription',
+            `Your ${subscription.tier.toUpperCase()} plan will stay active until ${formatDateLabel(subscription.current_period_end)}, then it won't renew. No further charges.`,
+            [
+                { text: 'Keep Subscription', style: 'cancel' },
+                {
+                    text: 'Cancel Subscription',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setCancelingSubscription(true);
+                        try {
+                            await supabase.auth.refreshSession();
+                            const { data: sessRes, error: sessErr } = await supabase.auth.getSession();
+                            if (sessErr) throw sessErr;
+                            const accessToken = sessRes?.session?.access_token;
+                            if (!accessToken) throw new Error('You are not signed in. Please sign in again and retry.');
+
+                            const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+                            const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+                            if (!baseUrl || !anonKey) throw new Error('Supabase env missing in client.');
+
+                            const res = await fetch(`${baseUrl}/functions/v1/cancel-subscription`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    apikey: anonKey,
+                                    Authorization: `Bearer ${accessToken}`,
+                                },
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) {
+                                throw new Error((data as any)?.error || 'Failed to cancel subscription.');
+                            }
+
+                            setSubscription((prev) => (prev ? { ...prev, cancel_at_period_end: true } : prev));
+                            showAlert('Subscription Canceled', 'Your plan will not renew after the current billing period.');
+                        } catch (e: any) {
+                            showAlert('Failed to cancel', e?.message || 'Please try again or contact support.');
+                        } finally {
+                            setCancelingSubscription(false);
+                        }
                     },
                 },
             ]
@@ -234,17 +308,17 @@ export default function SettingsScreen() {
 
             if (!ok) {
                 const hasPerm = await checkPermissions();
-                Alert.alert(
+                showAlert(
                     'Saved',
                     hasPerm
                         ? 'Reminder time saved, but scheduling failed.'
                         : 'Reminder time saved, but notifications are disabled. Enable notifications to receive reminders.'
                 );
             } else {
-                Alert.alert('Saved', `Daily reminder set for ${toDisplayTime(hhmm)}.`);
+                showAlert('Saved', `Daily reminder set for ${toDisplayTime(hhmm)}.`);
             }
         } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Failed to update reminder time.');
+            showAlert('Error', e?.message || 'Failed to update reminder time.');
         } finally {
             setSavingReminder(false);
         }
@@ -468,7 +542,14 @@ export default function SettingsScreen() {
                 <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
                     <View style={styles.subscriptionHeaderRow}>
                         <Text style={[styles.settingLabel, { color: colors.text }]}>Current plan</Text>
-                        <Text style={styles.subscriptionBadge}>{(subscription?.tier ?? tier).toUpperCase()}</Text>
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                            {['active', 'graduated'].includes(profile?.founder_status) ? (
+                                <Text style={styles.founderBadge}>
+                                    FOUNDER{profile?.founder_number ? ` #${profile.founder_number}` : ''}
+                                </Text>
+                            ) : null}
+                            <Text style={styles.subscriptionBadge}>{(subscription?.tier ?? tier).toUpperCase()}</Text>
+                        </View>
                     </View>
                     <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
                         Status: {subscription?.status ?? (tier === 'free' ? 'free' : 'active')}
@@ -497,6 +578,22 @@ export default function SettingsScreen() {
                             {tier !== 'free' ? 'Manage Subscription' : 'Choose a Subscription'}
                         </Text>
                     </TouchableOpacity>
+
+                    {tier !== 'free' && !(subscription?.cancel_at_period_end ?? false) ? (
+                        <>
+                            <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
+                            <TouchableOpacity
+                                style={[styles.actionButton, { paddingVertical: spacing.md }]}
+                                onPress={handleCancelSubscription}
+                                disabled={cancelingSubscription}
+                            >
+                                <Ionicons name="close-circle-outline" size={20} color={colors.error} />
+                                <Text style={[styles.actionText, { color: colors.error }]}>
+                                    {cancelingSubscription ? 'Canceling...' : 'Cancel Subscription'}
+                                </Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : null}
 
                     <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
 
@@ -672,6 +769,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(197,168,128,0.2)',
         borderWidth: 1,
         borderColor: 'rgba(197,168,128,0.35)',
+    },
+    founderBadge: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: '800',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 999,
+        backgroundColor: 'rgba(181,98,42,0.25)',
+        borderWidth: 1,
+        borderColor: 'rgba(181,98,42,0.5)',
     },
     subscriptionCancelNote: {
         color: '#FFB74D',

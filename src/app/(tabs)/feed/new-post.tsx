@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View, Text, StyleSheet, TextInput, TouchableOpacity,
-    ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -45,7 +43,7 @@ export default function NewPostScreen() {
 
         const fullText = `${title} ${content}`;
         if (containsBannedContent(fullText)) {
-            Alert.alert(
+            showAlert(
                 'Post Blocked',
                 'Your post contains content that violates our community guidelines. Please review and try again.',
             );
@@ -63,7 +61,7 @@ export default function NewPostScreen() {
             router.back();
         } catch (error) {
             console.error('[NewPost] Failed to create post:', error);
-            Alert.alert('Error', 'Failed to share your post. Please try again.');
+            showAlert('Error', 'Failed to share your post. Please try again.');
         } finally {
             setSubmitting(false);
         }

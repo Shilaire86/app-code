@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -16,6 +17,8 @@ type Ticket = {
     created_at: string;
     profiles: {
         email: string;
+        founder_status: string;
+        founder_number: number | null;
     };
 };
 
@@ -29,6 +32,7 @@ export default function AdminTicketsScreen() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('open');
+    const [foundersOnly, setFoundersOnly] = useState(false);
     const [updatingParams, setUpdatingParams] = useState<string | null>(null);
 
     const loadTickets = async () => {
@@ -37,7 +41,7 @@ export default function AdminTicketsScreen() {
 
             let query = supabase
                 .from('support_tickets')
-                .select(`*, profiles:user_id ( email )`)
+                .select(`*, profiles:user_id ( email, founder_status, founder_number )`)
                 .order('created_at', { ascending: false });
 
             if (statusFilter !== 'all') {
@@ -58,6 +62,10 @@ export default function AdminTicketsScreen() {
         if (isAdmin) loadTickets();
     }, [isAdmin, statusFilter]);
 
+    const displayedTickets = foundersOnly
+        ? tickets.filter(t => ['active', 'graduated'].includes(t.profiles?.founder_status))
+        : tickets;
+
     const updateStatus = async (ticket: Ticket, newStatus: string) => {
         try {
             setUpdatingParams(ticket.id);
@@ -73,14 +81,14 @@ export default function AdminTicketsScreen() {
                 t.id === ticket.id ? { ...t, status: newStatus as any } : t
             ));
         } catch (err: any) {
-            Alert.alert('Error', err.message);
+            showAlert('Error', err.message);
         } finally {
             setUpdatingParams(null);
         }
     };
 
     const showStatusOptions = (ticket: Ticket) => {
-        Alert.alert(
+        showAlert(
             'Update Status',
             `Current: ${ticket.status.toUpperCase()}`,
             [
@@ -126,13 +134,21 @@ export default function AdminTicketsScreen() {
                         </Text>
                     </TouchableOpacity>
                 ))}
+                <TouchableOpacity
+                    style={[styles.pill, foundersOnly && styles.pillActive]}
+                    onPress={() => setFoundersOnly(v => !v)}
+                >
+                    <Text style={[styles.pillText, foundersOnly && styles.pillTextActive]}>
+                        FOUNDERS ONLY
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             {loading ? (
                 <View style={styles.center}><ActivityIndicator color={theme.colors.primary} size="large" /></View>
             ) : (
                 <FlatList
-                    data={tickets}
+                    data={displayedTickets}
                     keyExtractor={item => item.id}
                     contentContainerStyle={styles.listContainer}
                     onRefresh={loadTickets}
@@ -146,10 +162,19 @@ export default function AdminTicketsScreen() {
                     renderItem={({ item }) => (
                         <View style={styles.ticketCard}>
                             <View style={styles.ticketTop}>
-                                <View style={styles.categoryBadge}>
-                                    <Text style={styles.categoryText}>{item.category.replace('_', ' ').toUpperCase()}</Text>
+                                <View style={{ flexDirection: 'row', gap: 6 }}>
+                                    <View style={styles.categoryBadge}>
+                                        <Text style={styles.categoryText}>{item.category.replace('_', ' ').toUpperCase()}</Text>
+                                    </View>
+                                    {['active', 'graduated'].includes(item.profiles?.founder_status) && (
+                                        <View style={[styles.categoryBadge, { backgroundColor: 'rgba(181,98,42,0.15)' }]}>
+                                            <Text style={[styles.categoryText, { color: '#D4824A' }]}>
+                                                FOUNDER{item.profiles?.founder_number ? ` #${item.profiles.founder_number}` : ''}
+                                            </Text>
+                                        </View>
+                                    )}
                                 </View>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={styles.statusBtn}
                                     onPress={() => showStatusOptions(item)}
                                     disabled={updatingParams === item.id}

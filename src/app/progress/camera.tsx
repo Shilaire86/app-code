@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack } from 'expo-router';
 import { theme } from '@/constants/theme';
 import * as ImagePicker from 'expo-image-picker';
@@ -37,7 +38,7 @@ export default function ProgressPhotoScreen() {
             // Explicitly request permissions first
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'We need camera access to capture your progress.');
+                showAlert('Permission Denied', 'We need camera access to capture your progress.');
                 return;
             }
 
@@ -58,9 +59,9 @@ export default function ProgressPhotoScreen() {
         } catch (error: any) {
             console.error('Camera error:', error);
             if (Platform.OS === 'web') {
-                Alert.alert('Camera Error', 'The camera is restricted in this browser or no camera was found. Try "Choose from Library" instead. Details: ' + (error?.message || 'Unknown error'));
+                showAlert('Camera Error', 'The camera is restricted in this browser or no camera was found. Try "Choose from Library" instead. Details: ' + (error?.message || 'Unknown error'));
             } else {
-                Alert.alert('Error', 'Could not open camera. Please check your app settings. Details: ' + (error?.message || 'Unknown error'));
+                showAlert('Error', 'Could not open camera. Please check your app settings. Details: ' + (error?.message || 'Unknown error'));
             }
         }
     };
@@ -70,7 +71,7 @@ export default function ProgressPhotoScreen() {
             // Explicitly request permissions first
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Denied', 'We need gallery access to upload your progress.');
+                showAlert('Permission Denied', 'We need gallery access to upload your progress.');
                 return;
             }
 
@@ -90,7 +91,7 @@ export default function ProgressPhotoScreen() {
             }
         } catch (error) {
             console.error('Library error:', error);
-            Alert.alert('Error', 'Could not access image library.');
+            showAlert('Error', 'Could not access image library.');
         }
     };
 
@@ -169,12 +170,12 @@ export default function ProgressPhotoScreen() {
                 void fetchProfile(user.id);
             }
 
-            Alert.alert("Transformed", "Progress photo uploaded. Your growth is documented.");
+            showAlert("Transformed", "Progress photo uploaded. Your growth is documented.");
             router.back();
         } catch (error: any) {
             console.error('[camera] Full error:', error);
             const errorMessage = error?.message || 'Unknown error';
-            Alert.alert('Upload Failed', `Could not upload photo: ${errorMessage}\n\nCheck console for details.`);
+            showAlert('Upload Failed', `Could not upload photo: ${errorMessage}\n\nCheck console for details.`);
         } finally {
             setUploading(false);
         }

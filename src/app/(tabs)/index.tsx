@@ -236,6 +236,21 @@ export default function HomeScreen() {
                 </View>
             </View>
 
+            {['active', 'graduated'].includes(profile?.founder_status) && (
+                <Card style={styles.founderCard}>
+                    <View style={styles.founderCardHeader}>
+                        <Ionicons name="ribbon" size={18} color={colors.primary} />
+                        <Text style={styles.founderCardTitle}>
+                            Founding Member{profile?.founder_number ? ` No. ${profile.founder_number}` : ''}
+                        </Text>
+                    </View>
+                    <Text style={styles.founderCardBody}>
+                        {/* PLACEHOLDER COPY — replace with real voice before shipping */}
+                        You were here before anyone else. Everything you report shapes what this becomes — thank you for building it with us.
+                    </Text>
+                </Card>
+            )}
+
             {!seenStageHint && (
                 <HintCard
                     title="Your Becoming Stage"
@@ -880,6 +895,19 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         marginTop: spacing.md,
         // Card.tsx default variant handles bg + neumorphic shadow
     },
+    founderCard: {
+        marginTop: spacing.md,
+        borderWidth: 1,
+        borderColor: `${colors.primary}40`,
+    },
+    founderCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
+    },
+    founderCardTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
+    founderCardBody: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
     upgradeTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
     upgradeBody: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
     upgradeButton: {

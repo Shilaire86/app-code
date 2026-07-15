@@ -1,16 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    TextInput,
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { showAlert, showPrompt } from '@/lib/confirm';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
@@ -102,7 +92,7 @@ export default function BuildProgramScreen() {
         if (!user?.id) return;
 
         if (!programName.trim()) {
-            Alert.alert('Missing Name', 'Give your program a name.');
+            showAlert('Missing Name', 'Give your program a name.');
             return;
         }
 
@@ -112,7 +102,7 @@ export default function BuildProgramScreen() {
         const errors = issues.filter((i) => i.level === 'error');
 
         if (errors.length > 0) {
-            Alert.alert('Cannot Save', 'Fix the errors in the health check before saving.');
+            showAlert('Cannot Save', 'Fix the errors in the health check before saving.');
             return;
         }
 
@@ -180,12 +170,12 @@ export default function BuildProgramScreen() {
                 }
             }
 
-            Alert.alert('Program Created!', `"${programName}" has been saved to My Programs.`, [
+            showAlert('Program Created!', `"${programName}" has been saved to My Programs.`, [
                 { text: 'View Programs', onPress: () => router.replace('/(tabs)/programs') },
             ]);
         } catch (err) {
             console.error('[BuildProgram] Save failed', err);
-            Alert.alert('Error', 'Failed to save program. Please try again.');
+            showAlert('Error', 'Failed to save program. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -248,7 +238,7 @@ export default function BuildProgramScreen() {
                                     onPress={() => setActiveDayIndex(idx)}
                                     onLongPress={() => {
                                         if (days.length > 1) {
-                                            Alert.alert('Remove Day', `Delete "${d.title}"?`, [
+                                            showAlert('Remove Day', `Delete "${d.title}"?`, [
                                                 { text: 'Cancel', style: 'cancel' },
                                                 { text: 'Delete', style: 'destructive', onPress: () => removeDay(idx) },
                                             ]);
@@ -320,7 +310,7 @@ export default function BuildProgramScreen() {
                                         <Text style={styles.controlLabel}>REPS</Text>
                                         <TouchableOpacity
                                             style={styles.valueBtn}
-                                            onPress={() => Alert.prompt('Target Reps', 'e.g. 10-12, 8, 15+', (t) => updateExercise(activeDayIndex, exIdx, { reps: t || '10-12' }), 'plain-text', ex.reps)}
+                                            onPress={() => showPrompt('Target Reps', 'e.g. 10-12, 8, 15+', (t) => updateExercise(activeDayIndex, exIdx, { reps: t || '10-12' }), ex.reps)}
                                         >
                                             <Text style={styles.valueBtnText}>{ex.reps}</Text>
                                         </TouchableOpacity>
@@ -329,7 +319,7 @@ export default function BuildProgramScreen() {
                                         <Text style={styles.controlLabel}>REST</Text>
                                         <TouchableOpacity
                                             style={styles.valueBtn}
-                                            onPress={() => Alert.prompt('Rest (seconds)', '', (t) => { const v = parseInt(t); if (!isNaN(v)) updateExercise(activeDayIndex, exIdx, { rest: v }); }, 'plain-text', ex.rest.toString())}
+                                            onPress={() => showPrompt('Rest (seconds)', '', (t) => { const v = parseInt(t); if (!isNaN(v)) updateExercise(activeDayIndex, exIdx, { rest: v }); }, ex.rest.toString())}
                                         >
                                             <Text style={styles.valueBtnText}>{ex.rest}s</Text>
                                         </TouchableOpacity>

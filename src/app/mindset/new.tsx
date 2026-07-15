@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
@@ -29,7 +30,7 @@ export default function NewMindsetScreen() {
 
     async function handleSubmit() {
         if (!gratitude.trim() && !intention.trim() && !reflection.trim()) {
-            Alert.alert('Empty Entry', 'Please write at least one reflection.');
+            showAlert('Empty Entry', 'Please write at least one reflection.');
             return;
         }
 
@@ -51,11 +52,11 @@ export default function NewMindsetScreen() {
                 void fetchProfile(user.id);
             }
 
-            Alert.alert("Reflected", "Your mindset has been recorded. Great work!");
+            showAlert("Reflected", "Your mindset has been recorded. Great work!");
             router.back();
         } catch (error) {
             console.error('Error submitting mindset:', error);
-            Alert.alert('Error', 'Failed to save reflection');
+            showAlert('Error', 'Failed to save reflection');
         } finally {
             setIsSubmitting(false);
         }

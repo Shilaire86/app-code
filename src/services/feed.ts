@@ -27,7 +27,7 @@ export async function fetchAllPosts() {
     return data ?? [];
 }
 
-export async function createPost(title: string, content: string, authorId: string) {
+export async function createPost(title: string, content: string, authorId: string, audience: 'all' | 'founders' = 'all') {
     const { data, error } = await supabase
         .from('coach_posts')
         .insert({
@@ -35,6 +35,7 @@ export async function createPost(title: string, content: string, authorId: strin
             content,
             author_id: authorId,
             is_published: false,
+            audience,
         })
         .select()
         .single();
@@ -43,7 +44,7 @@ export async function createPost(title: string, content: string, authorId: strin
     return data;
 }
 
-export async function updatePost(id: string, updates: { title?: string; content?: string; is_published?: boolean }) {
+export async function updatePost(id: string, updates: { title?: string; content?: string; is_published?: boolean; audience?: 'all' | 'founders' }) {
     const updateData: any = { ...updates };
     if (updates.is_published === true) {
         updateData.published_at = new Date().toISOString();
@@ -199,7 +200,7 @@ export async function fetchUserPosts() {
         .from('user_posts')
         .select(`
             *,
-            profiles (full_name, role),
+            profiles (full_name, role, founder_status, founder_number),
             user_post_likes(count)
         `)
         .eq('status', 'published')

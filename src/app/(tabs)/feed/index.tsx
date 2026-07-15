@@ -1,8 +1,6 @@
 import React, { memo, useState, useCallback, useEffect } from 'react';
-import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity,
-    ActivityIndicator, ScrollView, TextInput, Alert, Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useCachedQuery } from '@/hooks/useCachedQuery';
@@ -149,6 +147,11 @@ const PostCard = memo(({ item, isLiked, onToggleLike, user }: any) => {
                         <View style={styles.coachBadge}>
                             <Text style={styles.coachBadgeText}>COACH</Text>
                         </View>
+                        {item.audience === 'founders' && (
+                            <View style={styles.founderBadge}>
+                                <Text style={styles.founderBadgeText}>FOUNDERS ONLY</Text>
+                            </View>
+                        )}
                     </View>
                     <Text style={styles.date}>{new Date(item.published_at || item.created_at).toLocaleDateString()}</Text>
                 </View>
@@ -217,7 +220,7 @@ const UserPostCard = memo(({ item, isLiked, onToggleLike, onReport, user }: any)
         if (Platform.OS === 'web') {
             if (globalThis.confirm?.('Report this post as violating community guidelines?')) onReport(item.id);
         } else {
-            Alert.alert('Report Post', 'Report this post as violating community guidelines?', [
+            showAlert('Report Post', 'Report this post as violating community guidelines?', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Report', style: 'destructive', onPress: () => onReport(item.id) },
             ]);
@@ -240,6 +243,11 @@ const UserPostCard = memo(({ item, isLiked, onToggleLike, onReport, user }: any)
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={styles.authorName}>{item.profiles?.full_name || 'Member'}</Text>
+                        {['active', 'graduated'].includes(item.profiles?.founder_status) && (
+                            <View style={styles.founderBadge}>
+                                <Text style={styles.founderBadgeText}>FOUNDER</Text>
+                            </View>
+                        )}
                         <Ionicons name={icon as any} size={12} color={colors.textSecondary} />
                     </View>
                     <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
@@ -367,9 +375,9 @@ export default function FeedScreen() {
         if (!user?.id) return;
         try {
             await reportContent(user.id, 'user_post', postId, 'Reported by user');
-            Alert.alert('Reported', 'Thank you. This post has been flagged for review.');
+            showAlert('Reported', 'Thank you. This post has been flagged for review.');
         } catch {
-            Alert.alert('Error', 'Could not submit report. Please try again.');
+            showAlert('Error', 'Could not submit report. Please try again.');
         }
     }, [user?.id]);
 
@@ -566,6 +574,14 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             borderRadius: 4,
         },
         coachBadgeText: { color: colors.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+        founderBadge: {
+            borderWidth: 1,
+            borderColor: colors.primary,
+            paddingHorizontal: 6,
+            paddingVertical: 1,
+            borderRadius: 4,
+        },
+        founderBadgeText: { color: colors.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
         authorName:  { color: colors.text, fontWeight: '700', fontSize: 14 },
         date:        { color: colors.textSecondary, fontSize: 12 },
         postTitle: {

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -114,7 +115,7 @@ export default function MessageThreadScreen() {
             setErrorText('Not authorized to delete this thread.');
             return;
         }
-        Alert.alert(
+        showAlert(
             'Delete thread?',
             'This will permanently delete the entire conversation.',
             [

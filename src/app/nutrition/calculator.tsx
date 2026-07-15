@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 
 import { theme } from '@/constants/theme';
@@ -65,7 +66,7 @@ export default function MacroCalculatorScreen() {
             router.replace('/(tabs)/nutrition');
         } catch (e) {
             console.error('[MacroCalculator] Error saving targets', e);
-            Alert.alert('Error', 'Failed to save targets. Please try again.');
+            showAlert('Error', 'Failed to save targets. Please try again.');
         } finally {
             setIsSaving(false);
         }

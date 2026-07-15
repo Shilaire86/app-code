@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { showAlert, showPrompt } from '@/lib/confirm';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
@@ -53,7 +46,7 @@ export default function QuickWorkoutScreen() {
 
     const handleStartWorkout = async () => {
         if (selectedExercises.length === 0) {
-            Alert.alert('Empty Workout', 'Add at least one exercise to start.');
+            showAlert('Empty Workout', 'Add at least one exercise to start.');
             return;
         }
 
@@ -72,7 +65,7 @@ export default function QuickWorkoutScreen() {
             });
         } catch (err) {
             console.error('[QuickWorkout] Start failed', err);
-            Alert.alert('Error', 'Failed to start workout. Please try again.');
+            showAlert('Error', 'Failed to start workout. Please try again.');
         } finally {
             setIsStarting(false);
         }
@@ -149,11 +142,10 @@ export default function QuickWorkoutScreen() {
                                         <TouchableOpacity 
                                             style={styles.repsBtn}
                                             onPress={() => {
-                                                Alert.prompt(
+                                                showPrompt(
                                                     'Target Reps',
                                                     'e.g. 10-12, 8, 15+',
                                                     (text) => updateExercise(index, { reps: text || '10-12' }),
-                                                    'plain-text',
                                                     ex.reps
                                                 );
                                             }}
@@ -167,14 +159,13 @@ export default function QuickWorkoutScreen() {
                                         <TouchableOpacity 
                                             style={styles.repsBtn}
                                             onPress={() => {
-                                                Alert.prompt(
+                                                showPrompt(
                                                     'Rest Seconds',
                                                     'Default is 90s',
                                                     (text) => {
                                                         const val = parseInt(text);
                                                         if (!isNaN(val)) updateExercise(index, { rest: val });
                                                     },
-                                                    'plain-text',
                                                     ex.rest.toString(),
                                                     'number-pad'
                                                 );

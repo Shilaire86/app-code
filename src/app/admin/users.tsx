@@ -1,11 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { SubscriptionTier } from '@/stores/profileStore';
+
+type FounderStatus = 'none' | 'invited' | 'active' | 'graduated';
 
 type AdminUser = {
     id: string;
@@ -15,6 +18,9 @@ type AdminUser = {
     created_at: string;
     is_blocked: boolean;
     tier: SubscriptionTier;
+    founder_status: FounderStatus;
+    founder_number: number | null;
+    founder_reward_applied_at: string | null;
 };
 
 const TIER_FILTERS: (SubscriptionTier | 'all')[] = ['all', 'free', 'standard', 'vip', 'elite'];
@@ -60,12 +66,15 @@ export default function AdminUsersScreen() {
                 created_at: p.created_at,
                 is_blocked: p.is_blocked || false,
                 tier: (subMap.get(p.id) as SubscriptionTier) || 'free',
+                founder_status: (p.founder_status as FounderStatus) || 'none',
+                founder_number: p.founder_number ?? null,
+                founder_reward_applied_at: p.founder_reward_applied_at ?? null,
             }));
 
             setUsers(mappedUsers);
         } catch (error) {
             console.error('Error loading users:', error);
-            Alert.alert('Error', 'Failed to load list of users.');
+            showAlert('Error', 'Failed to load list of users.');
         } finally {
             setLoading(false);
         }
@@ -77,7 +86,7 @@ export default function AdminUsersScreen() {
 
     const handleToggleBlock = async (user: AdminUser) => {
         const action = user.is_blocked ? 'Unblock' : 'Block';
-        Alert.alert(
+        showAlert(
             `${action} User`,
             `Are you sure you want to ${action.toLowerCase()} ${user.email}?`,
             [
@@ -106,12 +115,127 @@ export default function AdminUsersScreen() {
                                 u.id === user.id ? { ...u, is_blocked: updates.is_blocked } : u
                             ));
                         } catch (error: any) {
-                            Alert.alert('Failed to update', error.message);
+                            showAlert('Failed to update', error.message);
                         } finally {
                             setUpdatingParams(null);
                         }
                     }
                 }
+            ]
+        );
+    };
+
+    const applyFounderDiscount = async (targetId: string): Promise<{ applied: boolean; reason?: string; error?: string }> => {
+        await supabase.auth.refreshSession();
+        const { data: sessRes, error: sessErr } = await supabase.auth.getSession();
+        if (sessErr) throw sessErr;
+        const accessToken = sessRes?.session?.access_token;
+        if (!accessToken) throw new Error('You are not signed in. Please sign in again and retry.');
+
+        const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+        const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+        if (!baseUrl || !anonKey) throw new Error('Supabase env missing in client.');
+
+        const res = await fetch(`${baseUrl}/functions/v1/grant-founder-discount`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                apikey: anonKey,
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ target_id: targetId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return { applied: false, error: (data as any)?.error || 'Failed to apply founder discount.' };
+        }
+        return data as { applied: boolean; reason?: string };
+    };
+
+    const handleFounderAction = async (user: AdminUser) => {
+        if (user.founder_status === 'graduated') return;
+
+        if (user.founder_status === 'active') {
+            showAlert(
+                'Mark Graduated',
+                `Mark ${user.email} as a graduated Founder? This applies their permanent 25% lifetime discount automatically if they're on a web (Stripe) subscription. Their founder badge and number stay on their account regardless of future subscription changes.`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Graduate',
+                        onPress: async () => {
+                            try {
+                                setUpdatingParams(user.id);
+                                const { error } = await supabase
+                                    .from('profiles')
+                                    .update({ founder_status: 'graduated' })
+                                    .eq('id', user.id);
+                                if (error) throw error;
+                                setUsers(prev => prev.map(u =>
+                                    u.id === user.id ? { ...u, founder_status: 'graduated' } : u
+                                ));
+
+                                const discountResult = await applyFounderDiscount(user.id);
+                                if (discountResult.applied) {
+                                    setUsers(prev => prev.map(u =>
+                                        u.id === user.id ? { ...u, founder_reward_applied_at: new Date().toISOString() } : u
+                                    ));
+                                    showAlert('Discount Applied', `${user.email}'s 25% lifetime discount is now active on their subscription.`);
+                                } else if (discountResult.reason === 'no_stripe_subscription') {
+                                    showAlert(
+                                        'Discount Not Applied',
+                                        `${user.email} isn't on a web (Stripe) subscription, so the discount can't be applied automatically. Reach out and have them manage their subscription via the website instead — the discount will apply there.`
+                                    );
+                                } else if (discountResult.reason !== 'already_applied') {
+                                    showAlert('Discount Failed', discountResult.error || 'Could not apply the founder discount. You can retry by re-opening this screen.');
+                                }
+                            } catch (error: any) {
+                                showAlert('Failed to update', error.message);
+                            } finally {
+                                setUpdatingParams(null);
+                            }
+                        },
+                    },
+                ]
+            );
+            return;
+        }
+
+        showAlert(
+            'Grant Founder Status',
+            `Grant ${user.email} permanent Founder status? They'll be assigned the next founder number.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Grant',
+                    onPress: async () => {
+                        try {
+                            setUpdatingParams(user.id);
+                            const { error } = await supabase.rpc('grant_founder_status', { target_id: user.id });
+                            if (error) throw error;
+
+                            const { data: refreshed } = await supabase
+                                .from('profiles')
+                                .select('founder_status, founder_number')
+                                .eq('id', user.id)
+                                .single();
+
+                            setUsers(prev => prev.map(u =>
+                                u.id === user.id
+                                    ? {
+                                        ...u,
+                                        founder_status: (refreshed?.founder_status as FounderStatus) || 'active',
+                                        founder_number: refreshed?.founder_number ?? u.founder_number,
+                                    }
+                                    : u
+                            ));
+                        } catch (error: any) {
+                            showAlert('Failed to update', error.message);
+                        } finally {
+                            setUpdatingParams(null);
+                        }
+                    },
+                },
             ]
         );
     };
@@ -211,6 +335,18 @@ export default function AdminUsersScreen() {
                                             <Text style={[styles.tierBadgeText, { color: '#FFD700' }]}>COACH</Text>
                                         </View>
                                     )}
+                                    {['active', 'graduated'].includes(item.founder_status) && (
+                                        <View style={[styles.tierBadge, { backgroundColor: 'rgba(181,98,42,0.15)' }]}>
+                                            <Text style={[styles.tierBadgeText, { color: '#D4824A' }]}>
+                                                FOUNDER{item.founder_number ? ` #${item.founder_number}` : ''}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    {item.founder_reward_applied_at && (
+                                        <View style={[styles.tierBadge, { backgroundColor: 'rgba(75,122,82,0.15)' }]}>
+                                            <Text style={[styles.tierBadgeText, { color: '#4B7A52' }]}>25% LIFETIME</Text>
+                                        </View>
+                                    )}
                                     {item.is_blocked && (
                                         <View style={[styles.tierBadge, { backgroundColor: 'rgba(255,107,107,0.1)' }]}>
                                             <Text style={[styles.tierBadgeText, { color: '#FF6B6B' }]}>BLOCKED</Text>
@@ -219,7 +355,19 @@ export default function AdminUsersScreen() {
                                 </View>
                             </View>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
+                                style={styles.blockBtn}
+                                onPress={() => handleFounderAction(item)}
+                                disabled={updatingParams === item.id || item.founder_status === 'graduated'}
+                            >
+                                <Ionicons
+                                    name="ribbon"
+                                    size={22}
+                                    color={item.founder_status === 'none' ? 'rgba(255,255,255,0.3)' : '#D4824A'}
+                                />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
                                 style={styles.blockBtn}
                                 onPress={() => handleToggleBlock(item)}
                                 disabled={updatingParams === item.id}
@@ -227,10 +375,10 @@ export default function AdminUsersScreen() {
                                 {updatingParams === item.id ? (
                                     <ActivityIndicator size="small" color={item.is_blocked ? theme.colors.primary : '#FF6B6B'} />
                                 ) : (
-                                    <Ionicons 
-                                        name={item.is_blocked ? "shield-checkmark" : "ban"} 
-                                        size={22} 
-                                        color={item.is_blocked ? theme.colors.primary : '#FF6B6B'} 
+                                    <Ionicons
+                                        name={item.is_blocked ? "shield-checkmark" : "ban"}
+                                        size={22}
+                                        color={item.is_blocked ? theme.colors.primary : '#FF6B6B'}
                                     />
                                 )}
                             </TouchableOpacity>

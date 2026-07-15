@@ -2,12 +2,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/hooks/useTheme';
+import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
     const router = useRouter();
     const { colors, spacing, radius, typography, isDark } = useTheme();
     const styles = createStyles({ colors, spacing, radius, typography, isDark });
+    const { profile } = useProfileStore();
+    const isFounder = ['active', 'graduated'].includes(profile?.founder_status);
 
     return (
         <View style={styles.container}>
@@ -21,11 +24,24 @@ export default function WelcomeScreen() {
 
             {/* Main content */}
             <View style={styles.content}>
-                <Text style={styles.eyebrow}>Welcome</Text>
-                <Text style={styles.title}>You are{'\n'}already becoming.</Text>
-                <Text style={styles.subtitle}>
-                    This is your quiet start. We will set your path with a few guided steps.
-                </Text>
+                {isFounder ? (
+                    <>
+                        {/* PLACEHOLDER COPY — replace with real voice before shipping */}
+                        <Text style={styles.eyebrow}>Founding Member{profile?.founder_number ? ` No. ${profile.founder_number}` : ''}</Text>
+                        <Text style={styles.title}>You're helping{'\n'}build this.</Text>
+                        <Text style={styles.subtitle}>
+                            You're one of a small group shaping The Becoming Method before anyone else sees it. What you notice and say back to us becomes the app. Thank you for being early.
+                        </Text>
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.eyebrow}>Welcome</Text>
+                        <Text style={styles.title}>You are{'\n'}already becoming.</Text>
+                        <Text style={styles.subtitle}>
+                            This is your quiet start. We will set your path with a few guided steps.
+                        </Text>
+                    </>
+                )}
 
                 {/* Coach Audio Hint */}
                 <TouchableOpacity style={styles.audioCard} activeOpacity={0.75}>

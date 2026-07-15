@@ -1,14 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Platform,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,7 +63,7 @@ export default function CardioPlanScreen() {
             setPlan(data);
         } catch (e) {
             console.error('[CardioPlan] Error generating plan:', e);
-            Alert.alert('Error', 'Failed to generate cardio plan. Please try again.');
+            showAlert('Error', 'Failed to generate cardio plan. Please try again.');
         } finally {
             setGenerating(false);
         }
@@ -84,7 +76,7 @@ export default function CardioPlanScreen() {
                 prev.map(p => (p.id === entry.id ? { ...p, is_completed: true } : p))
             );
         } catch (e) {
-            Alert.alert('Error', 'Failed to mark as complete.');
+            showAlert('Error', 'Failed to mark as complete.');
         }
     };
 

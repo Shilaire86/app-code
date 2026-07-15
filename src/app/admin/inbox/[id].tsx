@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -112,7 +113,7 @@ export default function AdminInboxThreadScreen() {
 
     function confirmDeleteThread() {
         if (!threadId) return;
-        Alert.alert(
+        showAlert(
             'Delete thread?',
             'This will permanently delete the thread and all messages.',
             [

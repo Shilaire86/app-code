@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
@@ -94,7 +95,7 @@ export default function WorkoutHistoryScreen() {
             await fetchHistory();
         } catch (error: any) {
             const msg = typeof error?.message === 'string' ? error.message : 'Failed to clear history.';
-            Alert.alert('Error', msg);
+            showAlert('Error', msg);
         } finally {
             setClearing(false);
         }
@@ -111,7 +112,7 @@ export default function WorkoutHistoryScreen() {
             return;
         }
 
-        Alert.alert(title, message, [
+        showAlert(title, message, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Delete All', style: 'destructive', onPress: clearHistory },
         ]);

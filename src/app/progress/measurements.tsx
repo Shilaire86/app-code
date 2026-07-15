@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
@@ -22,7 +23,7 @@ export default function MeasurementLogScreen() {
 
     async function handleSubmit() {
         if (!weight) {
-            Alert.alert("Required", "Please enter your weight at minimum.");
+            showAlert("Required", "Please enter your weight at minimum.");
             return;
         }
 
@@ -49,11 +50,11 @@ export default function MeasurementLogScreen() {
                 void fetchProfile(user.id);
             }
 
-            Alert.alert("Recorded", "Your measurements have been updated. Your evolution is being tracked.");
+            showAlert("Recorded", "Your measurements have been updated. Your evolution is being tracked.");
             router.back();
         } catch (error) {
             console.error('Error saving measurements:', error);
-            Alert.alert('Error', 'Failed to save measurements');
+            showAlert('Error', 'Failed to save measurements');
         } finally {
             setIsSubmitting(false);
         }

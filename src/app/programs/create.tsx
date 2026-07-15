@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    Animated,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
@@ -83,7 +75,7 @@ export default function CreateProgramScreen() {
         const currentActive = await countActiveGuidedPrograms(user.id);
 
         if (currentActive >= maxActive) {
-            Alert.alert(
+            showAlert(
                 'Program Limit Reached',
                 `You can have up to ${maxActive} active guided programs. Delete one to create a new one.`,
             );
@@ -106,7 +98,7 @@ export default function CreateProgramScreen() {
             setStep('done');
         } catch (err) {
             console.error('[CreateProgram] Generation failed', err);
-            Alert.alert('Error', 'Failed to generate program. Please try again.');
+            showAlert('Error', 'Failed to generate program. Please try again.');
             setStep('duration');
         } finally {
             setIsGenerating(false);

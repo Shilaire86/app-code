@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { theme } from '@/constants/theme';
@@ -39,20 +40,20 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
             if (error) {
                 const msg = `Storage Error: ${error.message}`;
                 if (Platform.OS === 'web') alert(msg);
-                else Alert.alert('Storage Error', error.message);
+                else showAlert('Storage Error', error.message);
                 console.error('[gallery] List error:', error);
             } else {
                 const fileInfos = (data || []).map(f => `${f.name} (${(f.metadata?.size / 1024).toFixed(1)}KB)`).join('\n');
                 const firstFile = data && data.length > 0 ? data[0].name : 'none';
                 const msg = `Storage Verified! Found ${data?.length || 0} files.\n\n${fileInfos}\n\nNote: This bucket is configured as private, so images must be loaded via signed URLs.`;
                 if (Platform.OS === 'web') alert(msg);
-                else Alert.alert('Storage Verified', msg);
+                else showAlert('Storage Verified', msg);
                 console.log('[gallery] Files found:', data);
             }
         } catch (err: any) {
             const msg = `Diagnostic Error: ${err.message}`;
             if (Platform.OS === 'web') alert(msg);
-            else Alert.alert('Error', msg);
+            else showAlert('Error', msg);
         } finally {
             setVerifying(false);
         }
@@ -145,7 +146,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
             fetchPhotos();
         } catch (error) {
             console.error('[gallery] Delete error:', error);
-            Alert.alert('Error', 'Failed to delete photo');
+            showAlert('Error', 'Failed to delete photo');
         }
     }
 
@@ -213,7 +214,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                     <TouchableOpacity
                         style={styles.photoCard}
                         onLongPress={() => {
-                            Alert.alert(
+                            showAlert(
                                 'Delete Photo',
                                 'Are you sure you want to delete this photo?',
                                 [
@@ -249,7 +250,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                             <TouchableOpacity
                                 style={styles.deleteButton}
                                 onPress={() => {
-                                    Alert.alert(
+                                    showAlert(
                                         'Delete Photo',
                                         'Are you sure?',
                                         [

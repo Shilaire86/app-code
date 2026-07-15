@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, TextInput, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -353,7 +354,7 @@ export default function AdminProgramStructureScreen() {
             if (ok) deleteWeek(week.id);
             return;
         }
-        Alert.alert(title, message, [
+        showAlert(title, message, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Delete', style: 'destructive', onPress: () => deleteWeek(week.id) },
         ]);
@@ -410,7 +411,7 @@ export default function AdminProgramStructureScreen() {
             if (ok) deleteDay(day.id);
             return;
         }
-        Alert.alert(title, message, [
+        showAlert(title, message, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Delete', style: 'destructive', onPress: () => deleteDay(day.id) },
         ]);
@@ -507,7 +508,7 @@ export default function AdminProgramStructureScreen() {
             if (ok) deleteExercise(ex.id);
             return;
         }
-        Alert.alert(title, message, [
+        showAlert(title, message, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Delete', style: 'destructive', onPress: () => deleteExercise(ex.id) },
         ]);

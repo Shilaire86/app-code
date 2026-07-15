@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
@@ -67,7 +68,7 @@ export default function WeeklyReflectionScreen() {
     async function handleSubmit() {
         const hasContent = Object.values(answers).some(v => v.trim());
         if (!hasContent) {
-            Alert.alert('Empty Reflection', 'Please write at least one reflection.');
+            showAlert('Empty Reflection', 'Please write at least one reflection.');
             return;
         }
 
@@ -96,11 +97,11 @@ export default function WeeklyReflectionScreen() {
                 if (error) throw error;
             }
 
-            Alert.alert('Reflected', 'Your weekly reflection has been saved.');
+            showAlert('Reflected', 'Your weekly reflection has been saved.');
             router.back();
         } catch (error) {
             console.error('[reflection] Submit error:', error);
-            Alert.alert('Error', 'Failed to save reflection');
+            showAlert('Error', 'Failed to save reflection');
         } finally {
             setIsSubmitting(false);
         }

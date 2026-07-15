@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -65,7 +66,7 @@ export default function ModuleLibraryScreen() {
                 
                 if (!allowed) {
                     if (reason?.includes('Requires')) {
-                        Alert.alert(
+                        showAlert(
                             'Premium Module',
                             reason + ' Upgrade to unlock this module.',
                             [
@@ -74,7 +75,7 @@ export default function ModuleLibraryScreen() {
                             ]
                         );
                     } else {
-                        Alert.alert('Cannot Activate Module', reason);
+                        showAlert('Cannot Activate Module', reason);
                     }
                     return;
                 }
@@ -86,7 +87,7 @@ export default function ModuleLibraryScreen() {
                 setActiveModuleIds(updated);
             }
         } catch (error) {
-            Alert.alert('Error', 'Failed to update module status.');
+            showAlert('Error', 'Failed to update module status.');
         } finally {
             setTogglingId(null);
         }

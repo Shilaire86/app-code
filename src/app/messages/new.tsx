@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, ScrollView } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
@@ -70,7 +71,7 @@ export default function NewMessageScreen() {
     async function submit() {
         const bodyText = body.trim();
         if (!bodyText) {
-            Alert.alert('Required', 'Please write your message.');
+            showAlert('Required', 'Please write your message.');
             return;
         }
 
@@ -84,7 +85,7 @@ export default function NewMessageScreen() {
             });
             router.replace(`/messages/${threadId}`);
         } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Failed to send message.');
+            showAlert('Error', e?.message || 'Failed to send message.');
         } finally {
             setSubmitting(false);
         }

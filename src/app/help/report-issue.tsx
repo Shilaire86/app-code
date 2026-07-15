@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
@@ -24,15 +25,15 @@ export default function ReportIssueScreen() {
 
     async function handleSubmit() {
         if (!category) {
-            Alert.alert('Required', 'Please select a category.');
+            showAlert('Required', 'Please select a category.');
             return;
         }
         if (!subject.trim()) {
-            Alert.alert('Required', 'Please enter a subject.');
+            showAlert('Required', 'Please enter a subject.');
             return;
         }
         if (!description.trim()) {
-            Alert.alert('Required', 'Please describe the issue.');
+            showAlert('Required', 'Please describe the issue.');
             return;
         }
 
@@ -49,14 +50,14 @@ export default function ReportIssueScreen() {
 
             if (error) throw error;
 
-            Alert.alert(
+            showAlert(
                 '✅ Ticket Submitted',
                 'Thank you for reporting this. Our team will review your issue and get back to you.',
                 [{ text: 'OK', onPress: () => router.back() }]
             );
         } catch (error) {
             console.error('Error submitting ticket:', error);
-            Alert.alert('Error', 'Failed to submit your report. Please try again.');
+            showAlert('Error', 'Failed to submit your report. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

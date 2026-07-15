@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -39,7 +40,7 @@ export default function RoutinePlayerScreen() {
             if (error) throw error;
             setRoutine(data as ModuleRoutine);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load routine');
+            showAlert('Error', 'Failed to load routine');
             router.back();
         } finally {
             setLoading(false);
@@ -123,7 +124,7 @@ export default function RoutinePlayerScreen() {
         if (nextIndex >= routine.exercises.length) {
             // Finished
             clearTimer();
-            Alert.alert(
+            showAlert(
                 'Routine Complete!',
                 'Great job finishing this supplemental session.',
                 [{ text: 'Done', onPress: () => router.back() }]
@@ -241,7 +242,7 @@ export default function RoutinePlayerScreen() {
                     headerTintColor: '#FFF',
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => {
-                            Alert.alert('End Routine?', 'Are you sure you want to stop early?', [
+                            showAlert('End Routine?', 'Are you sure you want to stop early?', [
                                 { text: 'Cancel', style: 'cancel' },
                                 { text: 'End', style: 'destructive', onPress: () => router.back() }
                             ]);

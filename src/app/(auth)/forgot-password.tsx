@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Alert,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +16,7 @@ export default function ForgotPasswordScreen() {
     async function handleReset() {
         const trimmedEmail = email.trim();
         if (!trimmedEmail) {
-            Alert.alert('Error', 'Please enter your email address');
+            showAlert('Error', 'Please enter your email address');
             return;
         }
 
@@ -39,9 +31,9 @@ export default function ForgotPasswordScreen() {
             });
 
             if (error) {
-                Alert.alert('Error', error.message);
+                showAlert('Error', error.message);
             } else {
-                Alert.alert('Success', 'Check your email for the reset link.');
+                showAlert('Success', 'Check your email for the reset link.');
                 router.replace('/(auth)/login');
             }
         } finally {

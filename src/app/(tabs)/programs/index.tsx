@@ -1,5 +1,6 @@
 import React, { memo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, SectionList, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SectionList, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { useGuide } from '@/hooks/useGuide';
@@ -176,7 +177,7 @@ export default function ProgramsScreen() {
     }, [activeTab, userId]);
 
     const handleDeleteProgram = useCallback(async (programId: string, name: string) => {
-        Alert.alert('Delete Program', `Are you sure you want to delete "${name}"?`, [
+        showAlert('Delete Program', `Are you sure you want to delete "${name}"?`, [
             { text: 'Cancel', style: 'cancel' },
             {
                 text: 'Delete',

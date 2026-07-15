@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { useWorkoutStore } from '@/stores/workoutStore';
@@ -231,7 +232,7 @@ export default function ActiveWorkoutScreen() {
             setAvailableAlternates([]);
         } catch (err) {
             console.error('Error fetching alternates:', err);
-            Alert.alert('Error', 'Failed to load alternative exercises');
+            showAlert('Error', 'Failed to load alternative exercises');
         } finally {
             setLoadingAlternates(false);
         }
@@ -479,7 +480,7 @@ export default function ActiveWorkoutScreen() {
         if (!error || errorHandledRef.current) return;
         errorHandledRef.current = true;
         console.error('Error fetching active workout:', error);
-        Alert.alert('Error', 'Failed to load workout details');
+        showAlert('Error', 'Failed to load workout details');
         router.back();
     }, [error, router]);
 
@@ -638,13 +639,13 @@ export default function ActiveWorkoutScreen() {
             }
 
             if (stageChanged) {
-                Alert.alert(
+                showAlert(
                     "🎉 Stage Up!",
                     `You've ascended to ${newStage.toUpperCase()}! Keep going.`,
                     [{ text: "Let's Go!", style: 'default' }]
                 );
             } else {
-                Alert.alert("Success", "Workout completed! +5 Becoming Points earned.");
+                showAlert("Success", "Workout completed! +5 Becoming Points earned.");
             }
         } catch (error) {
             console.error('Error saving workout:', error);
@@ -677,7 +678,7 @@ export default function ActiveWorkoutScreen() {
                 }).catch(() => { });
             }
 
-            Alert.alert("Error", "Workout saved locally and will sync when you're back online.");
+            showAlert("Error", "Workout saved locally and will sync when you're back online.");
             completeWorkout();
             router.replace('/(tabs)');
         }
@@ -692,7 +693,7 @@ export default function ActiveWorkoutScreen() {
             return;
         }
 
-        Alert.alert(
+        showAlert(
             "Finish Workout",
             "Ready to submit your hard work?",
             [
@@ -720,7 +721,7 @@ export default function ActiveWorkoutScreen() {
             return;
         }
 
-        Alert.alert(
+        showAlert(
             "Discard Workout",
             "Are you sure? This progress will be lost.",
             [

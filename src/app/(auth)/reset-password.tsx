@@ -1,14 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Alert,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -79,17 +71,17 @@ export default function ResetPasswordScreen() {
 
     async function handleUpdatePassword() {
         if (!recoveryReady) {
-            Alert.alert('Invalid Link', 'Open the password reset link from your email again and retry.');
+            showAlert('Invalid Link', 'Open the password reset link from your email again and retry.');
             return;
         }
 
         if (!password || password.length < 8) {
-            Alert.alert('Error', 'Password must be at least 8 characters.');
+            showAlert('Error', 'Password must be at least 8 characters.');
             return;
         }
 
         if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords must match.');
+            showAlert('Error', 'Passwords must match.');
             return;
         }
 
@@ -97,11 +89,11 @@ export default function ResetPasswordScreen() {
         try {
             const { error } = await supabase.auth.updateUser({ password });
             if (error) {
-                Alert.alert('Error', error.message);
+                showAlert('Error', error.message);
                 return;
             }
 
-            Alert.alert('Success', 'Your password has been updated.');
+            showAlert('Success', 'Your password has been updated.');
             router.replace('/(auth)/login');
         } finally {
             setLoading(false);

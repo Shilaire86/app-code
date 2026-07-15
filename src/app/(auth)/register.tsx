@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Alert,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -25,11 +17,11 @@ export default function RegisterScreen() {
     async function handleRegister() {
         const trimmedEmail = email.trim();
         if (!trimmedEmail || !password) {
-            Alert.alert('Error', 'Please enter both email and password');
+            showAlert('Error', 'Please enter both email and password');
             return;
         }
         if (password.length < 8) {
-            Alert.alert('Error', 'Password must be at least 8 characters.');
+            showAlert('Error', 'Password must be at least 8 characters.');
             return;
         }
 
@@ -46,9 +38,9 @@ export default function RegisterScreen() {
             });
 
             if (error) {
-                Alert.alert('Error', error.message);
+                showAlert('Error', error.message);
             } else {
-                Alert.alert('Success', 'Check your email to confirm your account.');
+                showAlert('Success', 'Check your email to confirm your account.');
                 router.replace('/(auth)/login');
             }
         } finally {

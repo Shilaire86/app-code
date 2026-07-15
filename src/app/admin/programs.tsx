@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Switch, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Switch, TextInput, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
@@ -312,7 +313,7 @@ export default function AdminProgramsScreen() {
 
         // Prefer native confirm dialog where available; otherwise fall back to "type DELETE" prompt.
         if (Platform.OS !== 'web') {
-            Alert.alert(title, message, [
+            showAlert(title, message, [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Delete', style: 'destructive', onPress: () => deleteProgram(programId) },
             ]);

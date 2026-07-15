@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Switch,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
@@ -49,12 +38,12 @@ export default function LogMealScreen() {
         if (!user?.id) return;
 
         if (!name.trim()) {
-            Alert.alert('Missing Name', 'Please give your meal a name.');
+            showAlert('Missing Name', 'Please give your meal a name.');
             return;
         }
 
         if (!calories || isNaN(parseInt(calories))) {
-            Alert.alert('Invalid Calories', 'Please enter a valid calorie amount.');
+            showAlert('Invalid Calories', 'Please enter a valid calorie amount.');
             return;
         }
 
@@ -84,12 +73,12 @@ export default function LogMealScreen() {
                 saved_meal_id: savedMealId,
             });
 
-            Alert.alert('Logged!', 'Your meal has been added to today\'s totals.', [
+            showAlert('Logged!', 'Your meal has been added to today\'s totals.', [
                 { text: 'Back to Dashboard', onPress: () => router.back() }
             ]);
         } catch (err) {
             console.error('[LogMeal] Save error:', err);
-            Alert.alert('Error', 'Failed to log meal. Please try again.');
+            showAlert('Error', 'Failed to log meal. Please try again.');
         } finally {
             setIsSaving(false);
         }

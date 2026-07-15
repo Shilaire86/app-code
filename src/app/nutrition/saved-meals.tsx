@@ -1,14 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    RefreshControl,
-    ActivityIndicator,
-    Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { theme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
@@ -47,7 +39,7 @@ export default function SavedMealsScreen() {
     };
 
     const handleDelete = (mealId: string, name: string) => {
-        Alert.alert('Delete Saved Meal', `Are you sure you want to remove "${name}" from your library?`, [
+        showAlert('Delete Saved Meal', `Are you sure you want to remove "${name}" from your library?`, [
             { text: 'Cancel', style: 'cancel' },
             { 
                 text: 'Delete', 
@@ -57,7 +49,7 @@ export default function SavedMealsScreen() {
                         await deleteSavedMeal(mealId);
                         loadData(); // Refresh list
                     } catch (err) {
-                        Alert.alert('Error', 'Failed to delete saved meal.');
+                        showAlert('Error', 'Failed to delete saved meal.');
                     }
                 }
             }
@@ -65,7 +57,7 @@ export default function SavedMealsScreen() {
     };
 
     const handleLogSaved = (meal: SavedMeal) => {
-        Alert.alert('Log Meal', `Log "${meal.name}" to today's intake?`, [
+        showAlert('Log Meal', `Log "${meal.name}" to today's intake?`, [
             { text: 'Cancel', style: 'cancel' },
             {
                 text: 'Log It',
@@ -81,12 +73,12 @@ export default function SavedMealsScreen() {
                             fat_g: meal.fat_g,
                             saved_meal_id: meal.id,
                         });
-                        Alert.alert('Logged!', 'Meal added to today.', [
+                        showAlert('Logged!', 'Meal added to today.', [
                             { text: 'OK', onPress: () => router.back() }
                         ]);
                     } catch (err) {
                         console.error('[SavedMeals] Error logging:', err);
-                        Alert.alert('Error', 'Failed to log the meal.');
+                        showAlert('Error', 'Failed to log the meal.');
                     }
                 }
             }

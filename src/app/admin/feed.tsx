@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-    View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList,
-    Alert, ActivityIndicator, Switch, ScrollView, Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator, Switch, ScrollView, Platform } from 'react-native';
+import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -19,6 +17,7 @@ type AdminTab = 'coach' | 'members' | 'reports';
 type CoachPost = {
     id: string; title: string; content: string;
     is_published: boolean; published_at: string | null; created_at: string;
+    audience: 'all' | 'founders';
 };
 
 type UserPost = {
@@ -45,6 +44,7 @@ function CoachPostsTab({ userId }: { userId: string }) {
     const [editingPost, setEditingPost] = useState<CoachPost | null>(null);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [audience, setAudience] = useState<'all' | 'founders'>('all');
     const [saving, setSaving] = useState(false);
 
     const load = useCallback(async () => {
@@ -52,7 +52,7 @@ function CoachPostsTab({ userId }: { userId: string }) {
             setLoading(true);
             setPosts(await fetchAllPosts());
         } catch {
-            Alert.alert('Error', 'Failed to load posts');
+            showAlert('Error', 'Failed to load posts');
         } finally {
             setLoading(false);
         }
@@ -61,13 +61,13 @@ function CoachPostsTab({ userId }: { userId: string }) {
     useEffect(() => { load(); }, [load]);
 
     const handleCreate = async () => {
-        if (!title.trim() || !content.trim()) { Alert.alert('Error', 'Fill in both fields'); return; }
+        if (!title.trim() || !content.trim()) { showAlert('Error', 'Fill in both fields'); return; }
         try {
             setSaving(true);
-            await createPost(title.trim(), content.trim(), userId);
-            setTitle(''); setContent(''); setShowForm(false);
+            await createPost(title.trim(), content.trim(), userId, audience);
+            setTitle(''); setContent(''); setAudience('all'); setShowForm(false);
             await load();
-        } catch { Alert.alert('Error', 'Failed to create post'); }
+        } catch { showAlert('Error', 'Failed to create post'); }
         finally { setSaving(false); }
     };
 
@@ -75,10 +75,10 @@ function CoachPostsTab({ userId }: { userId: string }) {
         if (!editingPost || !title.trim() || !content.trim()) return;
         try {
             setSaving(true);
-            await updatePost(editingPost.id, { title: title.trim(), content: content.trim() });
-            setTitle(''); setContent(''); setEditingPost(null); setShowForm(false);
+            await updatePost(editingPost.id, { title: title.trim(), content: content.trim(), audience });
+            setTitle(''); setContent(''); setAudience('all'); setEditingPost(null); setShowForm(false);
             await load();
-        } catch { Alert.alert('Error', 'Failed to update post'); }
+        } catch { showAlert('Error', 'Failed to update post'); }
         finally { setSaving(false); }
     };
 
@@ -86,18 +86,18 @@ function CoachPostsTab({ userId }: { userId: string }) {
         try {
             await updatePost(post.id, { is_published: !post.is_published });
             await load();
-        } catch { Alert.alert('Error', 'Failed to update post'); }
+        } catch { showAlert('Error', 'Failed to update post'); }
     };
 
     const handleDelete = (post: CoachPost) => {
         const doDelete = async () => {
             try { await deletePost(post.id); await load(); }
-            catch { Alert.alert('Error', 'Failed to delete post'); }
+            catch { showAlert('Error', 'Failed to delete post'); }
         };
         if (Platform.OS === 'web') {
             if (globalThis.confirm?.(`Delete "${post.title}"?`)) doDelete();
         } else {
-            Alert.alert('Delete Post', `Delete "${post.title}"?`, [
+            showAlert('Delete Post', `Delete "${post.title}"?`, [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Delete', style: 'destructive', onPress: doDelete },
             ]);
@@ -105,11 +105,12 @@ function CoachPostsTab({ userId }: { userId: string }) {
     };
 
     const openEdit = (post: CoachPost) => {
-        setEditingPost(post); setTitle(post.title); setContent(post.content); setShowForm(true);
+        setEditingPost(post); setTitle(post.title); setContent(post.content);
+        setAudience(post.audience ?? 'all'); setShowForm(true);
     };
 
     const cancelForm = () => {
-        setShowForm(false); setEditingPost(null); setTitle(''); setContent('');
+        setShowForm(false); setEditingPost(null); setTitle(''); setContent(''); setAudience('all');
     };
 
     if (showForm) {
@@ -127,6 +128,24 @@ function CoachPostsTab({ userId }: { userId: string }) {
                     placeholder="Write your post..." placeholderTextColor={colors.textSecondary}
                     multiline textAlignVertical="top"
                 />
+                <Text style={styles.label}>Audience</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(['all', 'founders'] as const).map(a => (
+                        <TouchableOpacity
+                            key={a}
+                            style={[
+                                styles.secondaryButton,
+                                { flex: 1 },
+                                audience === a && { borderColor: colors.primary, backgroundColor: `${colors.primary}22` },
+                            ]}
+                            onPress={() => setAudience(a)}
+                        >
+                            <Text style={[styles.secondaryButtonText, audience === a && { color: colors.primary }]}>
+                                {a === 'all' ? 'Everyone' : 'Founders only'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
                 <View style={styles.formButtons}>
                     <TouchableOpacity style={styles.secondaryButton} onPress={cancelForm}>
                         <Text style={styles.secondaryButtonText}>Cancel</Text>
@@ -175,6 +194,7 @@ function CoachPostsTab({ userId }: { userId: string }) {
                                     <Text style={styles.postDate}>
                                         {new Date(item.created_at).toLocaleDateString()}
                                         {item.is_published ? ' • Published' : ' • Draft'}
+                                        {item.audience === 'founders' ? ' • Founders only' : ''}
                                     </Text>
                                 </View>
                                 <Switch
@@ -224,7 +244,7 @@ function MemberPostsTab() {
             setLoading(true);
             setPosts(await fetchAllUserPosts());
         } catch {
-            Alert.alert('Error', 'Failed to load member posts');
+            showAlert('Error', 'Failed to load member posts');
         } finally {
             setLoading(false);
         }
@@ -236,18 +256,18 @@ function MemberPostsTab() {
         try {
             await updateUserPostStatus(post.id, status);
             await load();
-        } catch { Alert.alert('Error', 'Failed to update post status'); }
+        } catch { showAlert('Error', 'Failed to update post status'); }
     };
 
     const handleDelete = (post: UserPost) => {
         const doDelete = async () => {
             try { await deleteUserPost(post.id); await load(); }
-            catch { Alert.alert('Error', 'Failed to delete post'); }
+            catch { showAlert('Error', 'Failed to delete post'); }
         };
         if (Platform.OS === 'web') {
             if (globalThis.confirm?.('Delete this post permanently?')) doDelete();
         } else {
-            Alert.alert('Delete Post', 'Delete this post permanently?', [
+            showAlert('Delete Post', 'Delete this post permanently?', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Delete', style: 'destructive', onPress: doDelete },
             ]);
@@ -333,7 +353,7 @@ function ReportsTab() {
             setLoading(true);
             setReports(await fetchPendingReports());
         } catch {
-            Alert.alert('Error', 'Failed to load reports');
+            showAlert('Error', 'Failed to load reports');
         } finally {
             setLoading(false);
         }
@@ -345,7 +365,7 @@ function ReportsTab() {
         try {
             await updateReportStatus(report.id, status);
             await load();
-        } catch { Alert.alert('Error', 'Failed to update report'); }
+        } catch { showAlert('Error', 'Failed to update report'); }
     };
 
     if (loading) return <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
