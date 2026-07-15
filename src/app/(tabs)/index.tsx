@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -16,6 +16,7 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { getWorkoutStreakSummary, WorkoutStreakSummary } from '@/lib/streaks';
 import { fetchNextSession, fetchLatestWeight } from '@/services/workouts';
 import { isVip, hasEntitlement } from '@/lib/entitlements';
+import { APP_CONFIG } from '@/lib/appConfig';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { getTodaysCardio, markCardioComplete, UserCardioPlanEntry } from '@/services/cardio';
@@ -248,6 +249,26 @@ export default function HomeScreen() {
                         {/* PLACEHOLDER COPY — replace with real voice before shipping */}
                         You were here before anyone else. Everything you report shapes what this becomes — thank you for building it with us.
                     </Text>
+                </Card>
+            )}
+
+            {hasEntitlement(tier, 'messagingEnabled') && (
+                <Card style={styles.eliteCoachingCard}>
+                    <View style={styles.founderCardHeader}>
+                        <Ionicons name="ribbon" size={18} color={colors.primary} />
+                        <Text style={styles.founderCardTitle}>Your Coaching</Text>
+                    </View>
+                    <Text style={styles.founderCardBody}>
+                        1 in-person session included this month — message your coach to schedule.
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.eliteCoachingButton}
+                        onPress={() => Linking.openURL(APP_CONFIG.coachCalendlyUrl)}
+                        accessibilityRole="button"
+                    >
+                        <Ionicons name="videocam-outline" size={16} color="#FFF" />
+                        <Text style={styles.upgradeButtonText}>Book your monthly check-in</Text>
+                    </TouchableOpacity>
                 </Card>
             )}
 
@@ -899,6 +920,23 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         marginTop: spacing.md,
         borderWidth: 1,
         borderColor: `${colors.primary}40`,
+    },
+    eliteCoachingCard: {
+        marginTop: spacing.md,
+        borderWidth: 1,
+        borderColor: `${colors.primary}40`,
+        gap: 10,
+    },
+    eliteCoachingButton: {
+        minHeight: 44,
+        borderRadius: radius.md,
+        backgroundColor: colors.primary,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
     },
     founderCardHeader: {
         flexDirection: 'row',
