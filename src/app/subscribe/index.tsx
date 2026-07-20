@@ -291,7 +291,7 @@ export default function SubscribePlaceholderScreen() {
                                         <Text style={[styles.tierPrice, isElite && styles.tierPriceElite]}>
                                             {BILLING.tiers[t][billingPeriod].priceText}
                                         </Text>
-                                        {billingPeriod === 'annual' && !isElite && (
+                                        {billingPeriod === 'annual' && (
                                             <Text style={styles.annualSavings}>
                                                 {BILLING.tiers[t].annual.monthlyCost} · {BILLING.tiers[t].annual.savings}
                                             </Text>
@@ -299,8 +299,8 @@ export default function SubscribePlaceholderScreen() {
                                     </View>
                                     {isElite && (
                                         <View style={styles.comingSoonBadge}>
-                                            <Ionicons name="time-outline" size={12} color="#FFD700" />
-                                            <Text style={styles.comingSoonText}>By Request</Text>
+                                            <Ionicons name="ribbon-outline" size={12} color="#FFD700" />
+                                            <Text style={styles.comingSoonText}>1:1 Coaching</Text>
                                         </View>
                                     )}
                                     {!isElite && BILLING.trialDays > 0 && !isCurrent && (
@@ -339,18 +339,18 @@ export default function SubscribePlaceholderScreen() {
                                 {isElite && (
                                     <View style={styles.eliteContainer}>
                                         <Text style={styles.comingSoonNote}>
-                                            Elite members receive personalized 1-on-1 coaching, routine check-ins, and bespoke programming tailored to their specific evolution.
+                                            Elite members receive personalized 1-on-1 coaching, a monthly virtual check-in, an in-person session, and bespoke programming tailored to their specific evolution. No free trial — this is a coaching partnership, not a software tier.
                                         </Text>
                                         <TouchableOpacity
                                             style={styles.inquiryButton}
-                                            onPress={() => Linking.openURL(`mailto:${APP_CONFIG.coachEmail}?subject=Elite Tier Inquiry&body=I am interested in learning more about the Elite tier.`)}
+                                            onPress={() => Linking.openURL(`mailto:${APP_CONFIG.coachEmail}?subject=Elite Tier Inquiry&body=I have a question about the Elite tier before subscribing.`)}
                                         >
-                                            <Text style={styles.inquiryButtonText}>Inquire for early access</Text>
+                                            <Text style={styles.inquiryButtonText}>Questions? Email your coach first</Text>
                                             <Ionicons name="mail-outline" size={14} color={theme.colors.primary} />
                                         </TouchableOpacity>
                                     </View>
                                 )}
-                                {!isCurrent && !isElite && (
+                                {!isCurrent && (
                                     <TouchableOpacity
                                         style={styles.subscribeButton}
                                         onPress={() => startCheckout(String(t))}
@@ -362,7 +362,7 @@ export default function SubscribePlaceholderScreen() {
                                         ) : (
                                             <>
                                                 <Text style={styles.subscribeButtonText}>
-                                                    {tier === 'free' ? `Start ${BILLING.trialDays}-day free trial` : 'Switch to this plan'}
+                                                    {isElite ? 'Subscribe to Elite' : tier === 'free' ? `Start ${BILLING.trialDays}-day free trial` : 'Switch to this plan'}
                                                 </Text>
                                                 <Ionicons name="arrow-forward" size={16} color="#FFF" />
                                             </>
@@ -477,24 +477,6 @@ export default function SubscribePlaceholderScreen() {
                             <Ionicons name="checkmark" size={16} color="#00b894" />
                         </View>
                     </View>
-                </View>
-
-                <View style={styles.eliteTeaserCard}>
-                    <View style={styles.eliteTeaserHeader}>
-                        <Ionicons name="time-outline" size={16} color="#FFD700" />
-                        <Text style={styles.eliteTeaserBadge}>COMING SOON</Text>
-                    </View>
-                    <Text style={styles.eliteTeaserTitle}>Elite — The Coaching Partnership</Text>
-                    <Text style={styles.eliteTeaserBody}>
-                        Everything in VIP, plus a dedicated 1:1 coaching relationship. Your coach reviews your data, interprets your trends, and evolves your plan with you — so you never plateau alone.
-                    </Text>
-                    <TouchableOpacity
-                        style={styles.eliteTeaserCTA}
-                        onPress={() => Linking.openURL(`mailto:${APP_CONFIG.coachEmail}?subject=Elite Tier — Early Access&body=I'm interested in early access to Elite coaching.`)}
-                    >
-                        <Text style={styles.eliteTeaserCTAText}>Join the Early Access List</Text>
-                        <Ionicons name="arrow-forward" size={14} color="#FFD700" />
-                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
@@ -664,48 +646,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontStyle: 'italic',
         marginBottom: 8,
-    },
-    eliteTeaserCard: {
-        backgroundColor: 'rgba(255, 215, 0, 0.05)',
-        borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 215, 0, 0.2)',
-        padding: theme.spacing.lg,
-        gap: 8,
-    },
-    eliteTeaserHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 4,
-    },
-    eliteTeaserBadge: {
-        color: '#FFD700',
-        fontSize: 11,
-        fontWeight: '900',
-        letterSpacing: 1,
-    },
-    eliteTeaserTitle: {
-        color: '#FFF',
-        fontSize: 15,
-        fontWeight: '900',
-    },
-    eliteTeaserBody: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-        lineHeight: 20,
-        marginBottom: 8,
-    },
-    eliteTeaserCTA: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        alignSelf: 'flex-start',
-    },
-    eliteTeaserCTAText: {
-        color: '#FFD700',
-        fontSize: 13,
-        fontWeight: '800',
     },
     currentLabel: { color: theme.colors.primary, fontSize: 11, fontWeight: '700' },
     tierLeft: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
