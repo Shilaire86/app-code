@@ -9,7 +9,7 @@ import {
     ActivityIndicator,
     Modal,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { searchExercises, fetchTopExercises, ExerciseMatch } from '@/services/exercises';
 import { useProfileStore } from '@/stores/profileStore';
@@ -21,6 +21,8 @@ interface ExercisePickerProps {
 }
 
 export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerProps) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const [search, setSearch] = useState('');
     const [exercises, setExercises] = useState<ExerciseMatch[]>([]);
     const [loading, setLoading] = useState(false);
@@ -129,7 +131,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     modalContainer: {
         flex: 1,
         backgroundColor: theme.colors.background,

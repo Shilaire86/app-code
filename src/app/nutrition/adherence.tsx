@@ -6,13 +6,15 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { getActiveTargets, getAdherenceSummary, AdherenceSummary, NutritionTarget } from '@/services/nutrition';
 
 export default function AdherenceScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const [targets, setTargets] = useState<NutritionTarget | null>(null);
     const [summary, setSummary] = useState<AdherenceSummary | null>(null);
@@ -149,7 +151,7 @@ export default function AdherenceScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

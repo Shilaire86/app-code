@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { supabase } from '@/lib/supabase';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +17,8 @@ interface SubscriptionData {
 }
 
 export default function DebugScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
 
     // Auth state
@@ -289,6 +291,8 @@ export default function DebugScreen() {
 
 // Helper component for debug rows
 function DebugRow({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     return (
         <View style={styles.row}>
             <Text style={styles.label}>{label}</Text>
@@ -303,7 +307,7 @@ function DebugRow({ label, value, mono, highlight }: { label: string; value: str
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

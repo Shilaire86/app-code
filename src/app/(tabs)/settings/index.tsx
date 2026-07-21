@@ -575,11 +575,11 @@ export default function SettingsScreen() {
                     >
                         <Ionicons name="card-outline" size={20} color={colors.text} />
                         <Text style={[styles.actionText, { color: colors.text }]}>
-                            {tier !== 'free' ? 'Manage Subscription' : 'Choose a Subscription'}
+                            {(subscription?.tier ?? tier) !== 'free' ? 'Manage Subscription' : 'Choose a Subscription'}
                         </Text>
                     </TouchableOpacity>
 
-                    {tier !== 'free' && !(subscription?.cancel_at_period_end ?? false) ? (
+                    {(subscription?.tier ?? tier) !== 'free' && !(subscription?.cancel_at_period_end ?? false) ? (
                         <>
                             <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: spacing.sm }]} />
                             <TouchableOpacity

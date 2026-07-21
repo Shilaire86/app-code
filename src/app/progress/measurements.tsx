@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -9,6 +9,8 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function MeasurementLogScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
     const fetchProfile = useProfileStore(s => s.fetchProfile);
@@ -199,7 +201,7 @@ export default function MeasurementLogScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

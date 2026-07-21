@@ -48,6 +48,7 @@ export default function ActiveWorkoutScreen() {
     const [historyByExerciseId, setHistoryByExerciseId] = useState<Record<string, LastSet | null>>({});
     const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
+    const [postWorkoutNotes, setPostWorkoutNotes] = useState('');
 
     // Swap feature state
     const [localExercises, setLocalExercises] = useState<any[]>([]);
@@ -508,7 +509,8 @@ export default function ActiveWorkoutScreen() {
                     workout_id: isNewStructure ? null : activeWorkoutId,
                     started_at: startTime,
                     completed_at: new Date().toISOString(),
-                    duration_seconds: elapsedTime
+                    duration_seconds: elapsedTime,
+                    notes: postWorkoutNotes.trim() || null,
                 })
                 .select()
                 .single();
@@ -983,6 +985,22 @@ export default function ActiveWorkoutScreen() {
                         ))}
                     </View>
                 )}
+
+                {/* Post-Workout Notes */}
+                <View style={styles.sectionBlock}>
+                    <View style={styles.sectionHeaderRow}>
+                        <Ionicons name="create-outline" size={14} color="rgba(255,255,255,0.5)" />
+                        <Text style={styles.sectionHeaderText}>NOTES FOR YOUR COACH</Text>
+                    </View>
+                    <TextInput
+                        style={styles.notesInput}
+                        value={postWorkoutNotes}
+                        onChangeText={setPostWorkoutNotes}
+                        placeholder="How did this session feel? (optional)"
+                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        multiline
+                    />
+                </View>
             </ScrollView>
 
             <View style={styles.footer}>
@@ -1163,6 +1181,15 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         fontSize: 11,
         fontWeight: '800',
         letterSpacing: 1.2,
+    },
+    notesInput: {
+        color: colors.text,
+        fontSize: 14,
+        minHeight: 70,
+        textAlignVertical: 'top',
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.sm,
     },
     extraExCard: {
         flexDirection: 'row',

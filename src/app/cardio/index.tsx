@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
@@ -34,6 +34,8 @@ const INTENSITY_LABELS: Record<string, string> = {
 };
 
 export default function CardioIndexScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile, tier } = useProfileStore();
     const [protocols, setProtocols] = useState<CardioProtocol[]>([]);
@@ -206,7 +208,7 @@ export default function CardioIndexScreen() {
     }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0F0F0F',

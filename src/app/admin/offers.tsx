@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 
 export default function AdminOffersScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
 
@@ -40,7 +42,7 @@ export default function AdminOffersScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

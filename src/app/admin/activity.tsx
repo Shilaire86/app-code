@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Image } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 
@@ -21,6 +21,8 @@ type ActivityLog = {
 const TYPES = ['all', 'workout_complete', 'pr_set', 'milestone', 'stage_up', 'streak'];
 
 export default function AdminActivityScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
     const isAdmin = profile?.role === 'admin';
@@ -169,7 +171,7 @@ export default function AdminActivityScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     filterRow: { padding: theme.spacing.md, paddingBottom: 0 },
     pill: {

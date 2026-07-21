@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView
 import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { listMessages, sendMessage, ThreadMessage } from '@/services/messaging';
@@ -19,6 +19,8 @@ type ThreadMeta = {
 };
 
 export default function AdminInboxThreadScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { id } = useLocalSearchParams();
     const threadId = Array.isArray(id) ? id[0] : id;
@@ -240,7 +242,7 @@ export default function AdminInboxThreadScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.lg, gap: 10 },
     title: { color: '#FFF', fontSize: 18, fontWeight: '900' },

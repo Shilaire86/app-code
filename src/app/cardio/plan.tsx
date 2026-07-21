@@ -4,7 +4,7 @@ import { showAlert } from '@/lib/confirm';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -24,6 +24,8 @@ const INTENSITY_COLORS: Record<string, string> = {
 };
 
 export default function CardioPlanScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const { profile } = useProfileStore();
@@ -230,7 +232,7 @@ export default function CardioPlanScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0F0F0F',

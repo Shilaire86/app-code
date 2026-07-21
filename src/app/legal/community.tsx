@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { LEGAL_VERSIONS } from '@/lib/legalVersions';
 
 export default function CommunityGuidelinesScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
@@ -28,7 +30,7 @@ export default function CommunityGuidelinesScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl, gap: 10 },
     version: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },

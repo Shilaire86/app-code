@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndi
 import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useState, useCallback } from 'react';
@@ -10,9 +11,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 2;
-const ITEM_WIDTH = (width - theme.spacing.lg * 3) / COLUMN_COUNT;
+const ITEM_WIDTH = (width - spacing.lg * 3) / COLUMN_COUNT;
 
 export default function EvolutionGalleryScreen() { // Renamed to force Metro refresh
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
     const [photos, setPhotos] = useState<any[]>([]);
@@ -286,7 +289,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platfo
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,8 @@ import { saveNutritionTargets } from '@/services/nutrition';
 import { hasEntitlement } from '@/lib/entitlements';
 
 export default function MacroCalculatorScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const { profile, tier } = useProfileStore();
     const router = useRouter();
@@ -250,7 +252,7 @@ export default function MacroCalculatorScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

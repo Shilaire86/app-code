@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { getTierLabel } from '@/lib/tier-gating';
 import { SubscriptionTier } from '@/stores/profileStore';
 
@@ -18,6 +18,8 @@ export function UpgradePrompt({
     onUpgradePress: () => void;
     onLearnMorePress: () => void;
 }) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const tierLabel = getTierLabel(requiredTier);
     const upgradeLabel = `Upgrade to ${tierLabel}`;
 
@@ -45,7 +47,7 @@ export function UpgradePrompt({
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     card: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,

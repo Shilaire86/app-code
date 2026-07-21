@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Platform } from 'react-native';
 import { showAlert } from '@/lib/confirm';
 import { useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
 
 export default function ProgressPhotoScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
     const fetchProfile = useProfileStore(s => s.fetchProfile);
@@ -274,7 +276,7 @@ export default function ProgressPhotoScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

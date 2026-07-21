@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 function GuideCard({
     title,
@@ -13,6 +13,8 @@ function GuideCard({
     children: React.ReactNode;
     ctas?: { label: string; href: string }[];
 }) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     return (
         <View style={styles.card}>
@@ -37,6 +39,8 @@ function GuideCard({
 }
 
 export default function QuickStartGuideScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     return (
         <View style={styles.container}>
             <Stack.Screen
@@ -130,7 +134,7 @@ export default function QuickStartGuideScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
     card: {

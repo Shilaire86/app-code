@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { ModuleRoutine, ModuleExercise } from '@/services/modules';
 
 export default function RoutinePlayerScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [routine, setRoutine] = useState<ModuleRoutine | null>(null);
@@ -328,7 +330,7 @@ export default function RoutinePlayerScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

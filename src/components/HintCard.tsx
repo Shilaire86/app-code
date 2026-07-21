@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export function HintCard({
     title,
@@ -15,6 +15,8 @@ export function HintCard({
     primaryCta?: { label: string; onPress: () => void };
     dismissLabel?: string;
 }) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
@@ -38,7 +40,7 @@ export function HintCard({
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     card: {
         backgroundColor: 'rgba(255,255,255,0.04)',
         borderColor: 'rgba(0,187,255,0.20)',

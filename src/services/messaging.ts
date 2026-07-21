@@ -69,6 +69,40 @@ export async function createThread(params: {
     return { threadId: thread.id };
 }
 
+export async function findThreadForUser(clientId: string): Promise<MessageThread | null> {
+    const { data, error } = await supabase
+        .from('message_threads')
+        .select('id,created_at,created_by,status,category,subject,last_message_at,diagnostics')
+        .eq('created_by', clientId)
+        .order('last_message_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    throwOnError(error, 'Failed to look up thread.');
+    return (data as any) ?? null;
+}
+
+export async function createThreadForUser(
+    clientId: string,
+    category: ThreadCategory,
+    subject?: string
+): Promise<{ threadId: string }> {
+    const { data: thread, error: threadError } = await supabase
+        .from('message_threads')
+        .insert({
+            created_by: clientId,
+            category,
+            subject: subject?.trim() || null,
+            status: 'open',
+            last_message_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+    throwOnError(threadError, 'Failed to create thread.');
+    if (!thread?.id) throw new Error('Failed to create thread (missing id).');
+
+    return { threadId: thread.id };
+}
+
 export async function listMyThreads(): Promise<MessageThread[]> {
     const userId = (await supabase.auth.getUser()).data.user?.id;
     if (!userId) throw new Error('Not signed in.');

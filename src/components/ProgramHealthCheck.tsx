@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 
 const PUSH_GROUPS = ['chest', 'shoulders', 'triceps'];
@@ -108,6 +108,8 @@ interface ProgramHealthCheckProps {
 }
 
 export function ProgramHealthCheck({ issues }: ProgramHealthCheckProps) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const hasErrors = issues.some((i) => i.level === 'error');
     const hasWarnings = issues.some((i) => i.level === 'warning');
     const allOk = !hasErrors && !hasWarnings;
@@ -138,7 +140,7 @@ export function ProgramHealthCheck({ issues }: ProgramHealthCheckProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,

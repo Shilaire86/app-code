@@ -4,13 +4,15 @@ import { showAlert } from '@/lib/confirm';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { listMessages, sendMessage, ThreadMessage } from '@/services/messaging';
 import { supabase } from '@/lib/supabase';
 
 export default function MessageThreadScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { threadId: threadIdParam } = useLocalSearchParams();
     const threadId = Array.isArray(threadIdParam) ? threadIdParam[0] : threadIdParam;
@@ -225,7 +227,7 @@ export default function MessageThreadScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1 },

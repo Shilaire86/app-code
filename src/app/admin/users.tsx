@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, 
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { SubscriptionTier } from '@/stores/profileStore';
@@ -26,6 +26,8 @@ type AdminUser = {
 const TIER_FILTERS: (SubscriptionTier | 'all')[] = ['all', 'free', 'standard', 'vip', 'elite'];
 
 export default function AdminUsersScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
     const isAdmin = profile?.role === 'admin';
@@ -390,7 +392,7 @@ export default function AdminUsersScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     topSection: { padding: theme.spacing.lg, paddingBottom: 0, gap: 12 },
     searchWrap: {

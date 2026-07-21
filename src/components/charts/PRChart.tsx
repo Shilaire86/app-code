@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface PRDataPoint {
     exercise_name: string;
@@ -14,6 +14,8 @@ interface PRChartProps {
 }
 
 export default function PRChart({ data }: PRChartProps) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     if (!data || data.length === 0) {
         return (
             <View style={styles.emptyContainer}>
@@ -118,7 +120,7 @@ export default function PRChart({ data }: PRChartProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,

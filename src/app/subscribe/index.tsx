@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Platform, TextInput } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { ENTITLEMENTS } from '@/lib/entitlements';
 import { getTierLabel } from '@/lib/tier-gating';
 import { BILLING, BillingPeriod } from '@/lib/billingConfig';
@@ -18,6 +18,8 @@ import * as ExpoLinking from 'expo-linking';
 import { APP_CONFIG } from '@/lib/appConfig';
 
 export default function SubscribePlaceholderScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const params = useLocalSearchParams<{ checkout?: string | string[] }>();
     const { user } = useAuthStore();
@@ -504,7 +506,7 @@ export default function SubscribePlaceholderScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
     hero: { alignItems: 'center', gap: 10, paddingVertical: 16 },

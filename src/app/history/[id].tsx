@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function LogDetailScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [log, setLog] = useState<any>(null);
@@ -100,6 +102,13 @@ export default function LogDetailScreen() {
                     </View>
                 </View>
 
+                {log?.notes && (
+                    <View style={styles.notesCard}>
+                        <Text style={styles.notesLabel}>YOUR NOTES</Text>
+                        <Text style={styles.notesBody}>{log.notes}</Text>
+                    </View>
+                )}
+
                 {Object.keys(groupedSets).map((exerciseName) => (
                     <View key={exerciseName} style={styles.exerciseSection}>
                         <Text style={styles.exerciseTitle}>{exerciseName}</Text>
@@ -120,7 +129,7 @@ export default function LogDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
@@ -168,6 +177,26 @@ const styles = StyleSheet.create({
         color: theme.colors.primary,
         fontSize: 20,
         fontWeight: '800',
+    },
+    notesCard: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.lg,
+        padding: theme.spacing.lg,
+        marginBottom: theme.spacing.xl,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    notesLabel: {
+        color: theme.colors.textSecondary,
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 1,
+        marginBottom: 6,
+    },
+    notesBody: {
+        color: theme.colors.text,
+        fontSize: 14,
+        lineHeight: 20,
     },
     exerciseSection: {
         marginBottom: theme.spacing.xl,

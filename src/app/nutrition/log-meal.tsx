@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { showAlert } from '@/lib/confirm';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,6 +13,8 @@ const asStr = (v: string | string[] | undefined): string =>
     Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
 
 export default function LogMealScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const { tier } = useProfileStore();
@@ -237,7 +239,7 @@ export default function LogMealScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

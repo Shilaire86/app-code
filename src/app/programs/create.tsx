@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
 import { showAlert } from '@/lib/confirm';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -27,6 +27,8 @@ const GOAL_OPTIONS: { key: 'strength' | 'hypertrophy' | 'general'; label: string
 type WizardStep = 'template' | 'goal' | 'duration' | 'generating' | 'done';
 
 export default function CreateProgramScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const { profile, tier } = useProfileStore();
@@ -328,7 +330,7 @@ export default function CreateProgramScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

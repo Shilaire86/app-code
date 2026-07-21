@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
@@ -10,6 +10,8 @@ import PRChart from '@/components/charts/PRChart';
 type DateRange = '30d' | '90d' | 'all';
 
 export default function PRDashboardScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { user } = useAuthStore();
     const router = useRouter();
     const [prs, setPrs] = useState<any[]>([]);
@@ -135,7 +137,7 @@ export default function PRDashboardScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

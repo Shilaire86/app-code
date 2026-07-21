@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { showAlert, showPrompt } from '@/lib/confirm';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -16,6 +16,8 @@ type SelectedExercise = ExerciseMatch & {
 };
 
 export default function QuickWorkoutScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const [selectedExercises, setSelectedExercises] = useState<SelectedExercise[]>([]);
@@ -215,7 +217,7 @@ export default function QuickWorkoutScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

@@ -5,6 +5,7 @@ export async function fetchPrograms() {
         .from('programs')
         .select('*')
         .eq('is_active', true)
+        .eq('program_type', 'coach')
         // TEMP: There is no `is_published`/`status`/`published_at` field on `programs` yet.
         // Until we add a real publish flag in the DB, hide obvious seed/demo programs by name.
         .not('name', 'ilike', 'demo%')

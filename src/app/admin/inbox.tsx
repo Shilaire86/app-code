@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { listAdminThreads, MessageThread, ThreadCategory, ThreadStatus } from '@/services/messaging';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +14,8 @@ const STATUS_OPTS: Status[] = ['all', 'open', 'closed'];
 const CAT_OPTS: Category[] = ['all', 'training', 'program', 'app_issue', 'content', 'other'];
 
 export default function AdminInboxScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
     const isAdmin = profile?.role === 'admin' || profile?.role === 'coach';
@@ -138,7 +140,7 @@ export default function AdminInboxScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.lg, gap: 10 },
     title: { color: '#FFF', fontSize: 18, fontWeight: '900' },

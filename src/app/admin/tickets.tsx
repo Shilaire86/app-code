@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator }
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 
@@ -25,6 +25,8 @@ type Ticket = {
 const STATUS_FILTERS = ['all', 'open', 'in_progress', 'resolved', 'closed'];
 
 export default function AdminTicketsScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
     const isAdmin = profile?.role === 'admin' || profile?.role === 'coach';
@@ -205,7 +207,7 @@ export default function AdminTicketsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: theme.spacing.lg, paddingBottom: 0 },
     pill: {

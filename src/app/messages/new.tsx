@@ -4,7 +4,7 @@ import { showAlert } from '@/lib/confirm';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { createThread } from '@/services/messaging';
 import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
@@ -45,6 +45,8 @@ const CATEGORY_HELP: Record<Category, string[]> = {
 };
 
 export default function NewMessageScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const pathname = usePathname();
     const { tier } = useProfileStore();
@@ -188,7 +190,7 @@ export default function NewMessageScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: 40, gap: theme.spacing.md },
     notice: {

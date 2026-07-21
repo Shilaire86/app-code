@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity } from 'react-native';
 import { useProfileStore, BecomingStage } from '@/stores/profileStore';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 
-const STAGE_CONTENT: Record<BecomingStage, { title: string; copy: string; icon: any; color: string }> = {
+const getStageContent = (theme: ReturnType<typeof useTheme>): Record<BecomingStage, { title: string; copy: string; icon: any; color: string }> => ({
     initiate: {
         title: 'The Journey Begins',
         copy: 'You have taken the first step. The path unfolds before you.',
@@ -29,9 +29,11 @@ const STAGE_CONTENT: Record<BecomingStage, { title: string; copy: string; icon: 
         icon: 'diamond',
         color: '#aa00ff',
     }
-};
+});
 
 export function LevelUpModal() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { justLeveledUp, levelUpDetails, clearLevelUp } = useProfileStore();
 
     const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -61,7 +63,8 @@ export function LevelUpModal() {
     if (!justLeveledUp || !levelUpDetails) return null;
 
     const currentStage = levelUpDetails.current;
-    const content = STAGE_CONTENT[currentStage] || STAGE_CONTENT.initiate;
+    const stageContent = getStageContent(theme);
+    const content = stageContent[currentStage] || stageContent.initiate;
 
     const handleClose = () => {
         Animated.parallel([
@@ -119,7 +122,7 @@ export function LevelUpModal() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.85)',

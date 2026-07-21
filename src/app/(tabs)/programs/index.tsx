@@ -157,7 +157,9 @@ export default function ProgramsScreen() {
 
     const [activeTab, setActiveTab] = React.useState<'coach' | 'my'>('coach');
     const [userPrograms, setUserPrograms] = useState<any[]>([]);
+    const [eliteProgram, setEliteProgram] = useState<any>(null);
     const userId = useAuthStore(s => s.user?.id ?? null);
+    const hasEliteProgram = tier === 'elite' && !!eliteProgram;
 
     const canDoQuick = hasEntitlement(tier, 'quickWorkoutEnabled');
     const canCreateProgram = hasEntitlement(tier, 'guidedProgramsEnabled');
@@ -175,6 +177,23 @@ export default function ProgramsScreen() {
                 .then(({ data }) => setUserPrograms(data ?? []));
         }
     }, [activeTab, userId]);
+
+    useEffect(() => {
+        if (tier === 'elite' && userId) {
+            supabase
+                .from('programs')
+                .select('id, name, duration_weeks')
+                .eq('owner_id', userId)
+                .eq('program_type', 'elite')
+                .eq('is_active', true)
+                .maybeSingle()
+                .then(({ data }) => setEliteProgram(data ?? null));
+        }
+    }, [tier, userId]);
+
+    useEffect(() => {
+        if (hasEliteProgram && activeTab === 'coach') setActiveTab('my');
+    }, [hasEliteProgram, activeTab]);
 
     const handleDeleteProgram = useCallback(async (programId: string, name: string) => {
         showAlert('Delete Program', `Are you sure you want to delete "${name}"?`, [
@@ -214,23 +233,34 @@ export default function ProgramsScreen() {
                 <Text style={styles.subtitle}>Select your path to becoming.</Text>
             </View>
 
-            <View style={styles.tabBar}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'coach' && styles.activeTab]}
-                    onPress={() => setActiveTab('coach')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'coach' && styles.activeTabText]}>Coach-Led</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'my' && styles.activeTab]}
-                    onPress={() => setActiveTab('my')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'my' && styles.activeTabText]}>My Programs</Text>
-                    {!canDoQuick && (
-                        <Ionicons name="lock-closed" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
-                    )}
-                </TouchableOpacity>
-            </View>
+            {tier === 'elite' && !hasEliteProgram && (
+                <View style={styles.eliteBuildingBanner}>
+                    <Ionicons name="construct-outline" size={18} color="#8B5CF6" />
+                    <Text style={styles.eliteBuildingBannerText}>
+                        Your coach is building your custom program. In the meantime, explore the programs below.
+                    </Text>
+                </View>
+            )}
+
+            {!hasEliteProgram && (
+                <View style={styles.tabBar}>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'coach' && styles.activeTab]}
+                        onPress={() => setActiveTab('coach')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'coach' && styles.activeTabText]}>Coach-Led</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'my' && styles.activeTab]}
+                        onPress={() => setActiveTab('my')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'my' && styles.activeTabText]}>My Programs</Text>
+                        {!canDoQuick && (
+                            <Ionicons name="lock-closed" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+                        )}
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {!seenProgramsIntro && (
                 <View style={styles.hintWrap}>
@@ -246,7 +276,7 @@ export default function ProgramsScreen() {
                 </View>
             )}
 
-            {activeTab === 'my' && (
+            {(activeTab === 'my' || hasEliteProgram) && (
                 <ScrollView style={styles.myProgramsContainer} showsVerticalScrollIndicator={false}>
                     <TouchableOpacity
                         style={styles.quickWorkoutCard}
@@ -269,47 +299,67 @@ export default function ProgramsScreen() {
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.createProgramCard}
-                        onPress={() => canCreateProgram ? router.push('/programs/create') : router.push('/subscribe')}
-                    >
-                        <View style={[styles.quickIconBg, { backgroundColor: colors.successSoft }]}>
-                            <Ionicons name="sparkles" size={24} color={colors.success} />
-                        </View>
-                        <View style={styles.quickContent}>
-                            <Text style={styles.quickTitle}>Create Program</Text>
-                            <Text style={styles.quickSub}>Auto-generate a multi-week plan</Text>
-                        </View>
-                        {!canCreateProgram ? (
-                            <View style={[styles.quickLock, { backgroundColor: colors.success }]}>
-                                <Ionicons name="lock-closed" size={14} color="#FFF" />
-                                <Text style={styles.lockText}>VIP+</Text>
+                    {hasEliteProgram && eliteProgram && (
+                        <TouchableOpacity
+                            style={styles.eliteProgramCard}
+                            onPress={() => router.push({ pathname: '/(tabs)/programs/[id]', params: { id: eliteProgram.id } })}
+                        >
+                            <View style={[styles.quickIconBg, { backgroundColor: 'rgba(139,92,246,0.15)' }]}>
+                                <Ionicons name="star" size={24} color="#8B5CF6" />
                             </View>
-                        ) : (
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>{eliteProgram.name}</Text>
+                                <Text style={styles.quickSub}>Built by your coach</Text>
+                            </View>
                             <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-                        )}
-                    </TouchableOpacity>
+                        </TouchableOpacity>
+                    )}
 
-                    <TouchableOpacity
-                        style={styles.createProgramCard}
-                        onPress={() => canBuildOwn ? router.push('/programs/build') : router.push('/subscribe')}
-                    >
-                        <View style={[styles.quickIconBg, { backgroundColor: colors.warningSoft }]}>
-                            <Ionicons name="construct" size={24} color={colors.warning} />
-                        </View>
-                        <View style={styles.quickContent}>
-                            <Text style={styles.quickTitle}>Build Your Own</Text>
-                            <Text style={styles.quickSub}>Full blank-canvas program builder</Text>
-                        </View>
-                        {!canBuildOwn ? (
-                            <View style={[styles.quickLock, { backgroundColor: colors.warning }]}>
-                                <Ionicons name="lock-closed" size={14} color="#FFF" />
-                                <Text style={styles.lockText}>VIP+</Text>
+                    {!hasEliteProgram && (
+                        <TouchableOpacity
+                            style={styles.createProgramCard}
+                            onPress={() => canCreateProgram ? router.push('/programs/create') : router.push('/subscribe')}
+                        >
+                            <View style={[styles.quickIconBg, { backgroundColor: colors.successSoft }]}>
+                                <Ionicons name="sparkles" size={24} color={colors.success} />
                             </View>
-                        ) : (
-                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-                        )}
-                    </TouchableOpacity>
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>Create Program</Text>
+                                <Text style={styles.quickSub}>Auto-generate a multi-week plan</Text>
+                            </View>
+                            {!canCreateProgram ? (
+                                <View style={[styles.quickLock, { backgroundColor: colors.success }]}>
+                                    <Ionicons name="lock-closed" size={14} color="#FFF" />
+                                    <Text style={styles.lockText}>VIP+</Text>
+                                </View>
+                            ) : (
+                                <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                            )}
+                        </TouchableOpacity>
+                    )}
+
+                    {!hasEliteProgram && (
+                        <TouchableOpacity
+                            style={styles.createProgramCard}
+                            onPress={() => canBuildOwn ? router.push('/programs/build') : router.push('/subscribe')}
+                        >
+                            <View style={[styles.quickIconBg, { backgroundColor: colors.warningSoft }]}>
+                                <Ionicons name="construct" size={24} color={colors.warning} />
+                            </View>
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>Build Your Own</Text>
+                                <Text style={styles.quickSub}>Full blank-canvas program builder</Text>
+                            </View>
+                            {!canBuildOwn ? (
+                                <View style={[styles.quickLock, { backgroundColor: colors.warning }]}>
+                                    <Ionicons name="lock-closed" size={14} color="#FFF" />
+                                    <Text style={styles.lockText}>VIP+</Text>
+                                </View>
+                            ) : (
+                                <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                            )}
+                        </TouchableOpacity>
+                    )}
 
                     <TouchableOpacity
                         style={styles.createProgramCard}
@@ -325,7 +375,7 @@ export default function ProgramsScreen() {
                         <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
                     </TouchableOpacity>
 
-                    {userPrograms.length > 0 && (
+                    {!hasEliteProgram && userPrograms.length > 0 && (
                         <View style={styles.userProgramsSection}>
                             <Text style={styles.sectionLabel}>YOUR PROGRAMS</Text>
                             {userPrograms.map((prog: any) => (
@@ -351,7 +401,7 @@ export default function ProgramsScreen() {
                         </View>
                     )}
 
-                    {userPrograms.length === 0 && (
+                    {!hasEliteProgram && userPrograms.length === 0 && (
                         <View style={styles.emptyMyPrograms}>
                             <Ionicons name="albums-outline" size={40} color={colors.textTertiary} />
                             <Text style={styles.emptyMyTitle}>No custom programs yet</Text>
@@ -363,7 +413,7 @@ export default function ProgramsScreen() {
                 </ScrollView>
             )}
 
-            {activeTab === 'coach' && (
+            {activeTab === 'coach' && !hasEliteProgram && (
                 programRows.length === 0 ? (
                     <View style={styles.emptyCard}>
                         <Ionicons name="barbell-outline" size={56} color={colors.textTertiary} />
@@ -449,6 +499,24 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
     hintWrap: {
         paddingHorizontal: spacing.lg,
         paddingBottom: spacing.md,
+    },
+    eliteBuildingBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.md,
+        padding: 12,
+        borderRadius: radius.md,
+        backgroundColor: 'rgba(139,92,246,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(139,92,246,0.35)',
+    },
+    eliteBuildingBannerText: {
+        flex: 1,
+        color: colors.text,
+        fontSize: 13,
+        lineHeight: 18,
     },
     emptyCard: {
         marginHorizontal: spacing.lg,
@@ -613,6 +681,18 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         padding: 16,
         borderWidth: 1,
         borderColor: colors.borderMid,
+        marginBottom: spacing.xl,
+    },
+    eliteProgramCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surfaceElevated,
+        borderRadius: radius.lg,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(139,92,246,0.35)',
+        borderTopWidth: 3,
+        borderTopColor: '#8B5CF6',
         marginBottom: spacing.xl,
     },
     quickIconBg: {

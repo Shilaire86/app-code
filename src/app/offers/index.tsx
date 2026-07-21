@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Linking, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -26,6 +26,8 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 export default function AffiliateOffersScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const { tier } = useProfileStore();
     const { user } = useAuthStore();
     const [offers, setOffers] = useState<Offer[]>([]);
@@ -154,7 +156,7 @@ export default function AffiliateOffersScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

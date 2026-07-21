@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
-import { 
-    fetchAllModules, 
+import { useTheme } from '@/hooks/useTheme';
+import {
+    fetchAllModules,
     fetchUserActiveModules, 
     activateModule, 
     deactivateModule, 
@@ -17,6 +17,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore, SubscriptionTier } from '@/stores/profileStore';
 
 export default function ModuleLibraryScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const { tier } = useProfileStore();
@@ -206,7 +208,7 @@ export default function ModuleLibraryScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

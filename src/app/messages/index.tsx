@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator }
 import { Stack, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { listMyThreads, MessageThread } from '@/services/messaging';
 import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
@@ -25,6 +25,8 @@ function prettyCategory(category: string) {
 }
 
 export default function MessagesIndexScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { tier } = useProfileStore();
     const canMessage = hasEntitlement(tier, 'messagingEnabled');
@@ -144,7 +146,7 @@ export default function MessagesIndexScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     headerRow: {

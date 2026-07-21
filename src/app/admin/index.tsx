@@ -1,12 +1,14 @@
 import { View, Text, StyleSheet, TouchableOpacity, Pressable, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
 
@@ -179,13 +181,19 @@ export default function AdminScreen() {
                     <Text style={styles.navTitle}>Offers</Text>
                     <Text style={styles.navDesc}>Affiliate & promo codes</Text>
                 </Pressable>
+
+                <Pressable style={({ pressed }) => [styles.navCard, pressed && styles.pressed]} onPress={() => router.push('/admin/elite-clients')}>
+                    <View style={styles.navIconWrap}><Ionicons name="star" size={24} color={theme.colors.primary} /></View>
+                    <Text style={styles.navTitle}>Elite Clients</Text>
+                    <Text style={styles.navDesc}>Bespoke programs & progress</Text>
+                </Pressable>
             </View>
 
         </ScrollView>
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

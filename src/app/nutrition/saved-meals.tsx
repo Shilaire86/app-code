@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { showAlert } from '@/lib/confirm';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { fetchSavedMeals, deleteSavedMeal, logMeal, SavedMeal } from '@/services/nutrition';
 
 export default function SavedMealsScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { user } = useAuthStore();
     const [meals, setMeals] = useState<SavedMeal[]>([]);
@@ -166,7 +168,7 @@ export default function SavedMealsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,

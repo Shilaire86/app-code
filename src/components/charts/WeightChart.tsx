@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface DataPoint {
     date: string;
@@ -15,6 +15,8 @@ interface WeightChartProps {
 const CHART_HEIGHT = 120;
 
 export default function WeightChart({ data, unit = 'lbs' }: WeightChartProps) {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     if (!data || data.length === 0) {
         return (
             <View style={styles.emptyContainer}>
@@ -107,7 +109,7 @@ export default function WeightChart({ data, unit = 'lbs' }: WeightChartProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,

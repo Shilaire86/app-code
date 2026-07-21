@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
@@ -169,6 +169,8 @@ const TEMPLATES: {
 ];
 
 export default function AdminProgramsScreen() {
+    const theme = useTheme();
+    const styles = createStyles(theme);
     const router = useRouter();
     const { profile } = useProfileStore();
 
@@ -205,6 +207,7 @@ export default function AdminProgramsScreen() {
             const { data, error } = await supabase
                 .from('programs')
                 .select('id,name,description,is_active,created_at,updated_at,tier_required')
+                .eq('program_type', 'coach')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -695,7 +698,7 @@ export default function AdminProgramsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
