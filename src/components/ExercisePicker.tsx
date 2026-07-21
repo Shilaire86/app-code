@@ -119,6 +119,23 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                         renderItem={renderItem}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.listContent}
+                        ListHeaderComponent={
+                            search.trim().length > 0 ? (
+                                <TouchableOpacity
+                                    style={styles.customRow}
+                                    onPress={() => {
+                                        onSelect({ id: '', name: search.trim(), muscle_groups: [], equipment: [], video_url: null });
+                                        onClose();
+                                    }}
+                                >
+                                    <View style={styles.exerciseInfo}>
+                                        <Text style={styles.exerciseName}>Use &ldquo;{search.trim()}&rdquo;</Text>
+                                        <Text style={styles.exerciseSub}>Not on the list? Add it as a custom exercise</Text>
+                                    </View>
+                                    <Ionicons name="create-outline" size={22} color={theme.colors.primary} />
+                                </TouchableOpacity>
+                            ) : null
+                        }
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>No exercises found matching your search and equipment.</Text>
@@ -180,6 +197,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.05)',
+    },
+    customRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: theme.spacing.md,
+        marginBottom: theme.spacing.sm,
+        borderRadius: 12,
+        backgroundColor: theme.colors.primarySoft,
+        borderWidth: 1,
+        borderColor: theme.colors.primary + '55',
     },
     exerciseInfo: {
         flex: 1,

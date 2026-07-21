@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { listMyThreads, MessageThread } from '@/services/messaging';
 import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
+import { goBackOr } from '@/lib/navigation';
 
 function fmtDate(ts: string) {
     const d = new Date(ts);
@@ -88,6 +89,11 @@ export default function MessagesIndexScreen() {
                 headerTitle: 'Inbox',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.headerRow}>

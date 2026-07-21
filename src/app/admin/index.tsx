@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { goBackOr } from '@/lib/navigation';
 
 export default function AdminScreen() {
     const theme = useTheme();
@@ -115,6 +116,11 @@ export default function AdminScreen() {
                 headerTitle: 'Admin Dashboard',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {/* STATS ROW */}

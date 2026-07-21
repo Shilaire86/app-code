@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 import {
     calculateMacros,
     MacroResults,
@@ -81,6 +82,11 @@ export default function MacroCalculatorScreen() {
                 headerTitle: 'Macro Calculator',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>

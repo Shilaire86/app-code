@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { fetchSavedMeals, deleteSavedMeal, logMeal, SavedMeal } from '@/services/nutrition';
+import { goBackOr } from '@/lib/navigation';
 
 export default function SavedMealsScreen() {
     const theme = useTheme();
@@ -104,6 +105,11 @@ export default function SavedMealsScreen() {
                     headerTransparent: false,
                     headerStyle: { backgroundColor: theme.colors.background },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

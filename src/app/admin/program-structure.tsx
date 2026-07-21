@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
+import { ExercisePicker } from '@/components/ExercisePicker';
+import { ExerciseMatch } from '@/services/exercises';
 
 type ProgramWeek = { id: string; program_id: string; week_number: number; title: string | null };
 type ProgramDay = { id: string; program_week_id: string; day_number: number; title: string | null };
@@ -16,6 +18,7 @@ type ProgramDayExercise = {
     exercise_name: string;
     sets_target: number | null;
     reps_target: string | null;
+    notes: string | null;
     is_warmup?: boolean | null;
     is_cooldown?: boolean | null;
     created_at: string;
@@ -59,17 +62,27 @@ export default function AdminProgramStructureScreen() {
 
     const [warmupName, setWarmupName] = useState('');
     const [warmupRepsTarget, setWarmupRepsTarget] = useState('');
+    const [warmupNotes, setWarmupNotes] = useState('');
     const [exerciseName, setExerciseName] = useState('');
     const [setsTarget, setSetsTarget] = useState('');
     const [repsTarget, setRepsTarget] = useState('');
+    const [exerciseNotes, setExerciseNotes] = useState('');
     const [submittingExercise, setSubmittingExercise] = useState(false);
     const [submittingWarmup, setSubmittingWarmup] = useState(false);
     const [cooldownName, setCooldownName] = useState('');
     const [cooldownRepsTarget, setCooldownRepsTarget] = useState('');
+    const [cooldownNotes, setCooldownNotes] = useState('');
     const [submittingCooldown, setSubmittingCooldown] = useState(false);
     const [deletingDayId, setDeletingDayId] = useState<string | null>(null);
     const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
     const [deletingWeekId, setDeletingWeekId] = useState<string | null>(null);
+
+    const [pickerTarget, setPickerTarget] = useState<'warmup' | 'main' | 'cooldown' | null>(null);
+    function handlePickExercise(exercise: ExerciseMatch) {
+        if (pickerTarget === 'warmup') setWarmupName(exercise.name);
+        else if (pickerTarget === 'main') setExerciseName(exercise.name);
+        else if (pickerTarget === 'cooldown') setCooldownName(exercise.name);
+    }
 
     useEffect(() => {
         if (!isAdmin) return;
@@ -153,7 +166,7 @@ export default function AdminProgramStructureScreen() {
         try {
             const { data, error } = await supabase
                 .from('program_day_exercises')
-                .select('id,program_day_id,order_index,exercise_name,sets_target,reps_target,is_warmup,is_cooldown,created_at')
+                .select('id,program_day_id,order_index,exercise_name,sets_target,reps_target,notes,is_warmup,is_cooldown,created_at')
                 .eq('program_day_id', dayId)
                 .order('order_index', { ascending: true })
                 .order('created_at', { ascending: true });
@@ -479,6 +492,7 @@ export default function AdminProgramStructureScreen() {
         setSubmittingCooldown(true);
         try {
             const reps = cooldownRepsTarget.trim() ? cooldownRepsTarget.trim() : null;
+            const notes = cooldownNotes.trim() ? cooldownNotes.trim() : null;
             const { error } = await supabase
                 .from('program_day_exercises')
                 .insert({
@@ -487,12 +501,14 @@ export default function AdminProgramStructureScreen() {
                     exercise_name: name,
                     sets_target: null,
                     reps_target: reps,
+                    notes,
                     is_warmup: false,
                     is_cooldown: true,
                 });
             if (error) throw error;
             setCooldownName('');
             setCooldownRepsTarget('');
+            setCooldownNotes('');
             await fetchExercises(selectedDayId);
         } catch (e: any) {
             setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to add post-workout stretch.');
@@ -528,6 +544,7 @@ export default function AdminProgramStructureScreen() {
         try {
             const warmupCount = warmups.length;
             const reps = warmupRepsTarget.trim() ? warmupRepsTarget.trim() : null;
+            const notes = warmupNotes.trim() ? warmupNotes.trim() : null;
 
             const { error } = await supabase
                 .from('program_day_exercises')
@@ -537,12 +554,14 @@ export default function AdminProgramStructureScreen() {
                     exercise_name: name,
                     sets_target: null,
                     reps_target: reps,
+                    notes,
                     is_warmup: true,
                 });
             if (error) throw error;
 
             setWarmupName('');
             setWarmupRepsTarget('');
+            setWarmupNotes('');
             await fetchExercises(selectedDayId);
         } catch (e: any) {
             setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to add warm-up exercise.');
@@ -565,6 +584,7 @@ export default function AdminProgramStructureScreen() {
             const nextOrder = (mainWork.reduce((m, ex) => Math.max(m, ex.order_index), warmups.length - 1) ?? warmups.length - 1) + 1;
             const sets = setsTarget.trim() ? Number(setsTarget) : null;
             const reps = repsTarget.trim() ? repsTarget.trim() : null;
+            const notes = exerciseNotes.trim() ? exerciseNotes.trim() : null;
 
             const { error } = await supabase
                 .from('program_day_exercises')
@@ -574,6 +594,7 @@ export default function AdminProgramStructureScreen() {
                     exercise_name: name,
                     sets_target: Number.isFinite(sets as any) ? sets : null,
                     reps_target: reps,
+                    notes,
                     is_warmup: false,
                 });
             if (error) throw error;
@@ -581,6 +602,7 @@ export default function AdminProgramStructureScreen() {
             setExerciseName('');
             setSetsTarget('');
             setRepsTarget('');
+            setExerciseNotes('');
             await fetchExercises(selectedDayId);
         } catch (e: any) {
             setErrorText(typeof e?.message === 'string' ? e.message : 'Failed to add exercise.');
@@ -589,6 +611,14 @@ export default function AdminProgramStructureScreen() {
         }
     }
 
+    const goBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.replace('/admin/elite-clients');
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
@@ -596,6 +626,11 @@ export default function AdminProgramStructureScreen() {
                 headerTitle: 'Program Structure',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={goBack} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {!isAdmin ? (
@@ -735,6 +770,7 @@ export default function AdminProgramStructureScreen() {
                                             <View style={styles.listLeft}>
                                                 <Text style={styles.listTitle}>{ex.exercise_name}</Text>
                                                 <Text style={styles.listSub}>{ex.reps_target || '—'}</Text>
+                                                {ex.notes && <Text style={styles.listNote}>{ex.notes}</Text>}
                                             </View>
                                             <TouchableOpacity
                                                 style={styles.warmupChip}
@@ -756,14 +792,15 @@ export default function AdminProgramStructureScreen() {
 
                                     <View style={styles.form}>
                                         <Text style={styles.formTitle}>Add Warm-Up Exercise</Text>
-                                        <TextInput
+                                        <TouchableOpacity
                                             style={styles.input}
-                                            placeholder="Warm-up exercise name (required)"
-                                            placeholderTextColor="rgba(255,255,255,0.35)"
-                                            value={warmupName}
-                                            onChangeText={setWarmupName}
-                                            editable={!!selectedDayId && !submittingWarmup}
-                                        />
+                                            onPress={() => setPickerTarget('warmup')}
+                                            disabled={!selectedDayId || submittingWarmup}
+                                        >
+                                            <Text style={warmupName ? styles.pickerValueText : styles.pickerPlaceholderText}>
+                                                {warmupName || 'Tap to choose an exercise (required)'}
+                                            </Text>
+                                        </TouchableOpacity>
                                         <TextInput
                                             style={styles.input}
                                             placeholder="Reps / time (e.g. 10 reps or 5 min)"
@@ -771,6 +808,15 @@ export default function AdminProgramStructureScreen() {
                                             value={warmupRepsTarget}
                                             onChangeText={setWarmupRepsTarget}
                                             editable={!!selectedDayId && !submittingWarmup}
+                                        />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Notes (e.g. ~40% of working weight)"
+                                            placeholderTextColor="rgba(255,255,255,0.35)"
+                                            value={warmupNotes}
+                                            onChangeText={setWarmupNotes}
+                                            editable={!!selectedDayId && !submittingWarmup}
+                                            multiline
                                         />
                                         <TouchableOpacity
                                             style={[styles.primaryButton, (!selectedDayId || submittingWarmup) && styles.primaryButtonDisabled]}
@@ -795,6 +841,7 @@ export default function AdminProgramStructureScreen() {
                                                         <Text style={styles.listSub}>
                                                             {ex.sets_target != null ? `${ex.sets_target} sets` : '—'} • {ex.reps_target || '— reps'}
                                                         </Text>
+                                                        {ex.notes && <Text style={styles.listNote}>{ex.notes}</Text>}
                                                     </View>
                                                     <TouchableOpacity
                                                         style={[styles.warmupChip, styles.warmupChipOff]}
@@ -817,14 +864,15 @@ export default function AdminProgramStructureScreen() {
                                     {/* Add Main Exercise (inline) */}
                                     <View style={styles.form}>
                                         <Text style={styles.formTitle}>Add Main Exercise</Text>
-                                        <TextInput
+                                        <TouchableOpacity
                                             style={styles.input}
-                                            placeholder="Exercise name (required)"
-                                            placeholderTextColor="rgba(255,255,255,0.35)"
-                                            value={exerciseName}
-                                            onChangeText={setExerciseName}
-                                            editable={!!selectedDayId && !submittingExercise}
-                                        />
+                                            onPress={() => setPickerTarget('main')}
+                                            disabled={!selectedDayId || submittingExercise}
+                                        >
+                                            <Text style={exerciseName ? styles.pickerValueText : styles.pickerPlaceholderText}>
+                                                {exerciseName || 'Tap to choose an exercise (required)'}
+                                            </Text>
+                                        </TouchableOpacity>
                                         <View style={styles.formRow}>
                                             <TextInput
                                                 style={[styles.input, styles.inputHalf]}
@@ -844,6 +892,15 @@ export default function AdminProgramStructureScreen() {
                                                 editable={!!selectedDayId && !submittingExercise}
                                             />
                                         </View>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Notes (e.g. start at 185lb, add 5lb if RPE <= 7)"
+                                            placeholderTextColor="rgba(255,255,255,0.35)"
+                                            value={exerciseNotes}
+                                            onChangeText={setExerciseNotes}
+                                            editable={!!selectedDayId && !submittingExercise}
+                                            multiline
+                                        />
                                         <TouchableOpacity
                                             style={[styles.primaryButton, (!selectedDayId || submittingExercise) && styles.primaryButtonDisabled]}
                                             onPress={addExercise}
@@ -866,6 +923,7 @@ export default function AdminProgramStructureScreen() {
                                                     <View style={styles.listLeft}>
                                                         <Text style={styles.listTitle}>{ex.exercise_name}</Text>
                                                         <Text style={styles.listSub}>{ex.reps_target || '—'}</Text>
+                                                        {ex.notes && <Text style={styles.listNote}>{ex.notes}</Text>}
                                                     </View>
                                                     <TouchableOpacity
                                                         style={styles.cooldownChip}
@@ -887,14 +945,15 @@ export default function AdminProgramStructureScreen() {
 
                                     <View style={styles.form}>
                                         <Text style={styles.formTitle}>Add Post-Workout Stretch</Text>
-                                        <TextInput
+                                        <TouchableOpacity
                                             style={styles.input}
-                                            placeholder="Stretch / movement name (required)"
-                                            placeholderTextColor="rgba(255,255,255,0.35)"
-                                            value={cooldownName}
-                                            onChangeText={setCooldownName}
-                                            editable={!!selectedDayId && !submittingCooldown}
-                                        />
+                                            onPress={() => setPickerTarget('cooldown')}
+                                            disabled={!selectedDayId || submittingCooldown}
+                                        >
+                                            <Text style={cooldownName ? styles.pickerValueText : styles.pickerPlaceholderText}>
+                                                {cooldownName || 'Tap to choose a stretch / movement (required)'}
+                                            </Text>
+                                        </TouchableOpacity>
                                         <TextInput
                                             style={styles.input}
                                             placeholder="Duration (e.g. 30 sec hold or 5 breaths)"
@@ -902,6 +961,15 @@ export default function AdminProgramStructureScreen() {
                                             value={cooldownRepsTarget}
                                             onChangeText={setCooldownRepsTarget}
                                             editable={!!selectedDayId && !submittingCooldown}
+                                        />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Notes (optional)"
+                                            placeholderTextColor="rgba(255,255,255,0.35)"
+                                            value={cooldownNotes}
+                                            onChangeText={setCooldownNotes}
+                                            editable={!!selectedDayId && !submittingCooldown}
+                                            multiline
                                         />
                                         <TouchableOpacity
                                             style={[styles.cooldownButton, (!selectedDayId || submittingCooldown) && styles.primaryButtonDisabled]}
@@ -917,6 +985,12 @@ export default function AdminProgramStructureScreen() {
                     </View>
                 </ScrollView>
             )}
+
+            <ExercisePicker
+                visible={pickerTarget !== null}
+                onClose={() => setPickerTarget(null)}
+                onSelect={handlePickExercise}
+            />
         </View>
     );
 }
@@ -1087,6 +1161,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontWeight: '600',
         marginTop: 4,
     },
+    listNote: {
+        color: theme.colors.primary,
+        fontSize: 12,
+        fontStyle: 'italic',
+        marginTop: 4,
+    },
     listOrder: {
         color: 'rgba(255,255,255,0.6)',
         fontSize: 12,
@@ -1187,6 +1267,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     },
     inputHalf: {
         flex: 1,
+    },
+    pickerValueText: {
+        color: '#FFF',
+        fontSize: 13,
+    },
+    pickerPlaceholderText: {
+        color: 'rgba(255,255,255,0.35)',
+        fontSize: 13,
     },
     primaryButton: {
         backgroundColor: theme.colors.primary,

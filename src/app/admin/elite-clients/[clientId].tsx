@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { findThreadForUser, createThreadForUser } from '@/services/messaging';
+import { goBackOr } from '@/lib/navigation';
 
 type EliteProgram = { id: string; name: string; is_active: boolean };
 type SetLogRow = {
@@ -162,6 +163,11 @@ export default function AdminEliteClientDashboard() {
                 headerTitle: clientLabel || 'Client',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/admin/elite-clients')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {loading ? (

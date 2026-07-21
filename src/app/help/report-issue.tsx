@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 const CATEGORIES = [
     { key: 'bug', label: 'Bug / Something Broken', icon: 'bug-outline' as const },
@@ -73,6 +74,11 @@ export default function ReportIssueScreen() {
                     headerTitle: 'Report an Issue',
                     headerStyle: { backgroundColor: theme.colors.background },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/settings')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

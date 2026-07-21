@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { SubscriptionTier } from '@/stores/profileStore';
+import { goBackOr } from '@/lib/navigation';
 
 type FounderStatus = 'none' | 'invited' | 'active' | 'graduated';
 
@@ -273,6 +274,11 @@ export default function AdminUsersScreen() {
                 headerTitle: 'Manage Users',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.topSection}>

@@ -8,6 +8,7 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { getDailyPrompts, getRandomPrompt } from '@/constants/mindsetPrompts';
+import { goBackOr } from '@/lib/navigation';
 
 export default function NewMindsetScreen() {
     const { user } = useAuthStore();
@@ -69,6 +70,11 @@ export default function NewMindsetScreen() {
                 headerTitle: 'New Entry',
                 headerStyle: { backgroundColor: colors.background },
                 headerTintColor: colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/mindset/history')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

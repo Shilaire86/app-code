@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Stack } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { LEGAL_VERSIONS } from '@/lib/legalVersions';
+import { goBackOr } from '@/lib/navigation';
 
 export default function AffiliateDisclosureScreen() {
     const theme = useTheme();
     const styles = createStyles(theme);
+    const router = useRouter();
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
@@ -13,6 +16,11 @@ export default function AffiliateDisclosureScreen() {
                 headerTitle: 'Affiliate Disclosure',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/settings')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

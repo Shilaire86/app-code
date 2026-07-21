@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { listAdminThreads, MessageThread, ThreadCategory, ThreadStatus } from '@/services/messaging';
 import { supabase } from '@/lib/supabase';
+import { goBackOr } from '@/lib/navigation';
 
 type Status = ThreadStatus | 'all';
 type Category = ThreadCategory | 'all';
@@ -77,6 +78,11 @@ export default function AdminInboxScreen() {
                 headerTitle: 'Inbox',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {!isAdmin ? (

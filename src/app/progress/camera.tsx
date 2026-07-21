@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
+import { goBackOr } from '@/lib/navigation';
 
 export default function ProgressPhotoScreen() {
     const theme = useTheme();
@@ -190,6 +191,11 @@ export default function ProgressPhotoScreen() {
                 headerTitle: 'Growth Track',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.content}>

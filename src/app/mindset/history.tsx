@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 interface JournalEntry {
     id: string;
@@ -141,6 +142,11 @@ export default function JournalHistoryScreen() {
                 headerTitle: 'Mindset Journal',
                 headerStyle: { backgroundColor: colors.background },
                 headerTintColor: colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                ),
                 headerRight: () => (
                     <TouchableOpacity onPress={() => router.push('/mindset/new')}>
                         <Ionicons name="add" size={28} color={colors.primary} />

@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
+import { goBackOr } from '@/lib/navigation';
 
 type TemplateKey = 'ul4' | 'ppl5' | 'fb3';
 type Tier = 'free' | 'standard' | 'vip' | 'elite';
@@ -434,6 +435,11 @@ export default function AdminProgramsScreen() {
                 headerTitle: 'Admin',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {!isAdmin ? (

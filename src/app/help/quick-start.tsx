@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { goBackOr } from '@/lib/navigation';
 
 function GuideCard({
     title,
@@ -41,6 +42,7 @@ function GuideCard({
 export default function QuickStartGuideScreen() {
     const theme = useTheme();
     const styles = createStyles(theme);
+    const router = useRouter();
     return (
         <View style={styles.container}>
             <Stack.Screen
@@ -49,6 +51,11 @@ export default function QuickStartGuideScreen() {
                     headerTitle: 'Quick Start Guide',
                     headerStyle: { backgroundColor: theme.colors.background },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

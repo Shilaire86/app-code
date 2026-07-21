@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
+import { goBackOr } from '@/lib/navigation';
 import {
     fetchAllPosts, createPost, updatePost, deletePost,
     fetchAllUserPosts, updateUserPostStatus, deleteUserPost,
@@ -445,6 +446,11 @@ export default function AdminFeedScreen() {
             <Stack.Screen options={{
                 headerShown: true, headerTitle: 'Manage Feed',
                 headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.tabBar}>

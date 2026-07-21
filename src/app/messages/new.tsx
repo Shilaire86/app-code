@@ -8,6 +8,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { createThread } from '@/services/messaging';
 import { useProfileStore } from '@/stores/profileStore';
 import { hasEntitlement } from '@/lib/entitlements';
+import { goBackOr } from '@/lib/navigation';
 
 type Category = 'training' | 'program' | 'app_issue' | 'content' | 'other';
 
@@ -126,6 +127,11 @@ export default function NewMessageScreen() {
                 headerTitle: 'New message',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/messages')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

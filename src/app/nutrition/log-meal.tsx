@@ -7,6 +7,7 @@ import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { isVip } from '@/lib/entitlements';
+import { goBackOr } from '@/lib/navigation';
 import { logMeal, saveMeal, MealType } from '@/services/nutrition';
 
 const asStr = (v: string | string[] | undefined): string =>
@@ -101,6 +102,11 @@ export default function LogMealScreen() {
                     headerTransparent: true,
                     headerTitleStyle: { color: '#FFF' },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

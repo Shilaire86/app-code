@@ -877,6 +877,9 @@ export default function ActiveWorkoutScreen() {
                             <Text style={styles.prescription}>
                                 {ex.sets} Sets • {ex.reps_target || `${ex.reps_min}-${ex.reps_max}`} Reps
                             </Text>
+                            {ex.notes && (
+                                <Text style={styles.extraExNote}>{ex.notes}</Text>
+                            )}
                             {guidance && (
                                 <View style={styles.guidanceBox}>
                                     <Text style={styles.guidanceText}>{guidance.lastLabel}</Text>

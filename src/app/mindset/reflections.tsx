@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 const REFLECTION_QUESTIONS = [
     { id: 'wins',       label: 'Wins',            icon: 'trophy',        colorKey: 'mindset',  prompt: 'What victories did you achieve this week?' },
@@ -128,6 +129,11 @@ export default function WeeklyReflectionScreen() {
                 headerTitle: 'Weekly Reflection',
                 headerStyle: { backgroundColor: colors.background },
                 headerTintColor: colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

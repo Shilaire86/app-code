@@ -5,16 +5,19 @@ import {
     StyleSheet,
     ScrollView,
     ActivityIndicator,
+    TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useFocusEffect } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { getActiveTargets, getAdherenceSummary, AdherenceSummary, NutritionTarget } from '@/services/nutrition';
+import { goBackOr } from '@/lib/navigation';
 
 export default function AdherenceScreen() {
     const theme = useTheme();
     const styles = createStyles(theme);
+    const router = useRouter();
     const { user } = useAuthStore();
     const [targets, setTargets] = useState<NutritionTarget | null>(null);
     const [summary, setSummary] = useState<AdherenceSummary | null>(null);
@@ -54,7 +57,14 @@ export default function AdherenceScreen() {
     if (!targets || !summary) {
         return (
             <View style={styles.container}>
-                <Stack.Screen options={{ title: 'Nutrition Adherence' }} />
+                <Stack.Screen options={{
+                    title: 'Nutrition Adherence',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
+                }} />
                 <View style={styles.emptyState}>
                     <Ionicons name="stats-chart" size={64} color="rgba(255,255,255,0.1)" />
                     <Text style={styles.emptyTitle}>No Data Yet</Text>
@@ -75,6 +85,11 @@ export default function AdherenceScreen() {
                     headerTransparent: false,
                     headerStyle: { backgroundColor: theme.colors.background },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 
