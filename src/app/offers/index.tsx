@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { canAccessContentTier } from '@/lib/entitlements';
 import { logAffiliateClick } from '@/services/feed';
+import { goBackOr } from '@/lib/navigation';
 
 interface Offer {
     id: string;
@@ -118,6 +119,11 @@ export default function AffiliateOffersScreen() {
                 headerTitle: 'Partner Offers',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.header}>

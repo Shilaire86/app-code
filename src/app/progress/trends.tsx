@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import WeightChart from '@/components/charts/WeightChart';
+import { goBackOr } from '@/lib/navigation';
 import MeasurementChart from '@/components/charts/MeasurementChart';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -132,6 +133,11 @@ export default function TrendsScreen() {
                 headerTitle: 'Progress Trends',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {/* Date Range Selector */}

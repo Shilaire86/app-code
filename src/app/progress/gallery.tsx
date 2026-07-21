@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 2;
@@ -168,6 +169,11 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                 headerTitle: 'Evolution Gallery',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
                 headerRight: () => (
                     <TouchableOpacity onPress={() => router.push('/progress/camera')}>
                         <Ionicons name="add" size={28} color={theme.colors.primary} />

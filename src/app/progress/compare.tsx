@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 const { width } = Dimensions.get('window');
 const PHOTO_WIDTH = (width - 48) / 2;
@@ -103,6 +104,11 @@ export default function CompareScreen() {
                 headerTitle: 'Compare Progress',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             {photos.length < 2 ? (

@@ -16,6 +16,7 @@ import {
 } from '@/services/programGenerator';
 import { isVip } from '@/lib/entitlements';
 import { ENTITLEMENTS } from '@/lib/entitlements';
+import { goBackOr } from '@/lib/navigation';
 
 const DURATION_OPTIONS = [4, 6, 8, 12];
 const GOAL_OPTIONS: { key: 'strength' | 'hypertrophy' | 'general'; label: string; icon: string; desc: string }[] = [
@@ -307,6 +308,11 @@ export default function CreateProgramScreen() {
                     headerTransparent: true,
                     headerTitleStyle: { color: '#FFF' },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

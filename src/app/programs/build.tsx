@@ -9,6 +9,7 @@ import { ExercisePicker } from '@/components/ExercisePicker';
 import { ProgramHealthCheck, runHealthCheck } from '@/components/ProgramHealthCheck';
 import { ExerciseMatch } from '@/services/exercises';
 import { supabase } from '@/lib/supabase';
+import { goBackOr } from '@/lib/navigation';
 
 type BuildExercise = {
     id: string;
@@ -194,6 +195,11 @@ export default function BuildProgramScreen() {
                     headerTransparent: true,
                     headerTitleStyle: { color: '#FFF' },
                     headerTintColor: '#FFF',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
                 }}
             />
 

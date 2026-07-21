@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { goBackOr } from '@/lib/navigation';
 
 type ProgressEntry = {
     created_at: string;
@@ -85,6 +86,11 @@ export default function MyCheckInsScreen() {
                 headerTitle: 'My Check-Ins',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <View style={styles.actionsRow}>

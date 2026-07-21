@@ -16,6 +16,7 @@ import { nativeBillingReady, purchaseNativeSubscription, syncNativeEntitlements 
 import { scheduleTrialEndingReminders } from '@/lib/notifications';
 import * as ExpoLinking from 'expo-linking';
 import { APP_CONFIG } from '@/lib/appConfig';
+import { goBackOr } from '@/lib/navigation';
 
 export default function SubscribePlaceholderScreen() {
     const theme = useTheme();
@@ -201,6 +202,11 @@ export default function SubscribePlaceholderScreen() {
                 headerTitle: 'Upgrade',
                 headerStyle: { backgroundColor: theme.colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

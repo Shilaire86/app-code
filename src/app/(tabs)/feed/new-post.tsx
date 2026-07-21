@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { createUserPost } from '@/services/feed';
+import { goBackOr } from '@/lib/navigation';
 
 type PostType = 'thread' | 'workout_share' | 'milestone_share';
 
@@ -77,6 +78,11 @@ export default function NewPostScreen() {
                 headerTitle: 'New Post',
                 headerStyle: { backgroundColor: colors.background },
                 headerTintColor: '#FFF',
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/feed')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    </TouchableOpacity>
+                ),
                 headerRight: () => (
                     <TouchableOpacity
                         onPress={handleSubmit}

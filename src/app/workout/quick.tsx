@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { ExercisePicker } from '@/components/ExercisePicker';
 import { ExerciseMatch } from '@/services/exercises';
 import { startQuickWorkout } from '@/services/workouts';
+import { goBackOr } from '@/lib/navigation';
 
 type SelectedExercise = ExerciseMatch & {
     sets: number;
@@ -75,14 +76,19 @@ export default function QuickWorkoutScreen() {
 
     return (
         <View style={styles.container}>
-            <Stack.Screen 
+            <Stack.Screen
                 options={{
                     title: 'Quick Workout',
                     headerShown: true,
                     headerTransparent: true,
                     headerTitleStyle: { color: '#FFF' },
                     headerTintColor: '#FFF',
-                }} 
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    ),
+                }}
             />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
