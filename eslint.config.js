@@ -3,6 +3,13 @@ const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
 
 module.exports = [
+    // Must be its own config object with ONLY an `ignores` key — that's the
+    // one shape ESLint's flat config treats as a *global* ignore. Bundling
+    // it with `linterOptions` (as before) demoted it to a scoped ignore that
+    // only applied to this object's own (empty) `files` match, so dist/,
+    // build/, etc. were never actually excluded from the `**/*.{ts,tsx,js}`
+    // pattern below — a stale `expo export` web bundle under dist/ would get
+    // linted and throw a wall of unrelated `eqeqeq` errors.
     {
         ignores: [
             'node_modules/**',
@@ -11,6 +18,8 @@ module.exports = [
             'dist/**',
             'build/**',
         ],
+    },
+    {
         linterOptions: {
             reportUnusedDisableDirectives: 'off',
         },

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { MacroResults } from '@/lib/macros/calculator';
+import { MacroResults } from '@/lib/macroCalculator';
 
 export type NutritionTarget = {
     id: string;

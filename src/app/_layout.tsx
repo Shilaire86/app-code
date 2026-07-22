@@ -12,6 +12,7 @@ const theme = { colors: darkColors };
 import { scheduleDailyCheckIn, registerForPushNotificationsAsync, scheduleWeeklyProgressSummary } from '@/lib/notifications';
 import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
+import { useWorkoutStore } from '@/stores/workoutStore';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -25,6 +26,7 @@ import {
     isDebugRoute,
     isLegalGroup,
     isOnboardingGroup,
+    isPasswordRecoveryRoute,
     shouldBlockForBootstrap,
     shouldRedirectAuthenticatedAwayFromAuthGroup,
     shouldRedirectToLegal,
@@ -101,6 +103,7 @@ export default function RootLayout() {
         const profile = useProfileStore(s => s.profile);
         const fetchProfile = useProfileStore(s => s.fetchProfile);
         const resetProfile = useProfileStore(s => s.reset);
+        const resetWorkout = useWorkoutStore(s => s.reset);
         const { isConnected } = useNetworkStatus();
         const { processQueue } = useSyncQueueStore();
         const lastScheduledRef = useRef<string | null>(null);
@@ -133,10 +136,13 @@ export default function RootLayout() {
                 registerForPushNotificationsAsync(session.user.id).catch(err => console.error('[RootLayout] Push registration failed', err));
                 scheduleWeeklyProgressSummary().catch(err => console.error('[RootLayout] Weekly summary scheduling failed', err));
             } else if (initialized && !session) {
-                // Reset profile store on logout
+                // Reset profile + in-progress workout state on logout, so a
+                // different account signing in on this device afterward
+                // can't inherit either.
                 resetProfile();
+                resetWorkout();
             }
-        }, [initialized, session?.user?.id, fetchProfile, resetProfile]);
+        }, [initialized, session?.user?.id, fetchProfile, resetProfile, resetWorkout]);
 
         useEffect(() => {
             if (!initialized) return;
@@ -203,7 +209,7 @@ export default function RootLayout() {
             return <Redirect href="/" />;
         }
 
-        if (session && inAuthGroup) {
+        if (session && inAuthGroup && !isPasswordRecoveryRoute(segments)) {
             return <Redirect href="/" />;
         }
 

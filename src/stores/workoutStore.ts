@@ -12,30 +12,39 @@ interface SetLog {
 
 interface WorkoutState {
     activeWorkoutId: string | null;
+    // Which user started this in-progress workout. Persisted alongside the
+    // rest of the state so a different account signing in on the same
+    // device (after the previous user left a workout unfinished — app
+    // killed, backgrounded, no clean logout) can detect the mismatch and
+    // refuse to resume into someone else's unsaved reps/weights.
+    userId: string | null;
     startTime: string | null;
     setLogs: SetLog[];
     isPaused: boolean;
 
-    startWorkout: (workoutId: string) => void;
+    startWorkout: (workoutId: string, userId: string) => void;
     logSet: (set: SetLog) => void;
     updateSet: (index: number, updates: Partial<SetLog>) => void;
     removeSet: (index: number) => void;
     completeWorkout: () => void;
     discardWorkout: () => void;
     togglePause: () => void;
+    reset: () => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
     persist(
         (set) => ({
             activeWorkoutId: null,
+            userId: null,
             startTime: null,
             setLogs: [],
             isPaused: false,
 
-            startWorkout: (workoutId) =>
+            startWorkout: (workoutId, userId) =>
                 set({
                     activeWorkoutId: workoutId,
+                    userId,
                     startTime: new Date().toISOString(),
                     setLogs: [],
                     isPaused: false,
@@ -64,6 +73,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             completeWorkout: () =>
                 set({
                     activeWorkoutId: null,
+                    userId: null,
                     startTime: null,
                     setLogs: [],
                     isPaused: false,
@@ -72,6 +82,16 @@ export const useWorkoutStore = create<WorkoutState>()(
             discardWorkout: () =>
                 set({
                     activeWorkoutId: null,
+                    userId: null,
+                    startTime: null,
+                    setLogs: [],
+                    isPaused: false,
+                }),
+
+            reset: () =>
+                set({
+                    activeWorkoutId: null,
+                    userId: null,
                     startTime: null,
                     setLogs: [],
                     isPaused: false,

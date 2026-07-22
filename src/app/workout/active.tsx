@@ -14,6 +14,7 @@ import { fetchAffiliateOffers, fetchCoachPosts, toggleLike, fetchUserLikes, logA
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { scheduleStreakNudge } from '@/lib/notifications';
 import { getWorkoutStreakSummary } from '@/lib/streaks';
+import { generateUuid } from '@/lib/uuid';
 
 type RepRange = { min: number | null; max: number | null };
 type LastSet = { weightLbs: number; reps: number; createdAt: string };
@@ -25,6 +26,7 @@ export default function ActiveWorkoutScreen() {
     const workoutId = Array.isArray(id) ? id[0] : id;
     const {
         activeWorkoutId,
+        userId: storedWorkoutUserId,
         startTime,
         setLogs,
         startWorkout,
@@ -373,10 +375,15 @@ export default function ActiveWorkoutScreen() {
     }, [restRemaining]);
 
     useEffect(() => {
-        if (!workoutId || !data) return;
+        if (!workoutId || !data || !userId) return;
 
-        if (activeWorkoutId !== workoutId) {
-            startWorkout(workoutId);
+        // Re-seed if this is a different workout OR the persisted state
+        // belongs to a different account — e.g. a previous user left this
+        // exact workoutId in progress on a shared device (app killed,
+        // backgrounded) without a clean logout, and this account shouldn't
+        // resume into their unsaved reps/weights.
+        if (activeWorkoutId !== workoutId || storedWorkoutUserId !== userId) {
+            startWorkout(workoutId, userId);
             initialExercises
                 .filter((ex: any) => !ex.is_warmup && !ex.is_cooldown)
                 .forEach((ex: any) => {
@@ -390,7 +397,7 @@ export default function ActiveWorkoutScreen() {
                     }
                 });
         }
-    }, [workoutId, data, activeWorkoutId, initialExercises, startWorkout, logSet]);
+    }, [workoutId, data, userId, activeWorkoutId, storedWorkoutUserId, initialExercises, startWorkout, logSet]);
 
     useEffect(() => {
         if (!userId) return;
@@ -497,27 +504,39 @@ export default function ActiveWorkoutScreen() {
     };
 
     const finishWorkout = async () => {
-        try {
-            // Check if this is a new structure workout (program_day_id vs workout_id)
-            const isNewStructure = (data as any)?.workout?.isNewStructure === true;
+        // Stable id for this finish-workout attempt, carried through both the
+        // direct-save path below and the offline-queue fallback, so retrying
+        // (either within this call or later via the sync queue) upserts onto
+        // the same workout_logs row instead of creating a duplicate.
+        const clientLogId = generateUuid();
 
-            // 1. Save Workout Log
-            const { data: log, error: logError } = await supabase
+        // Check if this is a new structure workout (program_day_id vs workout_id)
+        const isNewStructure = (data as any)?.workout?.isNewStructure === true;
+
+        // ─── Critical, durable save — must succeed or we fall back to the
+        // offline queue. Kept isolated from the non-critical steps below so
+        // a failure there (milestone counting, activity logging, stage
+        // recalc) can't cause an already-saved workout to be re-enqueued
+        // and duplicated.
+        let log: { id: string };
+        try {
+            const { data: logRow, error: logError } = await supabase
                 .from('workout_logs')
-                .insert({
+                .upsert({
+                    client_log_id: clientLogId,
                     user_id: userId,
                     workout_id: isNewStructure ? null : activeWorkoutId,
                     started_at: startTime,
                     completed_at: new Date().toISOString(),
                     duration_seconds: elapsedTime,
                     notes: postWorkoutNotes.trim() || null,
-                })
+                }, { onConflict: 'client_log_id' })
                 .select()
                 .single();
 
             if (logError) throw logError;
+            log = logRow;
 
-            // 2. Save Set Logs
             if (setLogs.length > 0) {
                 const formattedSets = setLogs.map(s => ({
                     workout_log_id: log.id,
@@ -528,13 +547,68 @@ export default function ActiveWorkoutScreen() {
                     rpe: s.rpe
                 }));
 
+                // Clear any sets from a prior partial attempt at this same
+                // workout_log_id before inserting fresh — makes a retry after
+                // a failure further down idempotent instead of appending
+                // duplicate set rows.
+                const { error: deleteError } = await supabase
+                    .from('set_logs')
+                    .delete()
+                    .eq('workout_log_id', log.id);
+                if (deleteError) throw deleteError;
+
                 const { error: setsError } = await supabase
                     .from('set_logs')
                     .insert(formattedSets);
 
                 if (setsError) throw setsError;
+            }
+        } catch (error) {
+            console.error('Error saving workout:', error);
+            if (userId && startTime) {
+                enqueueWorkout({
+                    id: clientLogId,
+                    userId,
+                    workoutId: activeWorkoutId,
+                    startedAt: startTime,
+                    completedAt: new Date().toISOString(),
+                    durationSeconds: elapsedTime,
+                    setLogs: setLogs.map((log) => ({
+                        exerciseId: log.exerciseId,
+                        setNumber: log.setNumber,
+                        reps: log.reps,
+                        weightLbs: log.weightLbs,
+                        rpe: log.rpe,
+                    })),
+                    exercises: localExercises.map((ex: any) => ({
+                        id: ex.exercises.id,
+                        name: ex.exercises.name,
+                    })),
+                });
 
-                // 3. Check for PRs (only for exercises with valid exercise_id)
+                // Also schedule nudge for offline completion if possible
+                getWorkoutStreakSummary(userId, { force: true }).then(summary => {
+                    if (summary.streakDays >= 1) {
+                        scheduleStreakNudge(summary.streakDays);
+                    }
+                }).catch(() => { });
+            }
+
+            showAlert("Error", "Workout saved locally and will sync when you're back online.");
+            completeWorkout();
+            router.replace('/(tabs)');
+            return;
+        }
+
+        // ─── Non-critical side effects — the workout is already durably
+        // saved at this point, so a failure here is logged and swallowed
+        // rather than triggering the offline-queue fallback (which would
+        // duplicate the save we just made).
+        let stageChanged = false;
+        let newStage = '';
+        try {
+            if (setLogs.length > 0) {
+                // Check for PRs (only for exercises with valid exercise_id)
                 for (const exercise of localExercises) {
                     // Skip PR check for new structure programs (synthetic IDs)
                     if (!exercise.exercises?.id || isNewStructure) continue;
@@ -601,9 +675,7 @@ export default function ActiveWorkoutScreen() {
                 }
             }
 
-            // 4. Recalculate Becoming Stage and check for level-up
-            let stageChanged = false;
-            let newStage = '';
+            // Recalculate Becoming Stage and check for level-up
             if (userId) {
                 try {
                     const { recalculateStage } = await import('@/services/stageService');
@@ -623,66 +695,37 @@ export default function ActiveWorkoutScreen() {
                 }
             }
 
-            // 5. Refresh Profile Points
+            // Refresh Profile Points
             if (userId) {
                 void fetchProfile(userId);
             }
-
-            completeWorkout();
-            router.replace('/(tabs)');
-
-            // 6. Schedule Streak Nudge
-            if (userId) {
-                getWorkoutStreakSummary(userId, { force: true }).then(summary => {
-                    if (summary.streakDays >= 1) {
-                        scheduleStreakNudge(summary.streakDays);
-                    }
-                }).catch(err => console.error('[Workout] Failed to schedule nudge:', err));
-            }
-
-            if (stageChanged) {
-                showAlert(
-                    "🎉 Stage Up!",
-                    `You've ascended to ${newStage.toUpperCase()}! Keep going.`,
-                    [{ text: "Let's Go!", style: 'default' }]
-                );
-            } else {
-                showAlert("Success", "Workout completed! +5 Becoming Points earned.");
-            }
         } catch (error) {
-            console.error('Error saving workout:', error);
-            if (userId && startTime) {
-                enqueueWorkout({
-                    id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                    userId,
-                    workoutId: activeWorkoutId,
-                    startedAt: startTime,
-                    completedAt: new Date().toISOString(),
-                    durationSeconds: elapsedTime,
-                    setLogs: setLogs.map((log) => ({
-                        exerciseId: log.exerciseId,
-                        setNumber: log.setNumber,
-                        reps: log.reps,
-                        weightLbs: log.weightLbs,
-                        rpe: log.rpe,
-                    })),
-                    exercises: localExercises.map((ex: any) => ({
-                        id: ex.exercises.id,
-                        name: ex.exercises.name,
-                    })),
-                });
+            // Non-critical — the workout itself is already durably saved
+            // above, so we log and continue rather than re-enqueuing (which
+            // would duplicate the save) or telling the user it failed.
+            console.warn('[Workout] Non-critical post-save step failed (workout already saved):', error);
+        }
 
-                // Also schedule nudge for offline completion if possible
-                getWorkoutStreakSummary(userId, { force: true }).then(summary => {
-                    if (summary.streakDays >= 1) {
-                        scheduleStreakNudge(summary.streakDays);
-                    }
-                }).catch(() => { });
-            }
+        completeWorkout();
+        router.replace('/(tabs)');
 
-            showAlert("Error", "Workout saved locally and will sync when you're back online.");
-            completeWorkout();
-            router.replace('/(tabs)');
+        // Schedule Streak Nudge
+        if (userId) {
+            getWorkoutStreakSummary(userId, { force: true }).then(summary => {
+                if (summary.streakDays >= 1) {
+                    scheduleStreakNudge(summary.streakDays);
+                }
+            }).catch(err => console.error('[Workout] Failed to schedule nudge:', err));
+        }
+
+        if (stageChanged) {
+            showAlert(
+                "🎉 Stage Up!",
+                `You've ascended to ${newStage.toUpperCase()}! Keep going.`,
+                [{ text: "Let's Go!", style: 'default' }]
+            );
+        } else {
+            showAlert("Success", "Workout completed! +5 Becoming Points earned.");
         }
     };
 

@@ -10,8 +10,7 @@
     "web": "expo start --web",
     "lint": "eslint . --ext .ts,.tsx,.js",
     "push:test": "node scripts/send-push-test.mjs",
-    "test": "jest",
-    "postinstall": "sed -i.bak 's/import.meta.env/(process.env)/g' node_modules/zustand/esm/*.mjs && rm -f node_modules/zustand/esm/*.mjs.bak"
+    "test": "jest"
   },
   "dependencies": {
     "@expo-google-fonts/barlow-condensed": "^0.4.1",

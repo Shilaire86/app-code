@@ -70,7 +70,7 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
         <View style={styles.commentContainer}>
             {comments.map((comment) => (
                 <View key={comment.id} style={styles.commentItem}>
-                    <Text style={styles.commentAuthor}>{comment.profiles?.full_name || 'User'}</Text>
+                    <Text style={styles.commentAuthor}>{comment.profile_public?.full_name || 'User'}</Text>
                     <Text style={styles.commentText}>{comment.content}</Text>
                 </View>
             ))}
@@ -227,7 +227,7 @@ const UserPostCard = memo(({ item, isLiked, onToggleLike, onReport, user }: any)
         }
     };
 
-    const initials = (item.profiles?.full_name || 'U')
+    const initials = (item.profile_public?.full_name || 'U')
         .split(' ')
         .map((w: string) => w[0])
         .slice(0, 2)
@@ -242,8 +242,8 @@ const UserPostCard = memo(({ item, isLiked, onToggleLike, onReport, user }: any)
                 </View>
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.authorName}>{item.profiles?.full_name || 'Member'}</Text>
-                        {['active', 'graduated'].includes(item.profiles?.founder_status) && (
+                        <Text style={styles.authorName}>{item.profile_public?.full_name || 'Member'}</Text>
+                        {['active', 'graduated'].includes(item.profile_public?.founder_status) && (
                             <View style={styles.founderBadge}>
                                 <Text style={styles.founderBadgeText}>FOUNDER</Text>
                             </View>
@@ -325,7 +325,7 @@ const ActivityCard = memo(({ activity }: { activity: any }) => {
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.activityText}>
-                    <Text style={styles.activityUser}>{activity.profiles?.full_name || 'Someone'}</Text>
+                    <Text style={styles.activityUser}>{activity.profile_public?.full_name || 'Someone'}</Text>
                     {' '}{renderContent()}
                 </Text>
                 <Text style={styles.activityDate}>{timeAgo(activity.created_at)}</Text>

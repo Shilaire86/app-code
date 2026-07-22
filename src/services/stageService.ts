@@ -76,7 +76,21 @@ export async function recalculateStage(
         // 4. Upsert stage_status (skip repeated attempts if this environment blocks writes via RLS)
         const computedFrom = JSON.stringify(input);
         if (!persistenceBlockedByRlsByUser.has(userId)) {
-            const stagePayload = changed
+            // Typed explicitly (rather than left to inference) so the two
+            // branches resolve to one optional-fields shape instead of a
+            // union — a union here made TS require both branches to share
+            // an identical set of keys, which isn't actually the intent:
+            // the "unchanged" branch deliberately omits stage_since/
+            // previous_stage/stage_changed_at so the upsert's ON CONFLICT
+            // DO UPDATE leaves that history untouched when nothing changed.
+            const stagePayload: {
+                user_id: string;
+                current_stage: BecomingStage;
+                computed_from: string;
+                stage_since?: string;
+                previous_stage?: BecomingStage;
+                stage_changed_at?: string;
+            } = changed
                 ? {
                     user_id: userId,
                     current_stage: newStage,

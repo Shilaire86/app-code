@@ -112,7 +112,7 @@ export async function fetchComments(postId: string) {
         .from('post_comments')
         .select(`
             *,
-            profiles (
+            profile_public (
                 full_name,
                 role
             )
@@ -130,7 +130,7 @@ export async function addComment(postId: string, userId: string, content: string
         .insert({ post_id: postId, user_id: userId, content })
         .select(`
             *,
-            profiles (
+            profile_public (
                 full_name,
                 role
             )
@@ -155,9 +155,8 @@ export async function fetchRecentActivities() {
         .from('user_activities')
         .select(`
             *,
-            profiles (
-                full_name,
-                avatar_url
+            profile_public (
+                full_name
             )
         `)
         .order('created_at', { ascending: false })
@@ -200,7 +199,7 @@ export async function fetchUserPosts() {
         .from('user_posts')
         .select(`
             *,
-            profiles (full_name, role, founder_status, founder_number),
+            profile_public (full_name, role, founder_status, founder_number),
             user_post_likes(count)
         `)
         .eq('status', 'published')
@@ -218,7 +217,7 @@ export async function fetchAllUserPosts() {
         .from('user_posts')
         .select(`
             *,
-            profiles (full_name, role)
+            profile_public (full_name, role)
         `)
         .order('created_at', { ascending: false });
 
@@ -242,7 +241,7 @@ export async function createUserPost(
             title: title ?? null,
             activity_data: activityData ?? null,
         })
-        .select(`*, profiles (full_name, role)`)
+        .select(`*, profile_public (full_name, role)`)
         .single();
 
     if (error) throw error;

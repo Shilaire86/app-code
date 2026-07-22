@@ -102,50 +102,6 @@ export async function validatePromoCode(
 }
 
 /**
- * Records a promo code redemption after a successful subscription.
- */
-export async function redeemPromoCode(
-    promoCodeId: string,
-    tierPurchased: string,
-    periodPurchased: string,
-    discountApplied: number
-): Promise<void> {
-    const userId = (await supabase.auth.getUser()).data.user?.id;
-    if (!userId) throw new Error('Not signed in.');
-
-    // Insert redemption
-    const { error: redeemError } = await supabase
-        .from('promo_redemptions')
-        .insert({
-            user_id: userId,
-            promo_code_id: promoCodeId,
-            tier_purchased: tierPurchased,
-            period_purchased: periodPurchased,
-            discount_applied: discountApplied,
-        });
-
-    if (redeemError) throw redeemError;
-
-    // Increment usage count atomically
-    const { error: updateError } = await supabase.rpc('increment_promo_usage', { code_id: promoCodeId }).maybeSingle();
-
-    // Fallback: fetch current count and update manually
-    if (updateError) {
-        const { data: codeRow } = await supabase
-            .from('promo_codes')
-            .select('current_uses')
-            .eq('id', promoCodeId)
-            .maybeSingle();
-        if (codeRow) {
-            await supabase
-                .from('promo_codes')
-                .update({ current_uses: codeRow.current_uses + 1 })
-                .eq('id', promoCodeId);
-        }
-    }
-}
-
-/**
  * Fetches the user's previous redemptions.
  */
 export async function getUserRedemptions() {

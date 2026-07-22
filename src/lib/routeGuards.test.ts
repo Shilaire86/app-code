@@ -8,6 +8,7 @@ import {
     isDebugRoute,
     isLegalGroup,
     isOnboardingGroup,
+    isPasswordRecoveryRoute,
     needsLegalAcceptance,
     shouldBlockForBootstrap,
     shouldRedirectAuthenticatedAwayFromAuthGroup,
@@ -23,6 +24,13 @@ describe('routeGuards', () => {
         expect(isLegalGroup('legal')).toBe(true);
         expect(isAdminRoute('admin')).toBe(true);
         expect(isDebugRoute('debug')).toBe(true);
+    });
+
+    it('recognizes the reset-password route as an exempt recovery route', () => {
+        expect(isPasswordRecoveryRoute(['(auth)', 'reset-password'])).toBe(true);
+        expect(isPasswordRecoveryRoute(['(auth)', 'login'])).toBe(false);
+        expect(isPasswordRecoveryRoute(['(tabs)'])).toBe(false);
+        expect(isPasswordRecoveryRoute(undefined)).toBe(false);
     });
 
     it('fails closed while profile bootstrap is still in progress', () => {

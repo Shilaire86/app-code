@@ -24,7 +24,7 @@ type CoachPost = {
 type UserPost = {
     id: string; title: string | null; content: string;
     post_type: string; status: string; created_at: string;
-    profiles?: { full_name: string };
+    profile_public?: { full_name: string };
 };
 
 type Report = {
@@ -297,7 +297,7 @@ function MemberPostsTab() {
                     <View style={styles.postHeader}>
                         <View style={styles.postMeta}>
                             <Text style={styles.postTitle} numberOfLines={1}>
-                                {item.profiles?.full_name || 'Unknown'} · {item.post_type.replace('_', ' ')}
+                                {item.profile_public?.full_name || 'Unknown'} · {item.post_type.replace('_', ' ')}
                             </Text>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                                 <View style={[styles.statusDot, { backgroundColor: STATUS_COLORS[item.status] || colors.textSecondary }]} />

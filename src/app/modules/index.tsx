@@ -177,10 +177,21 @@ export default function ModuleLibraryScreen() {
 
                             <View style={styles.routinesList}>
                                 {mod.routines?.map((routine) => (
-                                    <TouchableOpacity 
-                                        key={routine.id} 
+                                    <TouchableOpacity
+                                        key={routine.id}
                                         style={styles.routineRow}
                                         onPress={() => {
+                                            if (!hasAccess) {
+                                                showAlert(
+                                                    'Premium Module',
+                                                    `Requires ${mod.tier_required.toUpperCase()} or higher. Upgrade to unlock this module.`,
+                                                    [
+                                                        { text: 'Cancel', style: 'cancel' },
+                                                        { text: 'Upgrade', onPress: () => router.push('/subscribe') }
+                                                    ]
+                                                );
+                                                return;
+                                            }
                                             router.push(`/modules/${routine.id}`);
                                         }}
                                     >

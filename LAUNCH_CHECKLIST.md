@@ -55,21 +55,29 @@ Set these in Supabase Dashboard → Project Settings → Edge Functions → Secr
 ## 3. Supabase Production State
 
 ### Schema + Migrations
-Run in this order against the production Supabase SQL editor:
+Run in this order against the production Supabase SQL editor (or `database/migrations/` in full — **not** `deploy_all.sql`/`deploy_044_to_060.sql`, which are stale past migration 060, see warnings in those files):
 - [ ] `database/schema.sql` applied
 - [ ] `database/migrations/002_rls_policies.sql` applied
 - [ ] `database/migrations/003_indexes.sql` applied (empty, skip OK)
-- [ ] `database/migrations/004_auto_profile_trigger.sql` through `043_lock_down_profile_updates.sql` applied in order
+- [ ] `database/migrations/004_auto_profile_trigger.sql` through `067_fix_programs_leak_followup.sql` applied in order
+- [x] `database/migrations/068_fix_profiles_full_row_leak.sql` applied 2026-07-22 (verified: leaky policy gone, `profile_public` view exists)
+- [ ] `database/migrations/069_fix_training_content_tier_gating.sql` — **apply before Friday launch** (fixes paywall bypass on training modules/routines/program templates)
+- [ ] `database/migrations/070_subscriptions_event_ordering.sql` — **apply before Friday launch** (required by the stripe-webhook/revenuecat-webhook changes below)
+- [ ] `database/migrations/071_promo_code_atomic_increment.sql` — **apply before Friday launch** (required by the stripe-webhook promo redemption changes below)
+- [ ] `database/migrations/072_workout_log_idempotency.sql` — **apply before Friday launch** (required by the active.tsx/syncQueueStore offline-sync fix below)
 
 ### Edge Functions
 Deploy with:
 ```
 supabase functions deploy create-checkout-session --project-ref xhzjpubapkrgtdkvnfck
 supabase functions deploy stripe-webhook --project-ref xhzjpubapkrgtdkvnfck
+supabase functions deploy revenuecat-webhook --project-ref xhzjpubapkrgtdkvnfck
+supabase functions deploy grant-founder-discount --project-ref xhzjpubapkrgtdkvnfck
 ```
-- [ ] Edge function `create-checkout-session` deployed *(annual billing + promo codes now fixed)*
-- [ ] Edge function `stripe-webhook` deployed *(annual price ID mapping now fixed)*
-- [ ] Any RevenueCat webhook function exists and is deployed if native billing uses it.
+- [ ] Edge function `create-checkout-session` deployed *(annual billing + promo codes fixed; now also validates promo rules server-side — 2026-07-22)*
+- [ ] Edge function `stripe-webhook` deployed *(annual price ID mapping fixed; now also rejects stale/out-of-order events and records promo redemptions — 2026-07-22)*
+- [ ] Edge function `revenuecat-webhook` deployed *(now fails closed if its secret is unset, and rejects stale/out-of-order events — 2026-07-22)* — **must be redeployed, code changed this session**
+- [ ] Edge function `grant-founder-discount` deployed *(now checks `founder_status = 'graduated'` server-side — 2026-07-22)* — **must be redeployed, code changed this session**
 
 ### Stripe Webhook Endpoint
 Configure in Stripe Dashboard → Developers → Webhooks:
@@ -125,9 +133,9 @@ Events to enable:
 
 ## 6. Extra Safety Checks
 
-- [x] Lint passes clean (0 warnings, 0 errors).
-- [x] Jest tests pass (24/24).
-- [x] TypeScript `tsc --noEmit` passes with 0 errors.
+- [x] Lint passes clean (0 warnings, 0 errors) — reverified 2026-07-22 (also fixed an eslint.config.js bug that let a stale `dist/` bundle get linted).
+- [x] Jest tests pass (25/25) — reverified 2026-07-22.
+- [x] TypeScript `tsc --noEmit` passes with 0 errors — reverified 2026-07-22 (previously had 4 real errors: `ColorPalette` type too narrow, a possibly-undefined access in gallery.tsx, and a union-type issue in stageService.ts — all fixed).
 - [ ] `npx expo-doctor` — run before build.
 - [ ] Clean install from scratch: remove `node_modules`, reinstall, run lint/test/audit.
 - [ ] Test fresh-user onboarding against production-like Supabase project.
@@ -140,17 +148,27 @@ Events to enable:
 
 ---
 
-## 7. Known Open Issues (Updated)
+## 7. Known Open Issues (Updated 2026-07-22)
 
 - [x] Annual Stripe price IDs — now set in `.env` and edge functions fixed to use them.
 - [x] Checkout ignored `billingPeriod` — **fixed** in `create-checkout-session` v5.
 - [x] Checkout ignored promo codes — **fixed** in `create-checkout-session` v5.
 - [x] Webhook didn't map annual price IDs — **fixed** in `stripe-webhook` v2 (also added metadata fallback).
-- [ ] `EXPO_PUBLIC_RC_GOOGLE_KEY` is still a placeholder — replace when Android billing is ready.
-- [ ] Native billing is disabled (`EXPO_PUBLIC_NATIVE_BILLING_SYNC_ENABLED` not set) — intentional until RevenueCat→Supabase webhook is built.
-- [ ] RevenueCat to Supabase sync is not implemented — needed before enabling native billing.
-- [ ] Supabase schema and migrations not yet confirmed applied to production.
-- [ ] Edge functions not yet confirmed deployed to production.
+- [x] `EXPO_PUBLIC_RC_GOOGLE_KEY` — resolved, real key now set (this line was stale).
+- [x] Native billing — resolved, RevenueCat→Supabase webhook is built and `EXPO_PUBLIC_NATIVE_BILLING_SYNC_ENABLED=true` in prod is intentional (confirmed with team 2026-07-22).
+- [x] `profiles` table full-row RLS leak — **fixed and applied to prod**, migration 068 (any user could read every other user's email/block-status/founder-status/etc).
+- [x] Reset-password flow was completely broken (redirect bug bounced users home before they could set a new password) — **fixed** in `_layout.tsx`/`routeGuards.ts`.
+- [x] Tier gating missing on `training_modules`/`module_routines`/`program_templates` — free/standard users could read VIP/Elite paid content directly — **fixed**, migration 069 (not yet applied to prod, see §3).
+- [x] Promo code rules (tier/period/max-uses/expiry/one-per-user) were unenforced server-side — **fixed**, `create-checkout-session` + `stripe-webhook` now validate and record redemptions; migrations 070/071 (not yet applied to prod, see §3).
+- [x] Offline workout sync could duplicate a whole workout on a transient error after the save already succeeded — **fixed** via a client-generated idempotency key; migration 072 (not yet applied to prod, see §3).
+- [x] A previous user's unfinished workout could be resumed by a different account on a shared device — **fixed**, `workoutStore` now tracks and checks `userId`, and resets on logout.
+- [x] `stripe-webhook`/`revenuecat-webhook` had no protection against out-of-order or cross-platform event delivery clobbering newer subscription state — **fixed** via event-timestamp staleness guard; migration 070 (not yet applied to prod, see §3).
+- [x] `revenuecat-webhook` silently skipped auth entirely if its secret env var was ever unset — **fixed**, now fails closed (500).
+- [x] `grant-founder-discount` didn't verify `founder_status = 'graduated'` server-side (admin-UI-only gating) — **fixed**.
+- [ ] **Migrations 069, 070, 071, 072 need to be applied to production before Friday launch** — see §3.
+- [ ] **Edge functions `revenuecat-webhook` and `grant-founder-discount` need to be redeployed** (code changed, not yet pushed) — see §3. `create-checkout-session` and `stripe-webhook` also changed and need redeploying.
+- [ ] Supabase schema and migrations not yet confirmed applied to production (pre-existing item, still open for 069-072).
+- [ ] Edge functions not yet confirmed deployed to production (pre-existing item, still open for the 4 changed functions above).
 
 ---
 

@@ -319,7 +319,12 @@ export const theme = {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Theme        = typeof theme;
-export type ColorPalette = typeof darkColors;
+// Widened to plain `string` values rather than `typeof darkColors` verbatim —
+// dark/light palettes share identical keys but different literal hex/rgba
+// values, so pinning this to one palette's exact literals rejected the other
+// wherever a caller passed `useTheme().colors` (a dark|light union) into a
+// function typed to accept `ColorPalette`.
+export type ColorPalette = { [K in keyof typeof darkColors]: string };
 export type Spacing      = typeof spacing;
 export type Radius       = typeof radius;
 export type Typography   = typeof typography;

@@ -47,7 +47,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                 else showAlert('Storage Error', error.message);
                 console.error('[gallery] List error:', error);
             } else {
-                const fileInfos = (data || []).map(f => `${f.name} (${(f.metadata?.size / 1024).toFixed(1)}KB)`).join('\n');
+                const fileInfos = (data || []).map(f => `${f.name} (${((f.metadata?.size ?? 0) / 1024).toFixed(1)}KB)`).join('\n');
                 const firstFile = data && data.length > 0 ? data[0].name : 'none';
                 const msg = `Storage Verified! Found ${data?.length || 0} files.\n\n${fileInfos}\n\nNote: This bucket is configured as private, so images must be loaded via signed URLs.`;
                 if (Platform.OS === 'web') alert(msg);

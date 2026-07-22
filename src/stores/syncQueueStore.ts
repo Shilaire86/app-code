@@ -25,7 +25,13 @@ export interface PendingWorkoutLog {
     durationSeconds: number;
     setLogs: PendingSetLog[];
     exercises: PendingExercise[];
+    attempts?: number;
 }
+
+// A permanently-failing entry (e.g. a referenced exercise_id that no longer
+// exists) would otherwise retry forever on every reconnect/app-open with no
+// visible signal to the user. Drop it after this many failed attempts.
+const MAX_SYNC_ATTEMPTS = 5;
 
 interface SyncQueueState {
     queue: PendingWorkoutLog[];
@@ -64,15 +70,22 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                         continue;
                     }
                     try {
+                        // entry.id is the same client-generated id used for this
+                        // workout whether it was queued directly from a failed
+                        // finishWorkout() call or from a previous failed sync
+                        // attempt. Upserting on it (instead of a plain insert)
+                        // means retrying a previously-failed queue entry updates
+                        // the existing row rather than creating a duplicate.
                         const { data: log, error: logError } = await supabase
                             .from('workout_logs')
-                            .insert({
+                            .upsert({
+                                client_log_id: entry.id,
                                 user_id: entry.userId,
                                 workout_id: entry.workoutId,
                                 started_at: entry.startedAt,
                                 completed_at: entry.completedAt,
                                 duration_seconds: entry.durationSeconds,
-                            })
+                            }, { onConflict: 'client_log_id' })
                             .select()
                             .single();
 
@@ -87,6 +100,15 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                                 weight_lbs: s.weightLbs,
                                 rpe: s.rpe,
                             }));
+
+                            // Clear any sets from a prior partial attempt at this
+                            // same log before inserting fresh, for the same
+                            // reason as the upsert above.
+                            const { error: deleteError } = await supabase
+                                .from('set_logs')
+                                .delete()
+                                .eq('workout_log_id', log.id);
+                            if (deleteError) throw deleteError;
 
                             const { error: setsError } = await supabase
                                 .from('set_logs')
@@ -124,8 +146,16 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                             }
                         }
                     } catch (error) {
-                        console.error('Failed to sync queued workout:', error);
-                        remaining.push(entry);
+                        const attempts = (entry.attempts ?? 0) + 1;
+                        if (attempts >= MAX_SYNC_ATTEMPTS) {
+                            console.error(
+                                `Dropping queued workout after ${attempts} failed sync attempts:`,
+                                error
+                            );
+                            continue;
+                        }
+                        console.error(`Failed to sync queued workout (attempt ${attempts}):`, error);
+                        remaining.push({ ...entry, attempts });
                     }
                 }
 

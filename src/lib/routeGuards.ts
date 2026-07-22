@@ -16,6 +16,15 @@ export function isAuthGroup(segment?: string): boolean {
     return segment === '(auth)';
 }
 
+// The reset-password screen intentionally establishes a session (via the
+// recovery-token exchange) while still living inside the (auth) group, so it
+// must be exempted from the "authenticated users get bounced out of (auth)"
+// redirect below — otherwise the redirect fires the instant the recovery
+// session is created, before the user can ever set a new password.
+export function isPasswordRecoveryRoute(segments?: readonly string[]): boolean {
+    return segments?.[0] === '(auth)' && segments?.[1] === 'reset-password';
+}
+
 export function isOnboardingGroup(segment?: string): boolean {
     return segment === '(onboarding)';
 }
