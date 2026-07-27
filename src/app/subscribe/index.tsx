@@ -17,6 +17,7 @@ import { scheduleTrialEndingReminders } from '@/lib/notifications';
 import * as ExpoLinking from 'expo-linking';
 import { APP_CONFIG } from '@/lib/appConfig';
 import { goBackOr } from '@/lib/navigation';
+import { showAlert } from '@/lib/confirm';
 
 export default function SubscribePlaceholderScreen() {
     const theme = useTheme();
@@ -189,7 +190,13 @@ export default function SubscribePlaceholderScreen() {
                 msg = e.context.body.error;
             }
 
-            setErrorText(status ? `${msg} (HTTP ${status})` : msg);
+            const fullMsg = status ? `${msg} (HTTP ${status})` : msg;
+            setErrorText(fullMsg);
+            // errorText renders near the top of a long scrolling page — if the
+            // user is down by the promo code card or a lower tier card when
+            // checkout fails, they'd never see it and the button would look
+            // like it silently did nothing. Surface it as an alert too.
+            showAlert('Checkout Error', fullMsg);
         } finally {
             setLoadingTier(null);
         }
@@ -437,7 +444,9 @@ export default function SubscribePlaceholderScreen() {
                                     color={promoResult.valid ? '#00b894' : '#FF6B6B'}
                                 />
                                 <Text style={[styles.promoFeedbackText, promoResult.valid ? { color: '#00b894' } : { color: '#FF6B6B' }]}>
-                                    {promoResult.valid ? `✓ Code applied! ${promoResult.discountLabel}` : promoResult.error}
+                                    {promoResult.valid
+                                        ? `✓ Code applied! ${promoResult.discountLabel} — valid on the ${(promoResult.promo?.applicable_tiers || []).map((t) => getTierLabel(t as SubscriptionTier)).join(' or ')} plan${(promoResult.promo?.applicable_tiers?.length || 0) > 1 ? 's' : ''} only. Tap Subscribe on that plan below.`
+                                        : promoResult.error}
                                 </Text>
                             </View>
                         )}

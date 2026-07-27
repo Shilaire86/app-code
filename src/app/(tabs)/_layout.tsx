@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,6 +20,12 @@ const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }
 
 export default function TabsLayout() {
     const { colors, radius } = useTheme();
+    // Manually setting tabBarStyle.height disables react-navigation's usual
+    // automatic safe-area padding for the bar, so it has to be added back by
+    // hand here — otherwise the bar sits too close to (or under) the home
+    // indicator on iPhones with a bigger bottom inset than whatever device
+    // this 68/12 was originally tuned against.
+    const insets = useSafeAreaInsets();
 
     return (
         <Tabs
@@ -33,9 +40,9 @@ export default function TabsLayout() {
                         backgroundColor:  colors.surface,
                         borderTopColor:   colors.borderHard,
                         borderTopWidth:   1,
-                        paddingBottom:    12,
+                        paddingBottom:    Math.max(12, insets.bottom + 4),
                         paddingTop:       10,
-                        height:           68,
+                        height:           56 + Math.max(12, insets.bottom + 4),
                     },
                     tabBarActiveTintColor:   colors.primary,
                     tabBarInactiveTintColor: colors.textSecondary,

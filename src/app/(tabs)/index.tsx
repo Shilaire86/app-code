@@ -202,9 +202,9 @@ export default function HomeScreen() {
                 </TouchableOpacity>
             )}
             <View style={styles.header}>
-                <View>
+                <View style={styles.greetingWrap}>
                     <Text style={styles.greeting}>Welcome back,</Text>
-                    <Text style={styles.email}>{profile?.full_name || user?.email?.split('@')[0]}</Text>
+                    <Text style={styles.email} numberOfLines={1}>{profile?.full_name || user?.email?.split('@')[0]}</Text>
                 </View>
                 <View style={styles.headerActions}>
                     <TouchableOpacity
@@ -791,8 +791,14 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         alignItems: 'flex-start',
         marginBottom: spacing.xl,
     },
+    greetingWrap: {
+        flex: 1,
+        flexShrink: 1,
+        marginRight: spacing.sm,
+    },
     headerActions: {
         flexDirection: 'row',
+        flexShrink: 0,
         gap: 10,
     },
     debugButton: {
