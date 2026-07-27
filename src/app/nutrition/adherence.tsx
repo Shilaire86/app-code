@@ -61,12 +61,12 @@ export default function AdherenceScreen() {
                     title: 'Nutrition Adherence',
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }} />
                 <View style={styles.emptyState}>
-                    <Ionicons name="stats-chart" size={64} color="rgba(255,255,255,0.1)" />
+                    <Ionicons name="stats-chart" size={64} color={theme.colors.textTertiary} />
                     <Text style={styles.emptyTitle}>No Data Yet</Text>
                     <Text style={styles.emptyText}>
                         Set your nutrition targets and start logging meals to see your adherence stats here.
@@ -84,10 +84,10 @@ export default function AdherenceScreen() {
                     headerShown: true,
                     headerTransparent: false,
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -183,7 +183,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: 60,
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 24,
         fontWeight: '800',
         marginTop: 20,
@@ -210,7 +210,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     streakValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 28,
         fontWeight: '900',
         marginBottom: 4,
@@ -263,7 +263,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 12,
     },
     statValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 32,
         fontWeight: '800',
         marginBottom: 16,
@@ -298,7 +298,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: '#FF6B6B',
     },
     hitDaysText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         textAlign: 'right',

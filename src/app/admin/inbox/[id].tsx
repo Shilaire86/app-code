@@ -145,22 +145,22 @@ export default function AdminInboxThreadScreen() {
                 headerShown: true,
                 headerTitle: title,
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 12 }}>
-                        <Ionicons name="chevron-back" size={26} color="#FFF" />
+                        <Ionicons name="chevron-back" size={26} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
                 headerRight: () => (
                     <TouchableOpacity onPress={confirmDeleteThread} style={{ paddingHorizontal: 12 }}>
-                        <Ionicons name="trash-outline" size={20} color="#FFF" />
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {!isAdmin ? (
                 <View style={styles.centered}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
                         <Text style={styles.primaryButtonText}>Back</Text>
@@ -245,7 +245,7 @@ export default function AdminInboxThreadScreen() {
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.lg, gap: 10 },
-    title: { color: '#FFF', fontSize: 18, fontWeight: '900' },
+    title: { color: theme.colors.text, fontSize: 18, fontWeight: '900' },
     primaryButton: { backgroundColor: theme.colors.primary, paddingHorizontal: 18, paddingVertical: 12, borderRadius: theme.radius.md, minHeight: 44, justifyContent: 'center' },
     primaryButtonText: { color: '#FFF', fontWeight: '900' },
     body: { flex: 1 },
@@ -273,12 +273,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     },
     errorTitle: { color: '#FFB3B3', fontSize: 12, fontWeight: '900', marginBottom: 4 },
     errorBody: { color: '#FFB3B3', fontSize: 12, lineHeight: 16 },
-    sectionTitle: { color: '#FFF', fontSize: 13, fontWeight: '900' },
+    sectionTitle: { color: theme.colors.text, fontSize: 13, fontWeight: '900' },
     diagBox: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderRadius: theme.radius.lg, padding: theme.spacing.md },
     diagToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     diagText: {
         marginTop: 8,
-        color: 'rgba(255,255,255,0.75)',
+        color: theme.colors.textSecondary,
         fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
         fontSize: 12,
         lineHeight: 16,
@@ -286,9 +286,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     replies: { gap: 10 },
     replyBubble: { borderRadius: theme.radius.lg, padding: theme.spacing.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
     replyUser: { backgroundColor: 'rgba(0,187,255,0.10)' },
-    replyCoach: { backgroundColor: 'rgba(255,255,255,0.06)' },
+    replyCoach: { backgroundColor: theme.colors.surfaceElevated },
     replyMeta: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '700', marginBottom: 6 },
-    replyText: { color: '#FFF', fontSize: 13, lineHeight: 18 },
+    replyText: { color: theme.colors.text, fontSize: 13, lineHeight: 18 },
     replyBar: {
         position: 'absolute',
         left: 0,
@@ -306,13 +306,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
         minHeight: 44,
         maxHeight: 120,
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         borderRadius: theme.radius.md,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     sendButton: { width: 44, height: 44, borderRadius: 12, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },

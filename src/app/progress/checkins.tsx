@@ -85,10 +85,10 @@ export default function MyCheckInsScreen() {
                 headerShown: true,
                 headerTitle: 'My Check-Ins',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -110,7 +110,7 @@ export default function MyCheckInsScreen() {
                 </View>
             ) : entries.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="clipboard-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="clipboard-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.emptyTitle}>No check-ins yet</Text>
                     <Text style={styles.emptyText}>Add your first check-in to start tracking your progress.</Text>
                     {!!error && <Text style={styles.errorText}>{error}</Text>}
@@ -184,7 +184,7 @@ export default function MyCheckInsScreen() {
                                         <Text style={styles.rowDate}>{formatDate(e.created_at)}</Text>
                                         <Text style={styles.rowSub}>Weight: {fmtNum(e.weight_lbs, ' lbs')}</Text>
                                     </View>
-                                    <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(255,255,255,0.7)" />
+                                    <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textSecondary} />
                                 </View>
 
                                 {isOpen && (
@@ -284,7 +284,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontWeight: '600',
     },
     errorBannerAction: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '800',
         textDecorationLine: 'underline',
@@ -304,7 +304,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     cardTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '900',
     },
@@ -329,7 +329,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 2,
     },
     value: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '900',
     },
@@ -337,12 +337,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: theme.spacing.md,
     },
     notesText: {
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
     },
     sectionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '900',
         marginBottom: theme.spacing.sm,
@@ -365,7 +365,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     rowDate: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '900',
     },
@@ -383,7 +383,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 6,
     },
     detailLine: {
-        color: 'rgba(255,255,255,0.82)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
     },
@@ -395,7 +395,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 6,

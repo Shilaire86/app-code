@@ -74,7 +74,7 @@ export default function LegalAcceptScreen() {
                 headerShown: true,
                 headerTitle: 'Legal',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerBackVisible: false,
             }} />
 
@@ -145,9 +145,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: theme.radius.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surface,
     },
-    noticeText: { flex: 1, color: '#FFF', fontSize: 12, lineHeight: 16 },
+    noticeText: { flex: 1, color: theme.colors.text, fontSize: 12, lineHeight: 16 },
     links: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,
@@ -163,7 +163,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingVertical: theme.spacing.md,
         minHeight: 44,
     },
-    linkText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+    linkText: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
     card: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,
@@ -180,7 +180,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 12,
     },
     toggleTextWrap: { flex: 1, gap: 2 },
-    toggleTitle: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+    toggleTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
     toggleSub: { color: theme.colors.textSecondary, fontSize: 12 },
     divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)' },
     primaryButton: {

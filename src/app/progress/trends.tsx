@@ -132,10 +132,10 @@ export default function TrendsScreen() {
                 headerShown: true,
                 headerTitle: 'Progress Trends',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -173,7 +173,7 @@ export default function TrendsScreen() {
                 ) : (
                     entryCount === 0 ? (
                         <View style={styles.emptyContainer}>
-                            <Ionicons name="stats-chart-outline" size={56} color="rgba(255,255,255,0.12)" />
+                            <Ionicons name="stats-chart-outline" size={56} color={theme.colors.textTertiary} />
                             <Text style={styles.emptyTitle}>No check-ins yet</Text>
                             <Text style={styles.emptyText}>
                                 Start tracking weight, measurements, and photos so you can see your progress over time.
@@ -317,7 +317,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '800',
         marginTop: 10,
@@ -370,7 +370,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     emptyMeasurementsTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '800',
         marginBottom: 4,
@@ -399,7 +399,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 12,
     },
     summaryValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 20,
         fontWeight: '700',
     },

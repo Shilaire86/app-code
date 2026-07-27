@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "becomingmethod",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -26,7 +25,6 @@
         "backgroundColor": "#1A1A1A"
       },
       "package": "com.thebecomingmethod.app",
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
@@ -50,7 +48,9 @@
           "photosPermission": "Allow The Becoming Method to access your photos to log your progress."
         }
       ],
-      "expo-build-properties"
+      "expo-build-properties",
+      "expo-audio",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "router": {},

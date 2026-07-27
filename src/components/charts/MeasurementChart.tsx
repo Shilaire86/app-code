@@ -134,7 +134,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         marginBottom: theme.spacing.sm,
@@ -193,7 +193,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         alignItems: 'flex-end',
     },
     currentValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '700',
     },
@@ -208,7 +208,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     emptyText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '600',
     },

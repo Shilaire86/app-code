@@ -168,10 +168,10 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                 headerShown: true,
                 headerTitle: 'Evolution Gallery',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
                 headerRight: () => (
@@ -206,7 +206,7 @@ export default function EvolutionGalleryScreen() { // Renamed to force Metro ref
                 contentContainerStyle={styles.list}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="images-outline" size={60} color="rgba(255,255,255,0.1)" />
+                        <Ionicons name="images-outline" size={60} color={theme.colors.textTertiary} />
                         <Text style={styles.emptyText}>No photos yet. Capture your first win.</Text>
                         <View style={styles.emptyActions}>
                             <TouchableOpacity

@@ -81,10 +81,10 @@ export default function MacroCalculatorScreen() {
                 headerShown: true,
                 headerTitle: 'Macro Calculator',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -270,7 +270,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         padding: theme.spacing.lg,
     },
     label: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '600',
         marginBottom: theme.spacing.sm,
@@ -290,7 +290,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.md,
         padding: theme.spacing.md,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
@@ -351,7 +351,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         color: theme.colors.primary,
     },
     optionSubtext: {
-        color: 'rgba(255,255,255,0.4)',
+        color: theme.colors.textTertiary,
         fontSize: 12,
         marginTop: 2,
     },
@@ -401,7 +401,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: theme.spacing.xl,
     },
     resultsTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '700',
         textAlign: 'center',
@@ -432,11 +432,11 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: theme.radius.md,
     },
     macroLabel: {
-        color: 'rgba(255,255,255,0.7)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
     },
     macroValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 20,
         fontWeight: '700',
     },
@@ -452,7 +452,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 12,
     },
     detailValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '600',
     },

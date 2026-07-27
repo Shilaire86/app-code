@@ -42,26 +42,26 @@ export function HintCard({
 
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     card: {
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surface,
         borderColor: 'rgba(0,187,255,0.20)',
         borderWidth: 1,
         borderRadius: theme.radius.lg,
         padding: theme.spacing.lg,
     },
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-    title: { color: '#FFF', fontSize: 14, fontWeight: '900' },
+    title: { color: theme.colors.text, fontSize: 14, fontWeight: '900' },
     dismissButton: {
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: theme.radius.md,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.10)',
-        backgroundColor: 'rgba(0,0,0,0.14)',
+        borderColor: theme.colors.border,
+        backgroundColor: theme.colors.surfaceElevated,
         minHeight: 36,
         justifyContent: 'center',
     },
     dismissText: { color: theme.colors.primary, fontSize: 12, fontWeight: '900' },
-    body: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18, marginTop: 8 },
+    body: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: 8 },
     primaryButton: {
         marginTop: 12,
         minHeight: 44,

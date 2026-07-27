@@ -15,10 +15,10 @@ export default function CommunityGuidelinesScreen() {
                 headerShown: true,
                 headerTitle: 'Community Guidelines',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/settings')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -42,8 +42,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl, gap: 10 },
     version: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },
-    h1: { color: '#FFF', fontSize: 20, fontWeight: '900', marginTop: 4 },
-    h2: { color: '#FFF', fontSize: 14, fontWeight: '900', marginTop: 12 },
-    p: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18 },
+    h1: { color: theme.colors.text, fontSize: 20, fontWeight: '900', marginTop: 4 },
+    h2: { color: theme.colors.text, fontSize: 14, fontWeight: '900', marginTop: 12 },
+    p: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 18 },
 });
 

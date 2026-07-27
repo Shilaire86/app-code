@@ -97,7 +97,7 @@ const CommentSection = ({ postId, user }: { postId: string; user: any }) => {
                         style={styles.lockedCommentRow}
                         onPress={() => router.push('/subscribe')}
                     >
-                        <Ionicons name="lock-closed" size={14} color="rgba(255,255,255,0.4)" />
+                        <Ionicons name="lock-closed" size={14} color={colors.textSecondary} />
                         <Text style={styles.lockedCommentText}>Standard+ Feature: Upgrade to join the conversation</Text>
                     </TouchableOpacity>
                 )
@@ -238,7 +238,7 @@ const UserPostCard = memo(({ item, isLiked, onToggleLike, onReport, user }: any)
         <View style={styles.postCard}>
             <View style={styles.authorRow}>
                 <View style={[styles.avatar, styles.avatarUser]}>
-                    <Text style={styles.avatarText}>{initials}</Text>
+                    <Text style={[styles.avatarText, styles.avatarTextUser]}>{initials}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -565,8 +565,9 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             alignItems: 'center',
         },
         avatarCoach: { backgroundColor: colors.primary },
-        avatarUser:  { backgroundColor: 'rgba(255,255,255,0.12)' },
+        avatarUser:  { backgroundColor: colors.surfaceElevated },
         avatarText:  { color: '#FFF', fontWeight: '800', fontSize: 14 },
+        avatarTextUser: { color: colors.text },
         coachBadge: {
             backgroundColor: `${colors.primary}22`,
             paddingHorizontal: 6,
@@ -625,27 +626,27 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             alignItems: 'center',
             gap: 8,
             marginTop: 8,
-            backgroundColor: 'rgba(255,255,255,0.03)',
+            backgroundColor: colors.surfaceElevated,
             padding: 10,
             borderRadius: 8,
             borderWidth: 1,
             borderColor: 'rgba(255,255,255,0.05)',
         },
-        lockedCommentText: { color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: '600' },
+        lockedCommentText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
         commentInput: {
             flex: 1,
-            backgroundColor: 'rgba(255,255,255,0.05)',
+            backgroundColor: colors.surfaceElevated,
             borderRadius: 8,
             paddingHorizontal: 10,
             paddingVertical: 6,
-            color: '#FFF',
+            color: colors.text,
             fontSize: 12,
             maxHeight: 60,
         },
         activityCard: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: 'rgba(255,255,255,0.02)',
+            backgroundColor: colors.surfaceElevated,
             padding: spacing.md,
             marginHorizontal: spacing.lg,
             marginBottom: spacing.md,
@@ -661,6 +662,6 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             alignItems: 'center',
         },
         activityText: { color: colors.text, fontSize: 13, lineHeight: 18 },
-        activityUser: { fontWeight: '800', color: '#FFF' },
+        activityUser: { fontWeight: '800', color: colors.text },
         activityDate: { color: colors.textSecondary, fontSize: 10, marginTop: 2 },
     });

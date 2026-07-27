@@ -4,7 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 
 export interface PendingSetLog {
-    exerciseId: string;
+    // Already resolved to a real exercises-table id (or null for a custom/
+    // unmatched exercise name) by the time it's enqueued — see active.tsx's
+    // resolveSetIdentity. Do not write a non-catalog id here; set_logs.exercise_id
+    // has a hard FK to exercises and silently fails (endless retry) otherwise.
+    exerciseId: string | null;
+    exerciseName?: string | null;
     setNumber: number;
     reps: number;
     weightLbs: number;
@@ -12,8 +17,8 @@ export interface PendingSetLog {
 }
 
 interface PendingExercise {
-    id: string;
-    name: string;
+    id: string | null;
+    name: string | null;
 }
 
 export interface PendingWorkoutLog {
@@ -95,6 +100,7 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                             const formattedSets = entry.setLogs.map((s) => ({
                                 workout_log_id: log.id,
                                 exercise_id: s.exerciseId,
+                                exercise_name: s.exerciseName ?? null,
                                 set_number: s.setNumber,
                                 reps: s.reps,
                                 weight_lbs: s.weightLbs,
@@ -117,6 +123,11 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                         }
 
                         for (const exercise of entry.exercises) {
+                            // No real catalog id (custom/unmatched exercise name) —
+                            // skip PR tracking rather than grouping every such
+                            // exercise's sets together under a shared null id.
+                            if (!exercise.id) continue;
+
                             const exerciseSets = entry.setLogs.filter(
                                 (s) => s.exerciseId === exercise.id
                             );

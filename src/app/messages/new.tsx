@@ -105,7 +105,7 @@ export default function NewMessageScreen() {
                     headerShown: true,
                     headerTitle: 'New message',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                 }} />
                 <View style={styles.content}>
                     <View style={styles.notice}>
@@ -126,10 +126,10 @@ export default function NewMessageScreen() {
                 headerShown: true,
                 headerTitle: 'New message',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/messages')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -206,9 +206,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: theme.radius.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surface,
     },
-    noticeText: { flex: 1, color: '#FFF', fontSize: 12, lineHeight: 16 },
+    noticeText: { flex: 1, color: theme.colors.text, fontSize: 12, lineHeight: 16 },
     label: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800', marginTop: 8 },
     pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     pill: {
@@ -217,26 +217,26 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 999,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.10)',
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
     pillActive: {
         backgroundColor: 'rgba(0,187,255,0.12)',
         borderColor: 'rgba(0,187,255,0.28)',
     },
-    pillText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '700' },
-    pillTextActive: { color: '#FFF' },
+    pillText: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },
+    pillTextActive: { color: theme.colors.primary },
     helper: { gap: 6, paddingTop: 6 },
-    helperLine: { color: 'rgba(255,255,255,0.65)', fontSize: 12, lineHeight: 16 },
+    helperLine: { color: theme.colors.textSecondary, fontSize: 12, lineHeight: 16 },
     helperLineStrong: { color: 'rgba(0,187,255,0.95)', fontSize: 12, fontWeight: '800' },
     input: {
         minHeight: 44,
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         borderRadius: theme.radius.md,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     textarea: { minHeight: 120, textAlignVertical: 'top' },

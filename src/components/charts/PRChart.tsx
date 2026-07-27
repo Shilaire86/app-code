@@ -136,7 +136,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
@@ -177,7 +177,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 4,
     },
     barValue: {
-        color: 'rgba(255,255,255,0.7)',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '800',
         width: 40,
@@ -199,7 +199,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 10,
     },
     statValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '600',
     },
@@ -213,7 +213,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.05)',
     },
     emptyText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '600',
     },

@@ -104,10 +104,10 @@ export default function SavedMealsScreen() {
                     headerShown: true,
                     headerTransparent: false,
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -123,7 +123,7 @@ export default function SavedMealsScreen() {
             >
                 {meals.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <Ionicons name="fast-food-outline" size={64} color="rgba(255,255,255,0.1)" />
+                        <Ionicons name="fast-food-outline" size={64} color={theme.colors.textTertiary} />
                         <Text style={styles.emptyTitle}>No Saved Meals</Text>
                         <Text style={styles.emptyText}>
                             Save common meals to your library for quick logging. You can save a meal when adding it in the Log Meal screen.
@@ -194,7 +194,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: 40,
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 24,
         fontWeight: '800',
         marginTop: 20,
@@ -240,13 +240,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 6,
     },
     mealTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         flexShrink: 1,
     },
     typeTag: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: theme.colors.surfaceElevated,
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,

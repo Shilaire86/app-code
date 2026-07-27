@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Switch, Linking, Platform, Modal } from 'react-native';
 import { showAlert } from '@/lib/confirm';
 import { Stack, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { checkPermissions, scheduleDailyCheckIn } from '@/lib/notifications';
 import { APP_CONFIG } from '@/lib/appConfig';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const PRESET_TIMES_24H = ['06:00', '09:00', '12:00', '18:00', '20:00'] as const;
 const DIETARY_PREFERENCES = ['standard', 'vegetarian', 'vegan', 'pescatarian', 'keto', 'paleo', 'carnivore'] as const;
@@ -25,6 +26,19 @@ function toDisplayTime(hhmm: string | null | undefined) {
     h = h % 12;
     if (h === 0) h = 12;
     return `${h}:${String(min).padStart(2, '0')} ${ampm}`;
+}
+
+function hhmmToDate(hhmm: string | null | undefined) {
+    const value = hhmm || '09:00';
+    const m = /^(\d{2}):(\d{2})$/.exec(value);
+    const dt = new Date();
+    dt.setSeconds(0, 0);
+    dt.setHours(m ? Number(m[1]) : 9, m ? Number(m[2]) : 0);
+    return dt;
+}
+
+function dateToHHMM(dt: Date) {
+    return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
 }
 
 function formatDateLabel(iso: string | null | undefined) {
@@ -63,6 +77,8 @@ export default function SettingsScreen() {
     const [dietaryPreference, setDietaryPreference] = useState(profile?.dietary_preference || 'standard');
     const [isSaving, setIsSaving] = useState(false);
     const [savingReminder, setSavingReminder] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [pickerDraftTime, setPickerDraftTime] = useState<Date>(() => hhmmToDate(profile?.preferred_workout_time));
     const [subscription, setSubscription] = useState<SubscriptionSnapshot | null>(null);
     const [loadingSubscription, setLoadingSubscription] = useState(false);
     const [cancelingSubscription, setCancelingSubscription] = useState(false);
@@ -324,6 +340,27 @@ export default function SettingsScreen() {
         }
     }
 
+    function openTimePicker() {
+        setPickerDraftTime(hhmmToDate(profile?.preferred_workout_time));
+        setShowTimePicker(true);
+    }
+
+    function handleTimePickerChange(event: DateTimePickerEvent, selected?: Date) {
+        if (Platform.OS === 'android') {
+            setShowTimePicker(false);
+            if (event.type === 'set' && selected) {
+                setReminderTime(dateToHHMM(selected));
+            }
+            return;
+        }
+        if (selected) setPickerDraftTime(selected);
+    }
+
+    function confirmIosTimePicker() {
+        setShowTimePicker(false);
+        setReminderTime(dateToHHMM(pickerDraftTime));
+    }
+
     const currentReminderDisplay = toDisplayTime(profile?.preferred_workout_time || null);
     const placeholderColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
 
@@ -497,9 +534,61 @@ export default function SettingsScreen() {
                                 </TouchableOpacity>
                             );
                         })}
+                        <TouchableOpacity
+                            style={[
+                                styles.presetButton,
+                                { borderRadius: radius.md, borderColor: colors.border },
+                                !(PRESET_TIMES_24H as readonly string[]).includes(profile?.preferred_workout_time || '09:00') && {
+                                    borderColor: colors.primary,
+                                    backgroundColor: colors.primary + '20',
+                                }
+                            ]}
+                            onPress={openTimePicker}
+                            disabled={savingReminder}
+                        >
+                            <Ionicons name="time-outline" size={14} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                            <Text style={[styles.presetButtonText, { color: colors.textSecondary }]}>
+                                Custom
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                     {!!savingReminder && (
                         <Text style={[styles.helperText, { color: colors.textTertiary, marginTop: 10 }]}>Saving...</Text>
+                    )}
+
+                    {showTimePicker && Platform.OS === 'android' && (
+                        <DateTimePicker
+                            value={pickerDraftTime}
+                            mode="time"
+                            display="default"
+                            onChange={handleTimePickerChange}
+                        />
+                    )}
+
+                    {Platform.OS === 'ios' && (
+                        <Modal visible={showTimePicker} transparent animationType="fade" onRequestClose={() => setShowTimePicker(false)}>
+                            <View style={styles.pickerOverlay}>
+                                <View style={[styles.pickerSheet, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                                    <View style={styles.pickerHeader}>
+                                        <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                            <Text style={[styles.pickerHeaderAction, { color: colors.textSecondary }]}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Reminder Time</Text>
+                                        <TouchableOpacity onPress={confirmIosTimePicker}>
+                                            <Text style={[styles.pickerHeaderAction, { color: colors.primary, fontWeight: '800' }]}>Done</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <DateTimePicker
+                                        value={pickerDraftTime}
+                                        mode="time"
+                                        display="spinner"
+                                        themeVariant={isDark ? 'dark' : 'light'}
+                                        onChange={handleTimePickerChange}
+                                        style={{ height: 200 }}
+                                    />
+                                </View>
+                            </View>
+                        </Modal>
                     )}
                 </View>
 
@@ -544,11 +633,11 @@ export default function SettingsScreen() {
                         <Text style={[styles.settingLabel, { color: colors.text }]}>Current plan</Text>
                         <View style={{ flexDirection: 'row', gap: 6 }}>
                             {['active', 'graduated'].includes(profile?.founder_status) ? (
-                                <Text style={styles.founderBadge}>
+                                <Text style={[styles.founderBadge, { color: colors.text }]}>
                                     FOUNDER{profile?.founder_number ? ` #${profile.founder_number}` : ''}
                                 </Text>
                             ) : null}
-                            <Text style={styles.subscriptionBadge}>{(subscription?.tier ?? tier).toUpperCase()}</Text>
+                            <Text style={[styles.subscriptionBadge, { color: colors.text }]}>{(subscription?.tier ?? tier).toUpperCase()}</Text>
                         </View>
                     </View>
                     <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
@@ -801,6 +890,8 @@ const styles = StyleSheet.create({
     },
     presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
     presetButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         borderWidth: 1,
         backgroundColor: 'rgba(128,128,128,0.05)',
         paddingHorizontal: 12,
@@ -809,6 +900,23 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     presetButtonText: { fontSize: 12, fontWeight: '800' },
+    pickerOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    pickerSheet: {
+        paddingBottom: 24,
+    },
+    pickerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+    },
+    pickerHeaderTitle: { fontSize: 15, fontWeight: '800' },
+    pickerHeaderAction: { fontSize: 15 },
     footer: {
         alignItems: 'center',
     },

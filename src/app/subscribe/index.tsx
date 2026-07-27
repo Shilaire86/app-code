@@ -201,10 +201,10 @@ export default function SubscribePlaceholderScreen() {
                 headerShown: true,
                 headerTitle: 'Upgrade',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -516,7 +516,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     content: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl, gap: theme.spacing.md },
     hero: { alignItems: 'center', gap: 10, paddingVertical: 16 },
-    title: { color: '#FFF', fontSize: 22, fontWeight: '900' },
+    title: { color: theme.colors.text, fontSize: 22, fontWeight: '900' },
     body: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 18 },
     noCommitmentChip: {
         flexDirection: 'row',
@@ -548,7 +548,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: 'rgba(255, 159, 67, 0.14)',
         borderColor: 'rgba(255, 159, 67, 0.45)',
     },
-    noticeText: { color: '#FFF', fontSize: 12, fontWeight: '700', flex: 1 },
+    noticeText: { color: theme.colors.text, fontSize: 12, fontWeight: '700', flex: 1 },
     noticeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     successButton: {
         backgroundColor: '#00b894',
@@ -572,9 +572,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 8,
     },
     currentTierHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-    currentTierTitle: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+    currentTierTitle: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
     currentTierName: { color: theme.colors.primary, fontSize: 18, fontWeight: '900' },
-    currentTierStatus: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '600' },
+    currentTierStatus: { color: theme.colors.textTertiary, fontSize: 11, fontWeight: '600' },
     card: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,
@@ -583,8 +583,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         padding: theme.spacing.lg,
         gap: 8,
     },
-    cardTitle: { color: '#FFF', fontSize: 14, fontWeight: '900' },
-    bullet: { color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 18 },
+    cardTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900' },
+    bullet: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 18 },
     tierRow: {
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.06)',
@@ -593,7 +593,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 8,
     },
     tierRowCurrent: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: theme.colors.surfaceElevated,
         marginHorizontal: -theme.spacing.lg,
         paddingHorizontal: theme.spacing.lg,
         borderTopWidth: 0,
@@ -626,10 +626,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.04)',
     },
-    comparisonLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600' },
-    tierNameElite: { color: 'rgba(255,255,255,0.7)' },
+    comparisonLabel: { color: theme.colors.text, fontSize: 13, fontWeight: '600' },
+    tierNameElite: { color: theme.colors.textSecondary },
     tierPriceElite: { color: 'rgba(255, 215, 0, 0.6)' },
-    bulletElite: { color: 'rgba(255,255,255,0.4)' },
+    bulletElite: { color: theme.colors.textTertiary },
     comingSoonBadge: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -643,27 +643,27 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     },
     comingSoonText: { color: '#FFD700', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
     comingSoonNote: {
-        color: 'rgba(255,255,255,0.4)',
+        color: theme.colors.textTertiary,
         fontSize: 12,
         fontStyle: 'italic',
         lineHeight: 16,
         marginTop: 2,
     },
     upgradeSubtitle: {
-        color: 'rgba(255,255,255,0.7)',
+        color: theme.colors.textSecondary,
         fontSize: 13,
         fontStyle: 'italic',
         marginBottom: 8,
     },
     currentLabel: { color: theme.colors.primary, fontSize: 11, fontWeight: '700' },
     tierLeft: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    tierName: { color: '#FFF', fontSize: 13, fontWeight: '900' },
+    tierName: { color: theme.colors.text, fontSize: 13, fontWeight: '900' },
     tierPrice: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' },
-    trialText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '700' },
+    trialText: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },
     tierBullets: { gap: 8, marginTop: 4 },
     bulletRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    bulletText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '500' },
-    bulletTextElite: { color: 'rgba(255,255,255,0.5)' },
+    bulletText: { color: theme.colors.text, fontSize: 13, fontWeight: '500' },
+    bulletTextElite: { color: theme.colors.textSecondary },
     errorText: { color: '#FF6B6B', fontSize: 12, lineHeight: 16, marginTop: 6 },
     subscribeButton: {
         minHeight: 44,
@@ -691,12 +691,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 12,
     },
-    secondaryText: { color: 'rgba(255,255,255,0.82)', fontSize: 13, fontWeight: '900' },
+    secondaryText: { color: theme.colors.text, fontSize: 13, fontWeight: '900' },
 
     // Period Toggle Styles
     periodToggle: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 12,
         padding: 4,
         marginBottom: 24,
@@ -719,12 +719,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         elevation: 2,
     },
     periodBtnText: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 14,
         fontWeight: '700',
     },
     periodBtnTextActive: {
-        color: '#FFF',
+        color: theme.colors.text,
     },
     saveBadge: {
         backgroundColor: '#00b894',
@@ -755,10 +755,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     promoInput: {
         flex: 1,
         height: 48,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 10,
         paddingHorizontal: 16,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '600',
         borderWidth: 1,

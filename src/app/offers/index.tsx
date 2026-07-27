@@ -89,7 +89,7 @@ export default function AffiliateOffersScreen() {
                     <Text style={styles.offerDescription}>{item.description}</Text>
                     {!accessible && (
                         <View style={styles.lockedBanner}>
-                            <Ionicons name="lock-closed" size={14} color="#FFF" />
+                            <Ionicons name="lock-closed" size={14} color={theme.colors.text} />
                             <Text style={styles.lockedText}>Upgrade to {item.tier_required} to unlock</Text>
                         </View>
                     )}
@@ -118,10 +118,10 @@ export default function AffiliateOffersScreen() {
                 headerShown: true,
                 headerTitle: 'Partner Offers',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -145,7 +145,7 @@ export default function AffiliateOffersScreen() {
 
             {offers.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="gift-outline" size={60} color="rgba(255,255,255,0.1)" />
+                    <Ionicons name="gift-outline" size={60} color={theme.colors.textTertiary} />
                     <Text style={styles.emptyText}>No offers available right now</Text>
                     <Text style={styles.emptySubtext}>Check back soon for exclusive deals</Text>
                 </View>
@@ -176,7 +176,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingBottom: theme.spacing.md,
     },
     headerTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 20,
         fontWeight: '700',
     },
@@ -218,7 +218,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.xs,
     },
     offerTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         flex: 1,
@@ -244,12 +244,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         alignItems: 'center',
         gap: 6,
         marginTop: theme.spacing.md,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surfaceElevated,
         padding: theme.spacing.sm,
         borderRadius: theme.radius.sm,
     },
     lockedText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
     },
     ctaRow: {
@@ -270,7 +270,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         padding: theme.spacing.xl,
     },
     emptyText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '600',
         marginTop: theme.spacing.lg,

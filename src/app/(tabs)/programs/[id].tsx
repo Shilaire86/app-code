@@ -155,7 +155,7 @@ export default function ProgramDetailScreen() {
                 headerShown: true,
                 headerTitle: '',
                 headerTransparent: true,
-                headerTintColor: '#FFF',
+                headerTintColor: colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={28} color="#FFF" />
@@ -445,7 +445,7 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         alignItems: 'center',
     },
     upgradeText: {
-        color: '#FFF',
+        color: colors.background,
         fontSize: 16,
         fontWeight: '700',
     },

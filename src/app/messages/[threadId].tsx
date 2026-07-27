@@ -147,15 +147,15 @@ export default function MessageThreadScreen() {
                 headerShown: true,
                 headerTitle: title,
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 12 }}>
-                        <Ionicons name="chevron-back" size={26} color="#FFF" />
+                        <Ionicons name="chevron-back" size={26} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
                 headerRight: () => (
                     <TouchableOpacity onPress={confirmDeleteThread} style={{ paddingHorizontal: 12 }}>
-                        <Ionicons name="trash-outline" size={20} color="#FFF" />
+                        <Ionicons name="trash-outline" size={20} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -250,20 +250,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
     },
     replyUser: { backgroundColor: 'rgba(0,187,255,0.10)' },
-    replyCoach: { backgroundColor: 'rgba(255,255,255,0.06)' },
+    replyCoach: { backgroundColor: theme.colors.surfaceElevated },
     replyMeta: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '700', marginBottom: 6 },
-    replyText: { color: '#FFF', fontSize: 13, lineHeight: 18 },
+    replyText: { color: theme.colors.text, fontSize: 13, lineHeight: 18 },
     closedBox: {
         margin: theme.spacing.lg,
         marginBottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderColor: 'rgba(255,255,255,0.10)',
         borderWidth: 1,
         borderRadius: theme.radius.md,
         padding: theme.spacing.md,
     },
-    closedTitle: { color: '#FFF', fontSize: 12, fontWeight: '900', marginBottom: 4 },
-    closedBody: { color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 16 },
+    closedTitle: { color: theme.colors.text, fontSize: 12, fontWeight: '900', marginBottom: 4 },
+    closedBody: { color: theme.colors.textSecondary, fontSize: 12, lineHeight: 16 },
     replyBar: {
         position: 'absolute',
         left: 0,
@@ -281,13 +281,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
         minHeight: 44,
         maxHeight: 120,
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         borderRadius: theme.radius.md,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     sendButton: {

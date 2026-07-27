@@ -4,6 +4,18 @@ import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/hooks/useTheme';
 import { useProfileStore } from '@/stores/profileStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { supabase } from '@/lib/supabase';
+
+// Fixed path in the public 'coach_audio' Storage bucket (migration 074).
+// Re-recording means uploading a new file to this same path in the Supabase
+// dashboard, THEN bumping COACH_AUDIO_VERSION below — the CDN in front of
+// Storage caches the object by URL and does not reliably purge on overwrite,
+// so without a version bump listeners can keep getting the stale file for a
+// while. Only the playback mechanism itself required an app rebuild.
+const COACH_AUDIO_VERSION = '2';
+const { data: coachAudioUrl } = supabase.storage.from('coach_audio').getPublicUrl('welcome.m4a');
+const coachAudioUri = `${coachAudioUrl.publicUrl}?v=${COACH_AUDIO_VERSION}`;
 
 export default function WelcomeScreen() {
     const router = useRouter();
@@ -11,6 +23,18 @@ export default function WelcomeScreen() {
     const styles = createStyles({ colors, spacing, radius, typography, isDark });
     const { profile } = useProfileStore();
     const isFounder = ['active', 'graduated'].includes(profile?.founder_status);
+
+    const player = useAudioPlayer(coachAudioUri);
+    const playerStatus = useAudioPlayerStatus(player);
+
+    const handleAudioPress = () => {
+        if (playerStatus.playing) {
+            player.pause();
+        } else {
+            if (playerStatus.didJustFinish) player.seekTo(0);
+            player.play();
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -44,7 +68,7 @@ export default function WelcomeScreen() {
                 )}
 
                 {/* Coach Audio Hint */}
-                <TouchableOpacity style={styles.audioCard} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.audioCard} activeOpacity={0.75} onPress={handleAudioPress}>
                     <View style={styles.audioIconWrap}>
                         <Ionicons name="headset-outline" size={18} color={colors.primary} />
                     </View>
@@ -53,7 +77,7 @@ export default function WelcomeScreen() {
                         <Text style={styles.audioSubtext}>A message from your coach</Text>
                     </View>
                     <View style={styles.playBtn}>
-                        <Ionicons name="play" size={14} color={colors.primary} />
+                        <Ionicons name={playerStatus.playing ? 'pause' : 'play'} size={14} color={colors.primary} />
                     </View>
                 </TouchableOpacity>
             </View>

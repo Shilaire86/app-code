@@ -68,7 +68,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: 2,
     },
     textWrap: { flex: 1, gap: 6 },
-    title: { color: '#FFF', fontSize: 15, fontWeight: '900' },
+    title: { color: theme.colors.text, fontSize: 15, fontWeight: '900' },
     body: { color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 18 },
     req: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800' },
     primaryButton: {

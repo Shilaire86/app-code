@@ -190,10 +190,10 @@ export default function ProgressPhotoScreen() {
                 headerShown: true,
                 headerTitle: 'Growth Track',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -204,7 +204,7 @@ export default function ProgressPhotoScreen() {
                         <Image source={{ uri: image }} style={styles.preview} />
                     ) : (
                         <View style={styles.placeholder}>
-                            <Ionicons name="camera-outline" size={60} color="rgba(255,255,255,0.1)" />
+                            <Ionicons name="camera-outline" size={60} color={theme.colors.textTertiary} />
                             <Text style={styles.placeholderText}>Capture your evolution</Text>
                         </View>
                     )}
@@ -244,8 +244,8 @@ export default function ProgressPhotoScreen() {
                             style={[styles.mainButton, styles.libraryButton]}
                             onPress={pickFromLibrary}
                         >
-                            <Ionicons name="images" size={24} color="#FFF" />
-                            <Text style={styles.buttonText}>Choose from Library</Text>
+                            <Ionicons name="images" size={24} color={theme.colors.text} />
+                            <Text style={[styles.buttonText, styles.libraryButtonText]}>Choose from Library</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
@@ -329,9 +329,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 12,
     },
     libraryButton: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
+    },
+    libraryButtonText: {
+        color: theme.colors.text,
     },
     actionRow: {
         flexDirection: 'row',
@@ -348,7 +351,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: theme.colors.primary,
     },
     secondaryButton: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },

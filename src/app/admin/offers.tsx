@@ -19,17 +19,17 @@ export default function AdminOffersScreen() {
                 headerShown: true,
                 headerTitle: 'Admin',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {!isAdmin ? (
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
                         <Text style={styles.primaryButtonText}>Back</Text>
@@ -61,7 +61,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 6,
@@ -83,7 +83,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: theme.spacing.sm,
     },
     header: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
     },

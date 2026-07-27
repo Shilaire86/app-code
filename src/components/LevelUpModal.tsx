@@ -184,7 +184,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     titleText: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#FFF',
+        color: theme.colors.text,
         marginBottom: theme.spacing.md,
         textAlign: 'center',
     },

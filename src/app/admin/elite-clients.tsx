@@ -90,7 +90,7 @@ export default function AdminEliteClientsScreen() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: true, headerTitle: 'Elite Clients' }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.lockedTitle}>Not authorized</Text>
                 </View>
             </View>
@@ -103,10 +103,10 @@ export default function AdminEliteClientsScreen() {
                 headerShown: true,
                 headerTitle: 'Elite Clients',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -139,7 +139,7 @@ export default function AdminEliteClientsScreen() {
                                     </Text>
                                 </View>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.4)" />
+                            <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
                         </TouchableOpacity>
                     )}
                 />
@@ -151,7 +151,7 @@ export default function AdminEliteClientsScreen() {
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    lockedTitle: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 8 },
+    lockedTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 8 },
     emptyText: { color: theme.colors.textSecondary, fontSize: 14 },
     listContainer: { padding: theme.spacing.lg, gap: 12 },
     clientCard: {
@@ -164,7 +164,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
     },
     cardMain: { flex: 1 },
-    clientEmail: { color: '#FFF', fontSize: 15, fontWeight: '800', marginBottom: 2 },
+    clientEmail: { color: theme.colors.text, fontSize: 15, fontWeight: '800', marginBottom: 2 },
     clientName: { color: theme.colors.textSecondary, fontSize: 13, marginBottom: 8 },
     badge: {
         alignSelf: 'flex-start',

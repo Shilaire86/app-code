@@ -97,7 +97,7 @@ export default function ModuleLibraryScreen() {
 
     const renderPlacementBadge = (placement: string) => {
         let text = 'Anytime';
-        let color = '#FFF';
+        let color: string = theme.colors.textSecondary;
 
         switch (placement) {
             case 'pre_workout': text = 'Pre-Workout'; color = '#00b894'; break;
@@ -127,8 +127,8 @@ export default function ModuleLibraryScreen() {
                 options={{
                     headerTitle: 'Modules',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
-                }} 
+                    headerTintColor: theme.colors.text,
+                }}
             />
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -166,7 +166,7 @@ export default function ModuleLibraryScreen() {
                                     onPress={() => handleToggleModule(mod)}
                                 >
                                     {togglingId === mod.id ? (
-                                        <ActivityIndicator size="small" color={isActive ? theme.colors.background : '#FFF'} />
+                                        <ActivityIndicator size="small" color={isActive ? theme.colors.background : theme.colors.text} />
                                     ) : (
                                         <Text style={[styles.toggleText, isActive && styles.toggleTextActive]}>
                                             {isActive ? 'ACTIVE' : 'ACTIVATE'}
@@ -200,14 +200,14 @@ export default function ModuleLibraryScreen() {
                                             <View>
                                                 <Text style={styles.routineName}>{routine.name}</Text>
                                                 <View style={styles.routineMeta}>
-                                                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.5)" />
+                                                    <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
                                                     <Text style={styles.routineTime}>{routine.duration_minutes} min</Text>
-                                                    <Text style={{ color: 'rgba(255,255,255,0.3)' }}>•</Text>
+                                                    <Text style={{ color: theme.colors.textTertiary }}>•</Text>
                                                     {renderPlacementBadge(routine.placement)}
                                                 </View>
                                             </View>
                                         </View>
-                                        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+                                        <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -233,13 +233,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 8,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 24,
         fontWeight: '900',
         marginBottom: 8,
     },
     subtitle: {
-        color: 'rgba(255,255,255,0.6)',
+        color: theme.colors.textSecondary,
         fontSize: 15,
         lineHeight: 22,
     },
@@ -265,13 +265,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingRight: 16,
     },
     moduleName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '800',
         marginBottom: 4,
     },
     moduleDesc: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 13,
         lineHeight: 18,
     },
@@ -290,7 +290,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontWeight: '900',
     },
     toggleBtn: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surfaceElevated,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
@@ -299,7 +299,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: '#00FF80',
     },
     toggleText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '800',
         letterSpacing: 1,
@@ -314,7 +314,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: theme.colors.surfaceElevated,
         padding: 16,
         borderRadius: 12,
     },
@@ -324,7 +324,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 16,
     },
     routineName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '700',
         marginBottom: 4,
@@ -335,7 +335,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 6,
     },
     routineTime: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 13,
     },
     placementBadge: {

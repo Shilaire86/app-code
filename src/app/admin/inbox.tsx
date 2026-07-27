@@ -77,17 +77,17 @@ export default function AdminInboxScreen() {
                 headerShown: true,
                 headerTitle: 'Inbox',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {!isAdmin ? (
                 <View style={styles.centered}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
                         <Text style={styles.primaryButtonText}>Back</Text>
@@ -149,15 +149,15 @@ export default function AdminInboxScreen() {
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.lg, gap: 10 },
-    title: { color: '#FFF', fontSize: 18, fontWeight: '900' },
+    title: { color: theme.colors.text, fontSize: 18, fontWeight: '900' },
     primaryButton: { backgroundColor: theme.colors.primary, paddingHorizontal: 18, paddingVertical: 12, borderRadius: theme.radius.md, minHeight: 44, justifyContent: 'center' },
     primaryButtonText: { color: '#FFF', fontWeight: '900' },
     filters: { padding: theme.spacing.lg, gap: 10 },
     filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    pill: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', backgroundColor: 'rgba(0,0,0,0.12)' },
+    pill: { paddingVertical: 8, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', backgroundColor: theme.colors.surfaceElevated },
     pillActive: { backgroundColor: 'rgba(0,187,255,0.18)', borderColor: 'rgba(0,187,255,0.35)' },
-    pillText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '900' },
-    pillTextActive: { color: '#FFF' },
+    pillText: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '900' },
+    pillTextActive: { color: theme.colors.primary },
     errorBox: { marginHorizontal: theme.spacing.lg, backgroundColor: 'rgba(255,107,107,0.12)', borderColor: 'rgba(255,107,107,0.28)', borderWidth: 1, borderRadius: theme.radius.md, padding: theme.spacing.md, marginBottom: theme.spacing.sm },
     errorTitle: { color: '#FFB3B3', fontSize: 12, fontWeight: '900', marginBottom: 4 },
     errorBody: { color: '#FFB3B3', fontSize: 12, lineHeight: 16 },
@@ -166,6 +166,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
     cardCat: { color: theme.colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 0.6 },
     cardMeta: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '800' },
-    cardSubject: { color: '#FFF', fontSize: 14, fontWeight: '900' },
+    cardSubject: { color: theme.colors.text, fontSize: 14, fontWeight: '900' },
     cardUser: { color: theme.colors.textSecondary, marginTop: 10, fontSize: 11, fontWeight: '700' },
 });

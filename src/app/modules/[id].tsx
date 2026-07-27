@@ -193,7 +193,7 @@ export default function RoutinePlayerScreen() {
                     options={{
                         headerTitle: 'Routine Overview',
                         headerStyle: { backgroundColor: theme.colors.background },
-                        headerTintColor: '#FFF',
+                        headerTintColor: theme.colors.text,
                     }} 
                 />
                 <ScrollView contentContainerStyle={styles.overviewContent}>
@@ -241,7 +241,7 @@ export default function RoutinePlayerScreen() {
                 options={{
                     headerTitle: `${currentExerciseIndex + 1} of ${routine.exercises.length}`,
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => {
                             showAlert('End Routine?', 'Are you sure you want to stop early?', [
@@ -249,7 +249,7 @@ export default function RoutinePlayerScreen() {
                                 { text: 'End', style: 'destructive', onPress: () => router.back() }
                             ]);
                         }}>
-                            <Ionicons name="close" size={24} color="#FFF" />
+                            <Ionicons name="close" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     )
                 }} 
@@ -298,7 +298,7 @@ export default function RoutinePlayerScreen() {
 
                 {currentEx.instructions && (
                     <View style={styles.instructionsBox}>
-                        <Ionicons name="information-circle-outline" size={20} color="rgba(255,255,255,0.6)" />
+                        <Ionicons name="information-circle-outline" size={20} color={theme.colors.textSecondary} />
                         <Text style={styles.instructionsText}>{currentEx.instructions}</Text>
                     </View>
                 )}
@@ -310,7 +310,7 @@ export default function RoutinePlayerScreen() {
                     onPress={handlePrev}
                     disabled={currentExerciseIndex === 0}
                 >
-                    <Ionicons name="play-skip-back" size={24} color="#FFF" />
+                    <Ionicons name="play-skip-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
 
                 {isTimed && (
@@ -323,7 +323,7 @@ export default function RoutinePlayerScreen() {
                 )}
 
                 <TouchableOpacity style={styles.controlBtnSecondary} onPress={handleNext}>
-                    <Ionicons name="play-skip-forward" size={24} color="#FFF" />
+                    <Ionicons name="play-skip-forward" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -349,20 +349,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 16,
     },
     routineTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 28,
         fontWeight: '900',
         textAlign: 'center',
         marginBottom: 8,
     },
     routineSub: {
-        color: 'rgba(255,255,255,0.6)',
+        color: theme.colors.textSecondary,
         fontSize: 15,
         fontWeight: '600',
     },
@@ -374,7 +374,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.05)',
     },
     previewTitle: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
         textTransform: 'uppercase',
@@ -390,13 +390,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 12,
     },
     previewNumber: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '800',
     },
@@ -404,7 +404,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     previewExName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         marginBottom: 2,
@@ -458,7 +458,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 48,
     },
     upNextText: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 14,
         fontWeight: '700',
         textTransform: 'uppercase',
@@ -466,7 +466,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 16,
     },
     activeExName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 32,
         fontWeight: '900',
         textAlign: 'center',
@@ -480,21 +480,21 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 48,
     },
     timerText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 72,
         fontWeight: '800',
         fontVariant: ['tabular-nums'],
     },
     instructionsBox: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         padding: 20,
         borderRadius: 12,
         gap: 12,
         width: '100%',
     },
     instructionsText: {
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.text,
         fontSize: 16,
         lineHeight: 24,
         flex: 1,
@@ -510,7 +510,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
     },

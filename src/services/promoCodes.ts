@@ -14,6 +14,7 @@ export type PromoCode = {
     current_uses: number;
     is_active: boolean;
     expires_at: string | null;
+    grants_founder_status: boolean;
 };
 
 export type PromoValidationResult = {
@@ -96,7 +97,7 @@ export async function validatePromoCode(
             ? `${promo.discount_value}% OFF`
             : promo.discount_type === 'fixed'
             ? `$${promo.discount_value} OFF`
-            : `${promo.discount_value} extra trial days`;
+            : `${promo.discount_value}-day free access, then billed at the standard price${promo.grants_founder_status ? ' — plus permanent Founder status' : ''}`;
 
     return { valid: true, promo, discountLabel };
 }

@@ -204,7 +204,7 @@ export default function HomeScreen() {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.greeting}>Welcome back,</Text>
-                    <Text style={styles.email}>{user?.email}</Text>
+                    <Text style={styles.email}>{profile?.full_name || user?.email?.split('@')[0]}</Text>
                 </View>
                 <View style={styles.headerActions}>
                     <TouchableOpacity
@@ -275,33 +275,36 @@ export default function HomeScreen() {
             {!seenStageHint && (
                 <HintCard
                     title="Your Becoming Stage"
-                    body="Earn points by completing workouts, logging check-ins, and adding photos. Your Stage updates automatically as you progress. Workouts +5, Check-in +2, Photo +10."
+                    body="Earn points by completing workouts, logging check-ins, and adding photos. Your Stage updates automatically as you progress. Workouts +50, Check-in +10, Photo +25. Tap the card below to see the full path."
                     onDismiss={() => dismiss('stage_badge')}
                 />
             )}
 
-            <Card style={styles.stageCard}>
-                <View style={styles.stageHeader}>
-                    <View style={[styles.stageBadge, { backgroundColor: (colors as any)[displayStage] || colors.primary }]}>
-                        <Text style={styles.stageText}>{displayStage.toUpperCase()}</Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/progress/stage')}>
+                <Card style={styles.stageCard}>
+                    <View style={styles.stageHeader}>
+                        <View style={[styles.stageBadge, { backgroundColor: (colors as any)[displayStage] || colors.primary }]}>
+                            <Text style={styles.stageText}>{displayStage.toUpperCase()}</Text>
+                        </View>
+                        <Text style={styles.stageTitle} numberOfLines={1}>Your Becoming Stage</Text>
+                        <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
                     </View>
-                    <Text style={styles.stageTitle}>Your Becoming Stage</Text>
-                </View>
 
-                <Text style={styles.stageCopy}>{stageCopy}</Text>
+                    <Text style={styles.stageCopy}>{stageCopy}</Text>
 
-                <View style={styles.progressContainer}>
-                    <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: (colors as any)[displayStage] || colors.primary }]} />
+                    <View style={styles.progressContainer}>
+                        <View style={styles.progressBarBg}>
+                            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: (colors as any)[displayStage] || colors.primary }]} />
+                        </View>
+                        <Text style={styles.progressText}>{Math.round(progress)}% to next stage</Text>
                     </View>
-                    <Text style={styles.progressText}>{Math.round(progress)}% to next stage</Text>
-                </View>
 
-                <View style={styles.pointsRow}>
-                    <Ionicons name="star" size={16} color={colors.primary} />
-                    <Text style={styles.pointsText}>{totalPoints} Becoming Points</Text>
-                </View>
-            </Card>
+                    <View style={styles.pointsRow}>
+                        <Ionicons name="star" size={16} color={colors.primary} />
+                        <Text style={styles.pointsText}>{totalPoints} Becoming Points</Text>
+                    </View>
+                </Card>
+            </TouchableOpacity>
 
             <Card style={styles.consistencyCard}>
                 <View style={styles.consistencyTop}>
@@ -1035,6 +1038,7 @@ const createStyles = ({ colors, spacing, radius, typography, isDark }: Pick<Retu
         letterSpacing: 1,
     },
     stageTitle: {
+        flexShrink: 1,
         color: colors.text,
         fontSize: typography.h3.fontSize,
         fontWeight: typography.h3.fontWeight as any,

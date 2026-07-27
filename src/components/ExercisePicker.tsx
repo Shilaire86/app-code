@@ -86,7 +86,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
             <View style={styles.modalContainer}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                        <Ionicons name="close" size={28} color="#FFF" />
+                        <Ionicons name="close" size={28} color={theme.colors.text} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Add Exercise</Text>
                     <View style={{ width: 28 }} />
@@ -138,7 +138,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                         }
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>No exercises found matching your search and equipment.</Text>
+                                <Text style={styles.emptyText}>No exercises found matching your search.</Text>
                             </View>
                         }
                     />
@@ -162,7 +162,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingBottom: theme.spacing.md,
     },
     headerTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '700',
     },
@@ -183,7 +183,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: '#FFF',
+        color: theme.colors.text,
         marginLeft: theme.spacing.sm,
         fontSize: 16,
     },
@@ -213,7 +213,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     exerciseName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '600',
     },

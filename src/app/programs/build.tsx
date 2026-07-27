@@ -193,11 +193,11 @@ export default function BuildProgramScreen() {
                     title: 'Build Program',
                     headerShown: true,
                     headerTransparent: true,
-                    headerTitleStyle: { color: '#FFF' },
-                    headerTintColor: '#FFF',
+                    headerTitleStyle: { color: theme.colors.text },
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -280,7 +280,7 @@ export default function BuildProgramScreen() {
 
                     {activeDay.exercises.length === 0 ? (
                         <View style={styles.emptyDay}>
-                            <Ionicons name="barbell-outline" size={36} color="rgba(255,255,255,0.05)" />
+                            <Ionicons name="barbell-outline" size={36} color={theme.colors.textTertiary} />
                             <Text style={styles.emptyDayText}>No exercises yet</Text>
                         </View>
                     ) : (
@@ -303,14 +303,14 @@ export default function BuildProgramScreen() {
                                                 style={styles.counterBtn}
                                                 onPress={() => updateExercise(activeDayIndex, exIdx, { sets: Math.max(1, ex.sets - 1) })}
                                             >
-                                                <Ionicons name="remove" size={14} color="#FFF" />
+                                                <Ionicons name="remove" size={14} color={theme.colors.text} />
                                             </TouchableOpacity>
                                             <Text style={styles.counterVal}>{ex.sets}</Text>
                                             <TouchableOpacity
                                                 style={styles.counterBtn}
                                                 onPress={() => updateExercise(activeDayIndex, exIdx, { sets: ex.sets + 1 })}
                                             >
-                                                <Ionicons name="add" size={14} color="#FFF" />
+                                                <Ionicons name="add" size={14} color={theme.colors.text} />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -408,7 +408,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 12,
         height: 48,
         paddingHorizontal: 16,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
@@ -491,7 +491,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 10,
         height: 44,
         paddingHorizontal: 14,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '600',
         borderWidth: 1,
@@ -521,7 +521,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 12,
     },
     exName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '700',
     },
@@ -548,7 +548,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     counter: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 8,
         height: 34,
         justifyContent: 'space-between',
@@ -558,24 +558,24 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 26,
         height: 26,
         borderRadius: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
     },
     counterVal: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '700',
     },
     valueBtn: {
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 8,
         height: 34,
         alignItems: 'center',
         justifyContent: 'center',
     },
     valueBtnText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '600',
     },
@@ -629,7 +629,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     saveButtonDisabled: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        opacity: 0.6,
     },
     saveButtonText: {
         color: '#000',

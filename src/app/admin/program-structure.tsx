@@ -625,17 +625,17 @@ export default function AdminProgramStructureScreen() {
                 headerShown: true,
                 headerTitle: 'Program Structure',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={goBack} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {!isAdmin ? (
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
                         <Text style={styles.primaryButtonText}>Back</Text>
@@ -643,7 +643,7 @@ export default function AdminProgramStructureScreen() {
                 </View>
             ) : !programId ? (
                 <View style={styles.center}>
-                    <Ionicons name="alert-circle-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="alert-circle-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Missing program</Text>
                     <Text style={styles.subtitle}>Open this screen with a programId.</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
@@ -692,7 +692,7 @@ export default function AdminProgramStructureScreen() {
                                             onPress={() => confirmDeleteWeek(w)}
                                             disabled={deletingWeekId === w.id}
                                         >
-                                            <Ionicons name="trash-outline" size={14} color="#FFF" />
+                                            <Ionicons name="trash-outline" size={14} color={theme.colors.error} />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
@@ -739,7 +739,7 @@ export default function AdminProgramStructureScreen() {
                                             onPress={() => confirmDeleteDay(d)}
                                             disabled={deletingDayId === d.id}
                                         >
-                                            <Ionicons name="trash-outline" size={14} color="#FFF" />
+                                            <Ionicons name="trash-outline" size={14} color={theme.colors.error} />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
@@ -783,7 +783,7 @@ export default function AdminProgramStructureScreen() {
                                                 onPress={() => confirmDeleteExercise(ex)}
                                                 disabled={deletingExerciseId === ex.id}
                                                     >
-                                                        <Ionicons name="trash-outline" size={16} color="#FFF" />
+                                                        <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
                                                     </TouchableOpacity>
                                                 </View>
                                             ))}
@@ -854,7 +854,7 @@ export default function AdminProgramStructureScreen() {
                                                         onPress={() => confirmDeleteExercise(ex)}
                                                         disabled={deletingExerciseId === ex.id}
                                                     >
-                                                        <Ionicons name="trash-outline" size={16} color="#FFF" />
+                                                        <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
                                                     </TouchableOpacity>
                                                 </View>
                                             ))}
@@ -936,7 +936,7 @@ export default function AdminProgramStructureScreen() {
                                                         onPress={() => confirmDeleteExercise(ex)}
                                                         disabled={deletingExerciseId === ex.id}
                                                     >
-                                                        <Ionicons name="trash-outline" size={16} color="#FFF" />
+                                                        <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
                                                     </TouchableOpacity>
                                                 </View>
                                             ))}
@@ -1008,7 +1008,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 6,
@@ -1038,7 +1038,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: theme.spacing.md,
     },
     sectionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '900',
     },
@@ -1046,7 +1046,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: theme.radius.md,
         paddingHorizontal: 10,
         paddingVertical: 8,
@@ -1108,19 +1108,19 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 999,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.12)',
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
     pillActive: {
         backgroundColor: 'rgba(0,187,255,0.18)',
         borderColor: 'rgba(0,187,255,0.35)',
     },
     pillText: {
-        color: 'rgba(255,255,255,0.75)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
     },
     pillTextActive: {
-        color: '#FFF',
+        color: theme.colors.primary,
     },
     loadingRow: {
         paddingVertical: 12,
@@ -1142,7 +1142,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 12,
         borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
@@ -1151,7 +1151,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         minWidth: 0,
     },
     listTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '900',
     },
@@ -1197,11 +1197,11 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         justifyContent: 'center',
     },
     warmupChipOff: {
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderColor: 'rgba(255,255,255,0.10)',
     },
     warmupChipText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 11,
         fontWeight: '900',
     },
@@ -1217,7 +1217,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         justifyContent: 'center' as const,
     },
     cooldownChipText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 11,
         fontWeight: '900' as const,
     },
@@ -1235,7 +1235,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingTop: theme.spacing.sm,
     },
     subSectionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '900',
     },
@@ -1247,7 +1247,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingTop: theme.spacing.md,
     },
     formTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '900',
     },
@@ -1256,24 +1256,24 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     input: {
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         borderRadius: theme.radius.md,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     inputHalf: {
         flex: 1,
     },
     pickerValueText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     pickerPlaceholderText: {
-        color: 'rgba(255,255,255,0.35)',
+        color: theme.colors.textTertiary,
         fontSize: 13,
     },
     primaryButton: {

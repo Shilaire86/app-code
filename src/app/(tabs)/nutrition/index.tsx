@@ -211,7 +211,7 @@ export default function NutritionDashboard() {
                          body="The Dynamic Nutrition System helps you hit your macros and guarantees results. Upgrade to gain full access to macro tracking, meal libraries, and smart food suggestions."
                          requiredTier="standard"
                          onUpgradePress={() => router.push('/subscribe')}
-                         onLearnMorePress={() => {}}
+                         onLearnMorePress={() => router.push('/help/quick-start')}
                      />
                 </View>
             </View>
@@ -447,7 +447,7 @@ export default function NutritionDashboard() {
                             style={[styles.myMealsBtn, styles.actionBtnHalf]}
                             onPress={() => router.push('/nutrition/saved-meals')}
                         >
-                            <Ionicons name="fast-food" size={18} color="#FFF" />
+                            <Ionicons name="fast-food" size={18} color={colors.text} />
                             <Text style={styles.myMealsBtnText}>MY MEALS</Text>
                         </TouchableOpacity>
                     )}

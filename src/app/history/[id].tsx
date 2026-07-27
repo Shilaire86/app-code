@@ -4,6 +4,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { goBackOr } from '@/lib/navigation';
 
 export default function LogDetailScreen() {
     const theme = useTheme();
@@ -63,9 +64,11 @@ export default function LogDetailScreen() {
         );
     }
 
-    // Group sets by exercise
+    // Group sets by exercise. `exercises` is null for custom/quick-workout
+    // sets that don't match a catalog exercise — those carry their name in
+    // the set_logs.exercise_name text column instead.
     const groupedSets = sets.reduce((acc: any, set: any) => {
-        const name = set.exercises.name;
+        const name = set.exercises?.name || set.exercise_name || 'Custom Exercise';
         if (!acc[name]) acc[name] = [];
         acc[name].push(set);
         return acc;
@@ -74,9 +77,15 @@ export default function LogDetailScreen() {
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
+                headerShown: true,
                 headerTitle: 'Workout Summary',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/history')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <ScrollView contentContainerStyle={styles.content}>

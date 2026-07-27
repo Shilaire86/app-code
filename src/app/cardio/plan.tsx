@@ -102,7 +102,7 @@ export default function CardioPlanScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#FFF" />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Weekly Cardio Plan</Text>
                 <TouchableOpacity onPress={handleGenerate} disabled={generating}>
@@ -235,7 +235,7 @@ export default function CardioPlanScreen() {
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0F0F0F',
+        backgroundColor: theme.colors.background,
     },
     header: {
         flexDirection: 'row',
@@ -248,7 +248,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: '900',
-        color: '#FFF',
+        color: theme.colors.text,
     },
     scrollContent: {
         paddingHorizontal: 24,
@@ -270,17 +270,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 4,
     },
     goalValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 22,
         fontWeight: '900',
         marginBottom: 4,
     },
     goalHint: {
-        color: 'rgba(255,255,255,0.5)',
+        color: theme.colors.textSecondary,
         fontSize: 13,
     },
     emptyBox: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: theme.colors.surface,
         borderRadius: 20,
         padding: 32,
         alignItems: 'center',
@@ -289,7 +289,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderStyle: 'dashed',
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 20,
         fontWeight: '800',
         marginTop: 16,
@@ -350,7 +350,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         color: theme.colors.primary,
     },
     dayProtocolName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '700',
         textAlign: 'center',
@@ -373,7 +373,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 4,
     },
     dayPlacement: {
-        color: 'rgba(255,255,255,0.3)',
+        color: theme.colors.textTertiary,
         fontSize: 9,
         fontWeight: '600',
         textTransform: 'uppercase',
@@ -381,7 +381,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 8,
     },
     restText: {
-        color: 'rgba(255,255,255,0.15)',
+        color: theme.colors.textTertiary,
         fontSize: 24,
         marginTop: 20,
     },

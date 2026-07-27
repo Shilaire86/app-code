@@ -70,7 +70,7 @@ export default function AdminActivityScreen() {
             case 'milestone': return <Ionicons name="star" size={20} color="#FFD700" />;
             case 'stage_up': return <Ionicons name="chevron-up-circle" size={20} color="#00E676" />;
             case 'streak': return <Ionicons name="flame" size={20} color="#FF6B6B" />;
-            default: return <Ionicons name="pulse" size={20} color="rgba(255,255,255,0.5)" />;
+            default: return <Ionicons name="pulse" size={20} color={theme.colors.textSecondary} />;
         }
     };
 
@@ -97,7 +97,7 @@ export default function AdminActivityScreen() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: true, headerTitle: 'Activity' }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.lockedTitle}>Not authorized</Text>
                 </View>
             </View>
@@ -110,10 +110,10 @@ export default function AdminActivityScreen() {
                 headerShown: true,
                 headerTitle: 'Live Activity',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -148,7 +148,7 @@ export default function AdminActivityScreen() {
                     refreshing={loading}
                     ListEmptyComponent={
                         <View style={styles.center}>
-                            <Ionicons name="pulse" size={48} color="rgba(255,255,255,0.1)" />
+                            <Ionicons name="pulse" size={48} color={theme.colors.textTertiary} />
                             <Text style={styles.emptyText}>No activity found</Text>
                         </View>
                     }
@@ -189,11 +189,11 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginRight: 8,
     },
     pillActive: { backgroundColor: 'rgba(0,187,255,0.15)', borderColor: theme.colors.primary },
-    pillText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '800' },
+    pillText: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '800' },
     pillTextActive: { color: theme.colors.primary },
 
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    lockedTitle: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 8 },
+    lockedTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 8 },
     emptyText: { color: theme.colors.textSecondary, fontSize: 14, marginTop: 8 },
 
     listContainer: { padding: theme.spacing.lg },
@@ -211,14 +211,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 12,
     },
     logMain: { flex: 1 },
     logHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-    logUser: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+    logUser: { color: theme.colors.text, fontSize: 13, fontWeight: '800' },
     logTime: { color: theme.colors.textSecondary, fontSize: 11 },
-    logDesc: { color: 'rgba(255,255,255,0.8)', fontSize: 14, lineHeight: 20 },
+    logDesc: { color: theme.colors.textSecondary, fontSize: 14, lineHeight: 20 },
 });

@@ -82,7 +82,14 @@ export async function fetchProgramDaySession(programDayId: string) {
                 exercise_alternatives: ex.alternatives ?? [],
                 notes: ex.notes ?? null,
                 exercises: {
+                    // `id` is a stable local key for UI matching (real catalog id
+                    // when we found one, else this program_day_exercises row's
+                    // own id) — it is NOT safe to write to set_logs.exercise_id,
+                    // which has a real FK to the exercises table. Use
+                    // `catalogExerciseId` (null when there's no catalog match)
+                    // for anything that gets persisted.
                     id: matched?.id || ex.id,
+                    catalogExerciseId: matched?.id ?? null,
                     name: ex.exercise_name,
                     video_url: matched?.video_url || null,
                     alternatives: matched?.alternatives || [],

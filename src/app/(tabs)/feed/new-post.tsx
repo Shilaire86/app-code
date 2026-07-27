@@ -77,10 +77,10 @@ export default function NewPostScreen() {
                 headerShown: true,
                 headerTitle: 'New Post',
                 headerStyle: { backgroundColor: colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/feed')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
                     </TouchableOpacity>
                 ),
                 headerRight: () => (
@@ -230,7 +230,7 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             color: '#FFF',
         },
         titleInput: {
-            color: '#FFF',
+            color: colors.text,
             fontSize: 22,
             fontWeight: '800',
             marginBottom: spacing.md,
@@ -239,13 +239,13 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
             borderBottomColor: 'rgba(255,255,255,0.07)',
         },
         bodyInput: {
-            color: 'rgba(255,255,255,0.85)',
+            color: colors.text,
             fontSize: 16,
             lineHeight: 24,
             minHeight: 160,
         },
         charCount: {
-            color: 'rgba(255,255,255,0.2)',
+            color: colors.textTertiary,
             fontSize: 11,
             textAlign: 'right',
             marginTop: spacing.sm,
@@ -273,7 +273,7 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
         },
         agreeText: {
             flex: 1,
-            color: 'rgba(255,255,255,0.5)',
+            color: colors.textSecondary,
             fontSize: 13,
             lineHeight: 18,
         },
@@ -293,7 +293,7 @@ const createStyles = ({ colors, spacing, radius, typography }: ReturnType<typeof
         },
         guidelineText: {
             flex: 1,
-            color: 'rgba(255,255,255,0.45)',
+            color: colors.textSecondary,
             fontSize: 12,
             lineHeight: 17,
         },

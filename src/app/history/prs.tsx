@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import PRChart from '@/components/charts/PRChart';
+import { goBackOr } from '@/lib/navigation';
 
 type DateRange = '30d' | '90d' | 'all';
 
@@ -60,9 +61,15 @@ export default function PRDashboardScreen() {
         return (
             <View style={[styles.container, styles.centered]}>
                 <Stack.Screen options={{
+                    headerShown: true,
                     headerTitle: 'Personal Records',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/history')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                    ),
                 }} />
                 <ActivityIndicator color={theme.colors.primary} />
             </View>
@@ -72,9 +79,15 @@ export default function PRDashboardScreen() {
     return (
         <View style={styles.container}>
             <Stack.Screen options={{
+                headerShown: true,
                 headerTitle: 'Personal Records',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/history')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                ),
             }} />
 
             <FlatList

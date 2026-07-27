@@ -109,7 +109,7 @@ export default function AdminTicketsScreen() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: true, headerTitle: 'Tickets' }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.lockedTitle}>Not authorized</Text>
                 </View>
             </View>
@@ -122,10 +122,10 @@ export default function AdminTicketsScreen() {
                 headerShown: true,
                 headerTitle: 'Support Tickets',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -163,7 +163,7 @@ export default function AdminTicketsScreen() {
                     refreshing={loading}
                     ListEmptyComponent={
                         <View style={styles.center}>
-                            <Ionicons name="bug-outline" size={48} color="rgba(255,255,255,0.1)" />
+                            <Ionicons name="bug-outline" size={48} color={theme.colors.textTertiary} />
                             <Text style={styles.emptyText}>No tickets found</Text>
                         </View>
                     }
@@ -224,11 +224,11 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.1)',
     },
     pillActive: { backgroundColor: 'rgba(0,187,255,0.15)', borderColor: theme.colors.primary },
-    pillText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '800' },
+    pillText: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '800' },
     pillTextActive: { color: theme.colors.primary },
 
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    lockedTitle: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 8 },
+    lockedTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 8 },
     emptyText: { color: theme.colors.textSecondary, fontSize: 14, marginTop: 8 },
 
     listContainer: { padding: theme.spacing.lg },
@@ -241,13 +241,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
     },
     ticketTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    categoryBadge: { backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-    categoryText: { color: '#FFF', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+    categoryBadge: { backgroundColor: theme.colors.surfaceElevated, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+    categoryText: { color: theme.colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
     statusBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     statusText: { color: theme.colors.primary, fontSize: 11, fontWeight: '900' },
-    
-    subject: { color: '#FFF', fontSize: 16, fontWeight: '800', marginBottom: 6 },
-    desc: { color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 20, marginBottom: 16 },
+
+    subject: { color: theme.colors.text, fontSize: 16, fontWeight: '800', marginBottom: 6 },
+    desc: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 16 },
     
     footerRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 12 },
     email: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },

@@ -174,7 +174,7 @@ export default function CreateProgramScreen() {
                         onPress={() => setSelectedGoal(g.key)}
                     >
                         <View style={styles.goalIcon}>
-                            <Ionicons name={g.icon as any} size={24} color={selectedGoal === g.key ? theme.colors.primary : '#FFF'} />
+                            <Ionicons name={g.icon as any} size={24} color={selectedGoal === g.key ? theme.colors.primary : theme.colors.textSecondary} />
                         </View>
                         <View style={styles.goalContent}>
                             <Text style={styles.goalTitle}>{g.label}</Text>
@@ -189,7 +189,7 @@ export default function CreateProgramScreen() {
 
             <View style={styles.navRow}>
                 <TouchableOpacity style={styles.backButton} onPress={() => setStep('template')}>
-                    <Ionicons name="arrow-back" size={18} color="#FFF" />
+                    <Ionicons name="arrow-back" size={18} color={theme.colors.text} />
                     <Text style={styles.backButtonText}>Back</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.nextButton} onPress={() => setStep('duration')}>
@@ -240,7 +240,7 @@ export default function CreateProgramScreen() {
 
             <View style={styles.navRow}>
                 <TouchableOpacity style={styles.backButton} onPress={() => setStep('goal')}>
-                    <Ionicons name="arrow-back" size={18} color="#FFF" />
+                    <Ionicons name="arrow-back" size={18} color={theme.colors.text} />
                     <Text style={styles.backButtonText}>Back</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.generateButton} onPress={handleGenerate}>
@@ -293,7 +293,7 @@ export default function CreateProgramScreen() {
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <Stack.Screen options={{ title: 'Create Program', headerShown: true, headerTransparent: true, headerTitleStyle: { color: '#FFF' }, headerTintColor: '#FFF' }} />
+                <Stack.Screen options={{ title: 'Create Program', headerShown: true, headerTransparent: true, headerTitleStyle: { color: theme.colors.text }, headerTintColor: theme.colors.text }} />
                 <ActivityIndicator color={theme.colors.primary} size="large" />
             </View>
         );
@@ -306,11 +306,11 @@ export default function CreateProgramScreen() {
                     title: step === 'done' ? 'Success!' : 'Create Program',
                     headerShown: true,
                     headerTransparent: true,
-                    headerTitleStyle: { color: '#FFF' },
-                    headerTintColor: '#FFF',
+                    headerTitleStyle: { color: theme.colors.text },
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -366,7 +366,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 2,
     },
     stepTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 26,
         fontWeight: '900',
         marginTop: 16,
@@ -398,7 +398,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 8,
     },
     optionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 17,
         fontWeight: '700',
     },
@@ -445,7 +445,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 6,
     },
     slotChip: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 6,
@@ -468,7 +468,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 14,
@@ -477,7 +477,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     goalTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
@@ -501,7 +501,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.06)',
     },
     durationNum: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 28,
         fontWeight: '900',
     },
@@ -519,7 +519,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
     },
     summaryTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
         marginBottom: 16,
@@ -536,7 +536,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 14,
     },
     summaryVal: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '600',
     },
@@ -577,7 +577,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.15)',
     },
     backButtonText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '600',
     },
@@ -603,7 +603,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingTop: 80,
     },
     generatingTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 22,
         fontWeight: '800',
         marginTop: 24,
@@ -625,7 +625,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 16,
     },
     doneTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 28,
         fontWeight: '900',
     },

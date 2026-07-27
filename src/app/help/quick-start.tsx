@@ -50,10 +50,10 @@ export default function QuickStartGuideScreen() {
                     headerShown: true,
                     headerTitle: 'Quick Start Guide',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -66,14 +66,14 @@ export default function QuickStartGuideScreen() {
                     <Text style={styles.p}>
                         Your stage reflects consistency over time. Earn points by showing up.
                     </Text>
-                    <Text style={styles.bullet}>- Workout: 5 points</Text>
-                    <Text style={styles.bullet}>- Progress Entry: 2 points</Text>
-                    <Text style={styles.bullet}>- Photo: 10 points</Text>
+                    <Text style={styles.bullet}>- Workout: 50 points</Text>
+                    <Text style={styles.bullet}>- Progress Entry: 10 points</Text>
+                    <Text style={styles.bullet}>- Photo: 25 points</Text>
                     <Text style={[styles.p, { marginTop: 8 }]}>Stage thresholds:</Text>
                     <Text style={styles.bullet}>- Initiate: 0</Text>
-                    <Text style={styles.bullet}>- Practitioner: 10</Text>
-                    <Text style={styles.bullet}>- Devoted: 50</Text>
-                    <Text style={styles.bullet}>- Embodied: 150</Text>
+                    <Text style={styles.bullet}>- Practitioner: 250</Text>
+                    <Text style={styles.bullet}>- Devoted: 1,000</Text>
+                    <Text style={styles.bullet}>- Embodied: 2,500</Text>
                 </GuideCard>
 
                 <GuideCard
@@ -151,10 +151,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
         padding: theme.spacing.lg,
     },
-    cardTitle: { color: '#FFF', fontSize: 16, fontWeight: '900', marginBottom: 8 },
+    cardTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900', marginBottom: 8 },
     cardBody: { gap: 4 },
-    p: { color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 18 },
-    bullet: { color: 'rgba(255,255,255,0.78)', fontSize: 13, lineHeight: 18 },
+    p: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 18 },
+    bullet: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 18 },
     ctaRow: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     ctaButton: {
         flexDirection: 'row',

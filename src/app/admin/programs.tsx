@@ -434,17 +434,17 @@ export default function AdminProgramsScreen() {
                 headerShown: true,
                 headerTitle: 'Admin',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {!isAdmin ? (
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
                         <Text style={styles.primaryButtonText}>Back</Text>
@@ -557,7 +557,7 @@ export default function AdminProgramsScreen() {
                         <ScrollView contentContainerStyle={styles.list}>
                             {programs.length === 0 ? (
                                 <View style={styles.emptyBox}>
-                                    <Ionicons name="list-outline" size={46} color="rgba(255,255,255,0.12)" />
+                                    <Ionicons name="list-outline" size={46} color={theme.colors.textTertiary} />
                                     <Text style={styles.emptyTitle}>No programs found</Text>
                                     <Text style={styles.emptyBody}>Create or seed programs to manage publishing.</Text>
                                 </View>
@@ -680,14 +680,14 @@ export default function AdminProgramsScreen() {
                                                             onPress={() => startEdit(p)}
                                                             disabled={isDeleting}
                                                         >
-                                                            <Ionicons name="create-outline" size={18} color="#FFF" />
+                                                            <Ionicons name="create-outline" size={18} color={theme.colors.text} />
                                                         </TouchableOpacity>
                                                         <TouchableOpacity
                                                             style={[styles.iconButton, styles.iconButtonDanger]}
                                                             onPress={() => confirmDelete(p.id, String(p.name ?? 'Program'))}
                                                             disabled={isDeleting}
                                                         >
-                                                            <Ionicons name="trash-outline" size={18} color="#FFF" />
+                                                            <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
                                                         </TouchableOpacity>
                                                     </>
                                                 )}
@@ -717,7 +717,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 6,
@@ -751,7 +751,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 8,
     },
     header: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
     },
@@ -781,7 +781,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         gap: 10,
     },
     creatorTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '900',
     },
@@ -791,7 +791,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         lineHeight: 16,
     },
     fieldLabel: {
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
     },
@@ -804,28 +804,28 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: theme.radius.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.12)',
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
     templatePillActive: {
         backgroundColor: 'rgba(0,187,255,0.18)',
         borderColor: 'rgba(0,187,255,0.35)',
     },
     templatePillText: {
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '800',
     },
     templatePillTextActive: {
-        color: '#FFF',
+        color: theme.colors.primary,
     },
     input: {
-        backgroundColor: 'rgba(0,0,0,0.18)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
         borderRadius: theme.radius.md,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
     },
     tierRow: {
@@ -839,20 +839,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 999,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.12)',
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
     tierPillActive: {
         backgroundColor: 'rgba(0,187,255,0.18)',
         borderColor: 'rgba(0,187,255,0.35)',
     },
     tierPillText: {
-        color: 'rgba(255,255,255,0.8)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         fontWeight: '900',
         textTransform: 'uppercase',
     },
     tierPillTextActive: {
-        color: '#FFF',
+        color: theme.colors.primary,
     },
     publishRow: {
         flexDirection: 'row',
@@ -900,7 +900,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         minWidth: 0,
     },
     programName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '900',
     },
@@ -911,7 +911,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginTop: 4,
     },
     programDesc: {
-        color: 'rgba(255,255,255,0.7)',
+        color: theme.colors.textSecondary,
         fontSize: 12,
         lineHeight: 16,
         marginTop: 6,
@@ -920,14 +920,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     editBox: {
         marginTop: 6,
         gap: 10,
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: theme.radius.md,
         padding: 12,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
     editTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '900',
     },
@@ -955,12 +955,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.12)',
     },
     editButtonSecondaryText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '900',
     },
     editButtonPrimaryText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 12,
         fontWeight: '900',
     },
@@ -970,7 +970,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: 'rgba(0,0,0,0.12)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: theme.radius.md,
         paddingHorizontal: 10,
         paddingVertical: 6,
@@ -994,7 +994,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.10)',
     },
@@ -1003,7 +1003,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,107,107,0.25)',
     },
     statusPill: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 11,
         fontWeight: '900',
         paddingHorizontal: 8,
@@ -1017,7 +1017,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(0,187,255,0.35)',
     },
     statusOff: {
-        backgroundColor: 'rgba(255,255,255,0.10)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.12)',
     },
@@ -1050,7 +1050,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.08)',
     },
     emptyTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '900',
         marginTop: 10,

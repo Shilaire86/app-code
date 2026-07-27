@@ -260,7 +260,7 @@ export default function AdminUsersScreen() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: true, headerTitle: 'Users' }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.lockedTitle}>Not authorized</Text>
                 </View>
             </View>
@@ -273,18 +273,18 @@ export default function AdminUsersScreen() {
                 headerShown: true,
                 headerTitle: 'Manage Users',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             <View style={styles.topSection}>
                 <View style={styles.searchWrap}>
-                    <Ionicons name="search" size={20} color="rgba(255,255,255,0.4)" />
-                    <TextInput 
+                    <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+                    <TextInput
                         style={styles.searchInput}
                         value={search}
                         onChangeText={setSearch}
@@ -294,7 +294,7 @@ export default function AdminUsersScreen() {
                     />
                     {search.length > 0 && (
                         <TouchableOpacity onPress={() => setSearch('')}>
-                            <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+                            <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -371,7 +371,7 @@ export default function AdminUsersScreen() {
                                 <Ionicons
                                     name="ribbon"
                                     size={22}
-                                    color={item.founder_status === 'none' ? 'rgba(255,255,255,0.3)' : '#D4824A'}
+                                    color={item.founder_status === 'none' ? theme.colors.textTertiary : '#D4824A'}
                                 />
                             </TouchableOpacity>
 
@@ -411,7 +411,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
-    searchInput: { flex: 1, color: '#FFF', paddingHorizontal: 10, fontSize: 15 },
+    searchInput: { flex: 1, color: theme.colors.text, paddingHorizontal: 10, fontSize: 15 },
     filterScroll: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
     tierPill: {
         paddingHorizontal: 12,
@@ -419,14 +419,14 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 999,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.15)',
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
     tierPillActive: { backgroundColor: 'rgba(0,187,255,0.1)', borderColor: theme.colors.primary },
-    tierPillText: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800' },
+    tierPillText: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '800' },
     tierPillTextActive: { color: theme.colors.primary },
-    
+
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    lockedTitle: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 8 },
+    lockedTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 8 },
     emptyText: { color: theme.colors.textSecondary, fontSize: 14 },
     
     listContainer: { padding: theme.spacing.lg, paddingTop: 0, gap: 12 },
@@ -444,21 +444,21 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         backgroundColor: 'rgba(255,107,107,0.03)',
     },
     cardMain: { flex: 1 },
-    userEmail: { color: '#FFF', fontSize: 15, fontWeight: '800', marginBottom: 2 },
+    userEmail: { color: theme.colors.text, fontSize: 15, fontWeight: '800', marginBottom: 2 },
     userName: { color: theme.colors.textSecondary, fontSize: 13, marginBottom: 8 },
     badgeRow: { flexDirection: 'row', gap: 6 },
     tierBadge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: theme.radius.sm,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surfaceElevated,
     },
-    tierBadgeText: { color: 'rgba(255,255,255,0.9)', fontSize: 10, fontWeight: '900' },
+    tierBadgeText: { color: theme.colors.text, fontSize: 10, fontWeight: '900' },
     blockBtn: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginLeft: 12,

@@ -81,11 +81,11 @@ export default function QuickWorkoutScreen() {
                     title: 'Quick Workout',
                     headerShown: true,
                     headerTransparent: true,
-                    headerTitleStyle: { color: '#FFF' },
-                    headerTintColor: '#FFF',
+                    headerTitleStyle: { color: theme.colors.text },
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/programs')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -100,7 +100,7 @@ export default function QuickWorkoutScreen() {
                 {selectedExercises.length === 0 ? (
                     <View style={styles.emptyState}>
                         <View style={styles.emptyIcon}>
-                            <Ionicons name="barbell-outline" size={48} color="rgba(255,255,255,0.05)" />
+                            <Ionicons name="barbell-outline" size={48} color={theme.colors.textTertiary} />
                         </View>
                         <Text style={styles.emptyText}>No exercises added yet.</Text>
                         <TouchableOpacity 
@@ -133,14 +133,14 @@ export default function QuickWorkoutScreen() {
                                                 onPress={() => updateExercise(index, { sets: Math.max(1, ex.sets - 1) })}
                                                 style={styles.counterBtn}
                                             >
-                                                <Ionicons name="remove" size={16} color="#FFF" />
+                                                <Ionicons name="remove" size={16} color={theme.colors.text} />
                                             </TouchableOpacity>
                                             <Text style={styles.counterVal}>{ex.sets}</Text>
-                                            <TouchableOpacity 
+                                            <TouchableOpacity
                                                 onPress={() => updateExercise(index, { sets: ex.sets + 1 })}
                                                 style={styles.counterBtn}
                                             >
-                                                <Ionicons name="add" size={16} color="#FFF" />
+                                                <Ionicons name="add" size={16} color={theme.colors.text} />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -237,7 +237,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.xl,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 28,
         fontWeight: '900',
     },
@@ -256,7 +256,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: theme.colors.surfaceElevated,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 16,
@@ -302,7 +302,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flex: 1,
     },
     exerciseName: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
     },
@@ -328,7 +328,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     counter: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 8,
         height: 36,
         justifyContent: 'space-between',
@@ -338,24 +338,24 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: theme.colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
     },
     counterVal: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         fontWeight: '700',
     },
     repsBtn: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: 8,
         height: 36,
         alignItems: 'center',
         justifyContent: 'center',
     },
     repsText: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 13,
         fontWeight: '600',
     },

@@ -269,6 +269,36 @@ export async function markCardioComplete(entryId: string): Promise<void> {
     if (error) throw error;
 }
 
+/**
+ * Logs a completed cardio session to workout history. Regular users can only
+ * insert `workout_logs` rows they own — the `workouts` table (structured
+ * program content) has no user-facing insert policy — so this follows the
+ * same pattern as quick/freeform strength workouts (see active.tsx's
+ * `finishWorkout`): `workout_id` stays null and the session name lives in
+ * `notes`, which the History screen falls back to when there's no linked
+ * `workouts.name`.
+ */
+export async function logCardioSession(
+    userId: string,
+    params: { title: string; durationMinutes: number; completedAt: Date }
+): Promise<void> {
+    const { title, durationMinutes, completedAt } = params;
+    const startedAt = new Date(completedAt.getTime() - durationMinutes * 60 * 1000);
+
+    const { error } = await supabase
+        .from('workout_logs')
+        .insert({
+            user_id: userId,
+            workout_id: null,
+            started_at: startedAt.toISOString(),
+            completed_at: completedAt.toISOString(),
+            duration_seconds: Math.round(durationMinutes * 60),
+            notes: title,
+        });
+
+    if (error) throw error;
+}
+
 // ─── Helpers ────────────────────────────────────────────────
 
 function goalToBestFor(goal: CardioGoal): string {

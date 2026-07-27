@@ -103,17 +103,17 @@ export default function CompareScreen() {
                 headerShown: true,
                 headerTitle: 'Compare Progress',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
 
             {photos.length < 2 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="images-outline" size={60} color="rgba(255,255,255,0.1)" />
+                    <Ionicons name="images-outline" size={60} color={theme.colors.textTertiary} />
                     <Text style={styles.emptyText}>Need at least 2 photos to compare</Text>
                     <TouchableOpacity
                         style={styles.ctaButton}
@@ -296,7 +296,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 12,
     },
     summaryValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '700',
     },
@@ -313,7 +313,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     selectionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '700',
     },

@@ -149,7 +149,7 @@ export default function AdminEliteClientDashboard() {
             <View style={styles.container}>
                 <Stack.Screen options={{ headerShown: true, headerTitle: 'Client' }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.lockedTitle}>Not authorized</Text>
                 </View>
             </View>
@@ -162,10 +162,10 @@ export default function AdminEliteClientDashboard() {
                 headerShown: true,
                 headerTitle: clientLabel || 'Client',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/admin/elite-clients')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -283,7 +283,7 @@ export default function AdminEliteClientDashboard() {
 const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    lockedTitle: { color: '#FFF', fontSize: 18, fontWeight: '900', marginTop: 8 },
+    lockedTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900', marginTop: 8 },
     scrollContent: { padding: theme.spacing.lg, paddingBottom: 40, gap: 16 },
     section: {
         backgroundColor: theme.colors.surface,
@@ -292,20 +292,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
-    sectionTitle: { color: '#FFF', fontSize: 14, fontWeight: '900', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
-    programName: { color: '#FFF', fontSize: 16, fontWeight: '700', marginBottom: 12 },
+    sectionTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+    programName: { color: theme.colors.text, fontSize: 16, fontWeight: '700', marginBottom: 12 },
     emptyText: { color: theme.colors.textSecondary, fontSize: 13, marginBottom: 12 },
     statLine: { color: theme.colors.textSecondary, fontSize: 14, marginBottom: 4 },
     logRow: { marginBottom: 10 },
-    logExercise: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+    logExercise: { color: theme.colors.text, fontSize: 14, fontWeight: '700' },
     logDetail: { color: theme.colors.textSecondary, fontSize: 12 },
-    noteBody: { color: '#FFF', fontSize: 14, marginTop: 2 },
+    noteBody: { color: theme.colors.text, fontSize: 14, marginTop: 2 },
     notesInput: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 14,
         minHeight: 80,
         textAlignVertical: 'top',
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: theme.radius.md,
         padding: 12,
         marginBottom: 12,
@@ -318,7 +318,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     },
     primaryButtonText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
     secondaryButton: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: theme.colors.surfaceElevated,
         borderRadius: theme.radius.md,
         paddingVertical: 10,
         alignItems: 'center',

@@ -95,10 +95,10 @@ export default function AdminScreen() {
                     headerShown: true,
                     headerTitle: 'Admin',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                 }} />
                 <View style={styles.center}>
-                    <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                    <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                     <Text style={styles.title}>Not authorized</Text>
                     <Text style={styles.subtitle}>You do not have access to Admin tools.</Text>
                     <TouchableOpacity style={styles.primaryButton} onPress={goBack}>
@@ -115,10 +115,10 @@ export default function AdminScreen() {
                 headerShown: true,
                 headerTitle: 'Admin Dashboard',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -216,7 +216,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         height: 400,
     },
     title: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 18,
         fontWeight: '900',
         marginTop: 6,
@@ -261,12 +261,12 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginBottom: 8,
     },
     statValue: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 24,
         fontWeight: '900',
     },
     sectionTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '900',
         marginBottom: 12,
@@ -302,7 +302,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         marginRight: 16,
     },
     navTitle: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         fontWeight: '800',
         flex: 1,

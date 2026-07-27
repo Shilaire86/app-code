@@ -66,11 +66,11 @@ export default function MessagesIndexScreen() {
                     headerShown: true,
                     headerTitle: 'Inbox',
                     headerStyle: { backgroundColor: theme.colors.background },
-                    headerTintColor: '#FFF',
+                    headerTintColor: theme.colors.text,
                 }} />
                 <View style={styles.centered}>
                     <View style={styles.emptyCard}>
-                        <Ionicons name="lock-closed-outline" size={56} color="rgba(255,255,255,0.12)" />
+                        <Ionicons name="lock-closed-outline" size={56} color={theme.colors.textTertiary} />
                         <Text style={styles.emptyTitle}>1:1 coach messaging is an Elite feature</Text>
                         <Text style={styles.emptyText}>Elite members get direct messaging with their coach for personalized program design, plateau troubleshooting, and accountability.</Text>
                         <TouchableOpacity style={styles.newButton} onPress={() => router.push('/subscribe')}>
@@ -88,10 +88,10 @@ export default function MessagesIndexScreen() {
                 headerShown: true,
                 headerTitle: 'Inbox',
                 headerStyle: { backgroundColor: theme.colors.background },
-                headerTintColor: '#FFF',
+                headerTintColor: theme.colors.text,
                 headerLeft: () => (
                     <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Ionicons name="arrow-back" size={24} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 ),
             }} />
@@ -121,7 +121,7 @@ export default function MessagesIndexScreen() {
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.emptyCard}>
-                            <Ionicons name="chatbubble-ellipses-outline" size={56} color="rgba(255,255,255,0.12)" />
+                            <Ionicons name="chatbubble-ellipses-outline" size={56} color={theme.colors.textTertiary} />
                             <Text style={styles.emptyTitle}>Message your coach</Text>
                             <Text style={styles.emptyText}>Ask training questions, program help, or report app issues.</Text>
                             <Text style={styles.emptyDisclaimer}>Not for emergencies. Expect a reply within 24-48 hours.</Text>
@@ -196,7 +196,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     threadTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 8 },
     threadCategory: { color: theme.colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 0.6 },
     threadMeta: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '700' },
-    threadSubject: { color: '#FFF', fontSize: 14, fontWeight: '900' },
+    threadSubject: { color: theme.colors.text, fontSize: 14, fontWeight: '900' },
     emptyCard: {
         backgroundColor: theme.colors.surface,
         borderRadius: theme.radius.lg,
@@ -206,9 +206,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         alignItems: 'center',
         gap: 10,
     },
-    emptyTitle: { color: '#FFF', fontSize: 16, fontWeight: '900' },
+    emptyTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' },
     emptyText: { color: theme.colors.textSecondary, textAlign: 'center' },
-    emptyDisclaimer: { color: 'rgba(255,255,255,0.55)', textAlign: 'center', fontSize: 12, lineHeight: 16, marginTop: 2 },
+    emptyDisclaimer: { color: theme.colors.textSecondary, textAlign: 'center', fontSize: 12, lineHeight: 16, marginTop: 2 },
     secondaryLink: { paddingVertical: 8, paddingHorizontal: 8, minHeight: 36, justifyContent: 'center' },
     secondaryLinkText: { color: theme.colors.primary, fontWeight: '800', textDecorationLine: 'underline' },
 });

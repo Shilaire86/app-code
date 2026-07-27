@@ -15,6 +15,8 @@ import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { scheduleStreakNudge } from '@/lib/notifications';
 import { getWorkoutStreakSummary } from '@/lib/streaks';
 import { generateUuid } from '@/lib/uuid';
+import { ExercisePicker } from '@/components/ExercisePicker';
+import { ExerciseMatch } from '@/services/exercises';
 
 type RepRange = { min: number | null; max: number | null };
 type LastSet = { weightLbs: number; reps: number; createdAt: string };
@@ -60,6 +62,7 @@ export default function ActiveWorkoutScreen() {
     const [exerciseToSwap, setExerciseToSwap] = useState<any | null>(null);
     const [availableAlternates, setAvailableAlternates] = useState<any[]>([]);
     const [loadingAlternates, setLoadingAlternates] = useState(false);
+    const [showExercisePicker, setShowExercisePicker] = useState(false);
 
     const {
         data,
@@ -244,17 +247,31 @@ export default function ActiveWorkoutScreen() {
     const performSwap = (newExercise: any) => {
         if (!exerciseToSwap) return;
 
+        // Curated alternates and ExercisePicker catalog results carry a real
+        // exercises-table id. A fully custom pick (typed, not in the catalog)
+        // comes back with id: '' — give it a stable local key (reusing this
+        // program_day_exercises row's own id, same convention used when the
+        // session was first loaded) and no catalog id, so set-saving later
+        // knows not to write a bogus exercise_id.
+        const hasRealCatalogId = !!newExercise?.id;
+        const normalized = {
+            ...newExercise,
+            id: hasRealCatalogId ? newExercise.id : exerciseToSwap.id,
+            catalogExerciseId: hasRealCatalogId ? newExercise.id : null,
+        };
+
         setLocalExercises(prev => prev.map(ex => {
             if (ex.id === exerciseToSwap.id) {
                 return {
                     ...ex,
-                    exercises: newExercise
+                    exercises: normalized
                 };
             }
             return ex;
         }));
 
         setSwapModalVisible(false);
+        setShowExercisePicker(false);
         setExerciseToSwap(null);
     };
 
@@ -513,6 +530,29 @@ export default function ActiveWorkoutScreen() {
         // Check if this is a new structure workout (program_day_id vs workout_id)
         const isNewStructure = (data as any)?.workout?.isNewStructure === true;
 
+        // Map each set's local exerciseId (a stable UI key that, for new-structure
+        // workouts, may just be a program_day_exercises row id with no matching
+        // exercises-table row) to what's actually safe to persist: a real catalog
+        // exercise_id when one was matched, else null + the exercise's name.
+        // Writing the local id straight into set_logs.exercise_id — which has a
+        // hard FK to exercises — fails silently (queued for retry, retries
+        // forever, workout ends up saved with zero sets) whenever a quick/custom
+        // exercise's name doesn't exactly match something in the catalog.
+        const exerciseIdentity = new Map<string, { exerciseId: string | null; exerciseName: string | null }>();
+        for (const ex of localExercises) {
+            const localId = ex?.exercises?.id;
+            if (!localId) continue;
+            const catalogId = 'catalogExerciseId' in (ex.exercises || {})
+                ? ex.exercises.catalogExerciseId
+                : localId; // old-structure sessions: ex.exercises.id is always a real catalog id
+            exerciseIdentity.set(localId, {
+                exerciseId: catalogId ?? null,
+                exerciseName: ex.exercises?.name ?? null,
+            });
+        }
+        const resolveSetIdentity = (exerciseId: string) =>
+            exerciseIdentity.get(exerciseId) ?? { exerciseId, exerciseName: null };
+
         // ─── Critical, durable save — must succeed or we fall back to the
         // offline queue. Kept isolated from the non-critical steps below so
         // a failure there (milestone counting, activity logging, stage
@@ -538,14 +578,18 @@ export default function ActiveWorkoutScreen() {
             log = logRow;
 
             if (setLogs.length > 0) {
-                const formattedSets = setLogs.map(s => ({
-                    workout_log_id: log.id,
-                    exercise_id: s.exerciseId, // set_logs.exercise_id is NOT NULL
-                    set_number: s.setNumber,
-                    reps: s.reps,
-                    weight_lbs: s.weightLbs,
-                    rpe: s.rpe
-                }));
+                const formattedSets = setLogs.map(s => {
+                    const identity = resolveSetIdentity(s.exerciseId);
+                    return {
+                        workout_log_id: log.id,
+                        exercise_id: identity.exerciseId,
+                        exercise_name: identity.exerciseName,
+                        set_number: s.setNumber,
+                        reps: s.reps,
+                        weight_lbs: s.weightLbs,
+                        rpe: s.rpe
+                    };
+                });
 
                 // Clear any sets from a prior partial attempt at this same
                 // workout_log_id before inserting fresh — makes a retry after
@@ -573,17 +617,21 @@ export default function ActiveWorkoutScreen() {
                     startedAt: startTime,
                     completedAt: new Date().toISOString(),
                     durationSeconds: elapsedTime,
-                    setLogs: setLogs.map((log) => ({
-                        exerciseId: log.exerciseId,
-                        setNumber: log.setNumber,
-                        reps: log.reps,
-                        weightLbs: log.weightLbs,
-                        rpe: log.rpe,
-                    })),
-                    exercises: localExercises.map((ex: any) => ({
-                        id: ex.exercises.id,
-                        name: ex.exercises.name,
-                    })),
+                    setLogs: setLogs.map((log) => {
+                        const identity = resolveSetIdentity(log.exerciseId);
+                        return {
+                            exerciseId: identity.exerciseId,
+                            exerciseName: identity.exerciseName,
+                            setNumber: log.setNumber,
+                            reps: log.reps,
+                            weightLbs: log.weightLbs,
+                            rpe: log.rpe,
+                        };
+                    }),
+                    exercises: localExercises.map((ex: any) => {
+                        const identity = ex?.exercises?.id ? resolveSetIdentity(ex.exercises.id) : { exerciseId: null, exerciseName: null };
+                        return { id: identity.exerciseId, name: identity.exerciseName ?? ex.exercises?.name };
+                    }),
                 });
 
                 // Also schedule nudge for offline completion if possible
@@ -819,9 +867,9 @@ export default function ActiveWorkoutScreen() {
                             <Ionicons
                                 name={isPaused ? "play" : "pause"}
                                 size={20}
-                                color="#FFF"
+                                color={isPaused ? '#FFF' : colors.text}
                             />
-                            <Text style={styles.controlButtonText}>
+                            <Text style={[styles.controlButtonText, isPaused && styles.resumeButtonText]}>
                                 {isPaused ? "Resume" : "Pause"}
                             </Text>
                         </TouchableOpacity>
@@ -1108,6 +1156,17 @@ export default function ActiveWorkoutScreen() {
                         )}
 
                         <TouchableOpacity
+                            style={styles.searchAllButton}
+                            onPress={() => {
+                                setSwapModalVisible(false);
+                                setShowExercisePicker(true);
+                            }}
+                        >
+                            <Ionicons name="search" size={16} color={colors.primary} />
+                            <Text style={styles.searchAllButtonText}>Search All Exercises / Add Custom</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
                             style={styles.cancelModalButton}
                             onPress={() => setSwapModalVisible(false)}
                         >
@@ -1116,6 +1175,12 @@ export default function ActiveWorkoutScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <ExercisePicker
+                visible={showExercisePicker}
+                onClose={() => setShowExercisePicker(false)}
+                onSelect={(exercise: ExerciseMatch) => performSwap(exercise)}
+            />
         </View>
     );
 }
@@ -1164,9 +1229,12 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         backgroundColor: colors.primary,
     },
     controlButtonText: {
-        color: '#FFF',
+        color: colors.text,
         fontSize: 14,
         fontWeight: '700',
+    },
+    resumeButtonText: {
+        color: '#FFF',
     },
     restBar: {
         flexDirection: 'row',
@@ -1534,6 +1602,21 @@ const createStyles = ({ colors, spacing, radius, typography }: Pick<ReturnType<t
         color: colors.textTertiary,
         textAlign: 'center',
         fontSize: 14,
+    },
+    searchAllButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: spacing.sm,
+        paddingVertical: 12,
+        borderRadius: radius.md,
+        backgroundColor: colors.primarySoft,
+    },
+    searchAllButtonText: {
+        ...typography.bodySmall,
+        color: colors.primary,
+        fontWeight: '700',
     },
     cancelModalButton: {
         padding: spacing.md,

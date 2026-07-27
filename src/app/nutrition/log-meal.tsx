@@ -100,11 +100,11 @@ export default function LogMealScreen() {
                     title: 'Log Meal',
                     headerShown: true,
                     headerTransparent: true,
-                    headerTitleStyle: { color: '#FFF' },
-                    headerTintColor: '#FFF',
+                    headerTitleStyle: { color: theme.colors.text },
+                    headerTintColor: theme.colors.text,
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => goBackOr(router, '/(tabs)/nutrition')} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                            <Ionicons name="arrow-back" size={24} color="#FFF" />
+                            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -289,7 +289,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderRadius: 12,
         height: 52,
         paddingHorizontal: 16,
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
@@ -363,7 +363,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: theme.colors.surface,
         padding: 16,
         borderRadius: 16,
         borderWidth: 1,
@@ -374,7 +374,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         paddingRight: 16,
     },
     switchLabel: {
-        color: '#FFF',
+        color: theme.colors.text,
         fontSize: 15,
         fontWeight: '700',
         marginBottom: 4,
