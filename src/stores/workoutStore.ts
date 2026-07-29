@@ -21,6 +21,16 @@ interface WorkoutState {
     startTime: string | null;
     setLogs: SetLog[];
     isPaused: boolean;
+    // AsyncStorage rehydration is async — right after app launch this store
+    // briefly holds its in-memory defaults (activeWorkoutId: null, etc.)
+    // before the persisted values load. A consumer that checks
+    // activeWorkoutId against the current screen's workoutId before this
+    // flips true can see a false "no active workout" mismatch and call
+    // startWorkout(), overwriting the real in-progress data moments before
+    // it would have loaded. Callers doing that comparison should wait for
+    // this to be true first.
+    hasHydrated: boolean;
+    setHasHydrated: (value: boolean) => void;
 
     startWorkout: (workoutId: string, userId: string) => void;
     logSet: (set: SetLog) => void;
@@ -40,6 +50,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             startTime: null,
             setLogs: [],
             isPaused: false,
+            hasHydrated: false,
+            setHasHydrated: (value) => set({ hasHydrated: value }),
 
             startWorkout: (workoutId, userId) =>
                 set({
@@ -100,6 +112,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         {
             name: 'workout-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
         }
     )
 );

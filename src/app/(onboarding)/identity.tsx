@@ -28,8 +28,8 @@ export default function IdentityScreen() {
                     Your name anchors the path. It is the first commitment.
                 </Text>
                 <Input
-                    label="Full Name"
-                    placeholder="Your name"
+                    label="Preferred Name"
+                    placeholder="What should we call you?"
                     value={fullName}
                     onChangeText={setFullName}
                 />

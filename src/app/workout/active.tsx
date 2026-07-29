@@ -36,7 +36,8 @@ export default function ActiveWorkoutScreen() {
         updateSet,
         removeSet,
         completeWorkout,
-        discardWorkout
+        discardWorkout,
+        hasHydrated: workoutStoreHydrated,
     } = useWorkoutStore();
     const { enqueueWorkout } = useSyncQueueStore();
     const userId = useAuthStore(s => s.user?.id ?? null);
@@ -393,6 +394,12 @@ export default function ActiveWorkoutScreen() {
 
     useEffect(() => {
         if (!workoutId || !data || !userId) return;
+        // AsyncStorage rehydration hasn't finished yet — activeWorkoutId is
+        // still its in-memory default (null), not necessarily what's actually
+        // persisted. Checking the mismatch below before this is true risks
+        // mistaking "not loaded yet" for "no active workout" and wiping real
+        // in-progress data out from under the load that was about to restore it.
+        if (!workoutStoreHydrated) return;
 
         // Re-seed if this is a different workout OR the persisted state
         // belongs to a different account — e.g. a previous user left this
@@ -414,7 +421,7 @@ export default function ActiveWorkoutScreen() {
                     }
                 });
         }
-    }, [workoutId, data, userId, activeWorkoutId, storedWorkoutUserId, initialExercises, startWorkout, logSet]);
+    }, [workoutId, data, userId, activeWorkoutId, storedWorkoutUserId, initialExercises, startWorkout, logSet, workoutStoreHydrated]);
 
     useEffect(() => {
         if (!userId) return;
@@ -846,6 +853,16 @@ export default function ActiveWorkoutScreen() {
                 headerStyle: { backgroundColor: colors.background },
                 headerTintColor: colors.text,
                 headerLeft: () => null,
+                headerBackVisible: false,
+                // headerLeft: () => null removes the back BUTTON, but the iOS
+                // edge-swipe gesture bypasses it entirely — swiping back skips
+                // the "Discard workout?" confirmation and leaves the workout
+                // store in a half-exited state, which is what was actually
+                // producing the "my workout data got deleted" reports (the
+                // Cancel button's discardWorkout() was never called; the next
+                // screen mount instead saw a stale/mismatched store and reset
+                // it). Disable the gesture so Cancel/Finish are the only ways out.
+                gestureEnabled: false,
                 headerRight: () => (
                     <TouchableOpacity onPress={handleDiscard}>
                         <Text style={{ color: colors.error, fontWeight: '600' }}>Cancel</Text>

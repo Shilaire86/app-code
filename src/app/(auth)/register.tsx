@@ -68,8 +68,8 @@ export default function RegisterScreen() {
 
                 <View style={styles.form}>
                     <Input
-                        label="Full Name"
-                        placeholder="Your name"
+                        label="Preferred Name"
+                        placeholder="What should we call you?"
                         value={fullName}
                         onChangeText={setFullName}
                     />

@@ -398,10 +398,10 @@ export default function SettingsScreen() {
 
                 <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderColor: colors.border }]}>
                     <View style={[styles.inputGroup, { marginBottom: spacing.lg }]}>
-                        <Text style={[styles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Full Name</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Preferred Name</Text>
                         <TextInput
                             style={[styles.input, { borderRadius: radius.md, padding: spacing.md, color: colors.text, borderColor: colors.border }]}
-                            placeholder="Your name"
+                            placeholder="What should we call you?"
                             placeholderTextColor={placeholderColor}
                             value={fullName}
                             onChangeText={setFullName}
