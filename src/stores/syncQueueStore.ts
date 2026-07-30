@@ -25,6 +25,7 @@ export interface PendingWorkoutLog {
     id: string;
     userId: string;
     workoutId: string | null;
+    title?: string | null;
     startedAt: string;
     completedAt: string;
     durationSeconds: number;
@@ -87,6 +88,7 @@ export const useSyncQueueStore = create<SyncQueueState>()(
                                 client_log_id: entry.id,
                                 user_id: entry.userId,
                                 workout_id: entry.workoutId,
+                                title: entry.title ?? null,
                                 started_at: entry.startedAt,
                                 completed_at: entry.completedAt,
                                 duration_seconds: entry.durationSeconds,

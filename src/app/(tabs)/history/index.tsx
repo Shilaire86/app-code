@@ -21,7 +21,7 @@ const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item:
         >
             <View style={styles.cardHeader}>
                 <Text style={styles.workoutName}>
-                    {item.workouts?.name || item.notes || 'Custom Workout'}
+                    {item.title || item.workouts?.name || item.notes || 'Custom Workout'}
                 </Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </View>
@@ -64,6 +64,7 @@ export default function WorkoutHistoryScreen() {
                     id,
                     started_at,
                     duration_seconds,
+                    title,
                     notes,
                     workouts (
                         name

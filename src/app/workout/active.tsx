@@ -573,6 +573,14 @@ export default function ActiveWorkoutScreen() {
                     client_log_id: clientLogId,
                     user_id: userId,
                     workout_id: isNewStructure ? null : activeWorkoutId,
+                    // New-structure sessions (quick workouts AND real
+                    // program days alike) have no workout_id to join back to
+                    // a real name through, so History always fell back to a
+                    // generic "Custom Workout" label — even for an actual
+                    // coach program. Capture the program/day name here so it
+                    // shows up correctly, and so it's there for the user to
+                    // rename later if they want something more specific.
+                    title: workout?.programs?.name || workout?.name || null,
                     started_at: startTime,
                     completed_at: new Date().toISOString(),
                     duration_seconds: elapsedTime,
@@ -621,6 +629,7 @@ export default function ActiveWorkoutScreen() {
                     id: clientLogId,
                     userId,
                     workoutId: activeWorkoutId,
+                    title: workout?.programs?.name || workout?.name || null,
                     startedAt: startTime,
                     completedAt: new Date().toISOString(),
                     durationSeconds: elapsedTime,
@@ -663,12 +672,21 @@ export default function ActiveWorkoutScreen() {
         let newStage = '';
         try {
             if (setLogs.length > 0) {
-                // Check for PRs (only for exercises with valid exercise_id)
+                // Check for PRs. Previously skipped entirely for any "new
+                // structure" (quick/program-day) workout on the assumption
+                // exercise ids there are always synthetic — but many of
+                // those exercises DO resolve to a real catalog id (see
+                // resolveSetIdentity above), and skipping ALL of them meant
+                // no one on the new program structure ever got PR tracking.
+                // Only skip exercises that truly have no catalog match.
                 for (const exercise of localExercises) {
-                    // Skip PR check for new structure programs (synthetic IDs)
-                    if (!exercise.exercises?.id || isNewStructure) continue;
+                    const localId = exercise.exercises?.id;
+                    if (!localId) continue;
 
-                    const exerciseSets = setLogs.filter(s => s.exerciseId === exercise.exercises.id);
+                    const identity = resolveSetIdentity(localId);
+                    if (!identity.exerciseId) continue;
+
+                    const exerciseSets = setLogs.filter(s => s.exerciseId === localId);
                     if (exerciseSets.length === 0) continue;
 
                     const maxWeight = Math.max(...exerciseSets.map(s => s.weightLbs));
@@ -679,7 +697,7 @@ export default function ActiveWorkoutScreen() {
                         .from('prs')
                         .select('weight_lbs')
                         .eq('user_id', userId)
-                        .eq('exercise_id', exercise.exercises.id)
+                        .eq('exercise_id', identity.exerciseId)
                         .order('weight_lbs', { ascending: false })
                         .limit(1)
                         .maybeSingle();
@@ -690,8 +708,8 @@ export default function ActiveWorkoutScreen() {
                             .from('prs')
                             .insert({
                                 user_id: userId,
-                                exercise_id: exercise.exercises.id,
-                                exercise_name: exercise.exercises.name,
+                                exercise_id: identity.exerciseId,
+                                exercise_name: identity.exerciseName || exercise.exercises.name,
                                 weight_lbs: maxWeight,
                                 reps: exerciseSets.find(s => s.weightLbs === maxWeight)?.reps || 1,
                                 achieved_at: new Date().toISOString().split('T')[0]
@@ -700,7 +718,7 @@ export default function ActiveWorkoutScreen() {
                         // Log PR activity
                         if (userId) {
                             await logActivity(userId, 'pr_set', {
-                                exercise_name: exercise.exercises.name,
+                                exercise_name: identity.exerciseName || exercise.exercises.name,
                                 weight: maxWeight,
                                 reps: exerciseSets.find(s => s.weightLbs === maxWeight)?.reps || 1
                             });

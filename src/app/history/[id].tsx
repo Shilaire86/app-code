@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { goBackOr } from '@/lib/navigation';
+import { showPrompt } from '@/lib/confirm';
 
 export default function LogDetailScreen() {
     const theme = useTheme();
@@ -56,6 +57,28 @@ export default function LogDetailScreen() {
         }
     }
 
+    function handleRename() {
+        showPrompt(
+            'Rename Workout',
+            'Give this workout a name',
+            async (text) => {
+                const trimmed = text.trim();
+                if (!trimmed || trimmed === (log?.title || log?.workouts?.name || log?.notes)) return;
+                const previous = log?.title;
+                setLog((prev: any) => ({ ...prev, title: trimmed }));
+                const { error } = await supabase
+                    .from('workout_logs')
+                    .update({ title: trimmed })
+                    .eq('id', id);
+                if (error) {
+                    console.error('Error renaming workout:', error);
+                    setLog((prev: any) => ({ ...prev, title: previous }));
+                }
+            },
+            log?.title || log?.workouts?.name || log?.notes || ''
+        );
+    }
+
     if (loading) {
         return (
             <View style={[styles.container, styles.centered]}>
@@ -64,10 +87,17 @@ export default function LogDetailScreen() {
         );
     }
 
+    // A workout session pre-seeds one row per planned set at 0 lbs / 0 reps
+    // so the active-workout screen has something to edit; any exercise the
+    // user never actually touched leaves those placeholder rows behind.
+    // Exclude them here rather than showing "0 lbs / 0 reps" for work that
+    // was never done.
+    const performedSets = sets.filter((set: any) => (set.weight_lbs || 0) > 0 || (set.reps || 0) > 0);
+
     // Group sets by exercise. `exercises` is null for custom/quick-workout
     // sets that don't match a catalog exercise — those carry their name in
     // the set_logs.exercise_name text column instead.
-    const groupedSets = sets.reduce((acc: any, set: any) => {
+    const groupedSets = performedSets.reduce((acc: any, set: any) => {
         const name = set.exercises?.name || set.exercise_name || 'Custom Exercise';
         if (!acc[name]) acc[name] = [];
         acc[name].push(set);
@@ -90,7 +120,10 @@ export default function LogDetailScreen() {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.headerCard}>
-                    <Text style={styles.workoutName}>{log?.workouts?.name || 'Custom Workout'}</Text>
+                    <TouchableOpacity style={styles.workoutNameRow} onPress={handleRename} activeOpacity={0.7}>
+                        <Text style={styles.workoutName}>{log?.title || log?.workouts?.name || log?.notes || 'Custom Workout'}</Text>
+                        <Ionicons name="pencil" size={16} color={theme.colors.textTertiary} />
+                    </TouchableOpacity>
                     <Text style={styles.date}>
                         {new Date(log?.started_at).toLocaleDateString('en-US', {
                             weekday: 'long',
@@ -106,7 +139,7 @@ export default function LogDetailScreen() {
                         </View>
                         <View style={styles.statItem}>
                             <Text style={styles.statLabel}>TOTAL SETS</Text>
-                            <Text style={styles.statValue}>{sets.length}</Text>
+                            <Text style={styles.statValue}>{performedSets.length}</Text>
                         </View>
                     </View>
                 </View>
@@ -158,11 +191,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
+    workoutNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 4,
+    },
     workoutName: {
         color: theme.colors.text,
         fontSize: 24,
         fontWeight: '800',
-        marginBottom: 4,
+        flexShrink: 1,
     },
     date: {
         color: theme.colors.textSecondary,

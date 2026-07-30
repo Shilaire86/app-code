@@ -275,8 +275,8 @@ export async function markCardioComplete(entryId: string): Promise<void> {
  * program content) has no user-facing insert policy — so this follows the
  * same pattern as quick/freeform strength workouts (see active.tsx's
  * `finishWorkout`): `workout_id` stays null and the session name lives in
- * `notes`, which the History screen falls back to when there's no linked
- * `workouts.name`.
+ * the dedicated `title` column, which the History screen falls back to when
+ * there's no linked `workouts.name`.
  */
 export async function logCardioSession(
     userId: string,
@@ -293,7 +293,7 @@ export async function logCardioSession(
             started_at: startedAt.toISOString(),
             completed_at: completedAt.toISOString(),
             duration_seconds: Math.round(durationMinutes * 60),
-            notes: title,
+            title,
         });
 
     if (error) throw error;
