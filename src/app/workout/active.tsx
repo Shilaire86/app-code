@@ -54,6 +54,14 @@ export default function ActiveWorkoutScreen() {
     const [historyLoadFailed, setHistoryLoadFailed] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [postWorkoutNotes, setPostWorkoutNotes] = useState('');
+    // Total time spent paused so far, plus when the current pause began (if
+    // any) — used to compute elapsedTime from wall-clock time rather than by
+    // accumulating +1-per-tick, since setInterval ticks get throttled or
+    // dropped entirely while the app is backgrounded on iOS. A tick-based
+    // counter silently undercounts by however long the app was backgrounded;
+    // recomputing from Date.now() - startTime every tick self-corrects.
+    const pausedMsRef = useRef(0);
+    const pauseStartedAtRef = useRef<number | null>(null);
 
     // Swap feature state
     const [localExercises, setLocalExercises] = useState<any[]>([]);
@@ -276,7 +284,16 @@ export default function ActiveWorkoutScreen() {
         setExerciseToSwap(null);
     };
 
-    const togglePause = () => setIsPaused(prev => !prev);
+    const togglePause = () => setIsPaused(prev => {
+        const next = !prev;
+        if (next) {
+            pauseStartedAtRef.current = Date.now();
+        } else if (pauseStartedAtRef.current) {
+            pausedMsRef.current += Date.now() - pauseStartedAtRef.current;
+            pauseStartedAtRef.current = null;
+        }
+        return next;
+    });
 
     function isLowerBodyExercise(name: string) {
         const s = name.toLowerCase();
@@ -362,13 +379,22 @@ export default function ActiveWorkoutScreen() {
         };
     }
 
+    const computeElapsedSeconds = () => {
+        if (!startTime) return 0;
+        const start = new Date(startTime).getTime();
+        const currentPauseMs = pauseStartedAtRef.current ? Date.now() - pauseStartedAtRef.current : 0;
+        const totalPausedMs = pausedMsRef.current + currentPauseMs;
+        return Math.max(0, Math.floor((Date.now() - start - totalPausedMs) / 1000));
+    };
+
     useEffect(() => {
         if (startTime && !isPaused) {
-            const start = new Date(startTime).getTime();
-            // If we've been paused, we need to adjust for that.
-            // But for simplicity in this MVP, we use elapsedTime which we increment.
+            // Recompute from wall-clock time on every tick instead of
+            // accumulating +1 — self-corrects for any ticks dropped while
+            // backgrounded instead of compounding the undercount.
+            setElapsedTime(computeElapsedSeconds());
             timerRef.current = setInterval(() => {
-                setElapsedTime(prev => prev + 1);
+                setElapsedTime(computeElapsedSeconds());
             }, 1000);
         }
         return () => {
@@ -401,27 +427,48 @@ export default function ActiveWorkoutScreen() {
         // in-progress data out from under the load that was about to restore it.
         if (!workoutStoreHydrated) return;
 
-        // Re-seed if this is a different workout OR the persisted state
-        // belongs to a different account — e.g. a previous user left this
-        // exact workoutId in progress on a shared device (app killed,
-        // backgrounded) without a clean logout, and this account shouldn't
-        // resume into their unsaved reps/weights.
-        if (activeWorkoutId !== workoutId || storedWorkoutUserId !== userId) {
+        // A different account always forces a fresh start — e.g. a previous
+        // user left this exact workoutId in progress on a shared device (app
+        // killed, backgrounded) without a clean logout, and this account
+        // shouldn't resume into their unsaved reps/weights.
+        if (storedWorkoutUserId !== userId) {
             startWorkout(workoutId, userId);
             initialExercises
                 .filter((ex: any) => !ex.is_warmup && !ex.is_cooldown)
                 .forEach((ex: any) => {
                     for (let i = 0; i < ex.sets; i++) {
-                        logSet({
-                            exerciseId: ex.exercises.id,
-                            setNumber: i + 1,
-                            reps: 0,
-                            weightLbs: 0,
-                        });
+                        logSet({ exerciseId: ex.exercises.id, setNumber: i + 1, reps: 0, weightLbs: 0 });
+                    }
+                });
+            return;
+        }
+
+        if (activeWorkoutId !== workoutId) {
+            // iOS can fully kill a backgrounded app after enough time (no
+            // special background execution here) — reopening then lands back
+            // on Home rather than resuming this exact screen, and tapping
+            // back into "today's workout" can resolve to a workoutId that
+            // doesn't literally match this session's. If there's already a
+            // real in-progress session recorded for this account (actual
+            // logged reps/weight, not just placeholders), resume THAT one
+            // instead of silently wiping it to start this one fresh — that
+            // silent wipe is what was actually happening before.
+            const hasRealProgress = !!activeWorkoutId && setLogs.some(s => (s.reps || 0) > 0 || (s.weightLbs || 0) > 0);
+            if (hasRealProgress) {
+                router.replace(`/workout/active?id=${activeWorkoutId}`);
+                return;
+            }
+
+            startWorkout(workoutId, userId);
+            initialExercises
+                .filter((ex: any) => !ex.is_warmup && !ex.is_cooldown)
+                .forEach((ex: any) => {
+                    for (let i = 0; i < ex.sets; i++) {
+                        logSet({ exerciseId: ex.exercises.id, setNumber: i + 1, reps: 0, weightLbs: 0 });
                     }
                 });
         }
-    }, [workoutId, data, userId, activeWorkoutId, storedWorkoutUserId, initialExercises, startWorkout, logSet, workoutStoreHydrated]);
+    }, [workoutId, data, userId, activeWorkoutId, storedWorkoutUserId, initialExercises, startWorkout, logSet, workoutStoreHydrated, setLogs, router]);
 
     useEffect(() => {
         if (!userId) return;
@@ -533,6 +580,10 @@ export default function ActiveWorkoutScreen() {
         // (either within this call or later via the sync queue) upserts onto
         // the same workout_logs row instead of creating a duplicate.
         const clientLogId = generateUuid();
+        // Recompute fresh rather than trusting the elapsedTime state, which
+        // only updates once a second and could be stale by nearly that much
+        // if Finish is tapped right as a tick was due.
+        const finalElapsedSeconds = computeElapsedSeconds();
 
         // Check if this is a new structure workout (program_day_id vs workout_id)
         const isNewStructure = (data as any)?.workout?.isNewStructure === true;
@@ -583,7 +634,7 @@ export default function ActiveWorkoutScreen() {
                     title: workout?.programs?.name || workout?.name || null,
                     started_at: startTime,
                     completed_at: new Date().toISOString(),
-                    duration_seconds: elapsedTime,
+                    duration_seconds: finalElapsedSeconds,
                     notes: postWorkoutNotes.trim() || null,
                 }, { onConflict: 'client_log_id' })
                 .select()
@@ -632,7 +683,7 @@ export default function ActiveWorkoutScreen() {
                     title: workout?.programs?.name || workout?.name || null,
                     startedAt: startTime,
                     completedAt: new Date().toISOString(),
-                    durationSeconds: elapsedTime,
+                    durationSeconds: finalElapsedSeconds,
                     setLogs: setLogs.map((log) => {
                         const identity = resolveSetIdentity(log.exerciseId);
                         return {
