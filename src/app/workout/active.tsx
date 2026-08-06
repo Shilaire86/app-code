@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { showAlert } from '@/lib/confirm';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
@@ -1041,15 +1041,6 @@ export default function ActiveWorkoutScreen() {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-                                {ex.exercises.video_url && (
-                                    <TouchableOpacity
-                                        style={styles.demoButton}
-                                        onPress={() => Linking.openURL(ex.exercises.video_url)}
-                                    >
-                                        <Ionicons name="play-circle-outline" size={18} color={colors.primary} />
-                                        <Text style={styles.demoText}>Demo</Text>
-                                    </TouchableOpacity>
-                                )}
                             </View>
                             <Text style={styles.prescription}>
                                 {ex.sets} Sets • {ex.reps_target || `${ex.reps_min}-${ex.reps_max}`} Reps
