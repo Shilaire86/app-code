@@ -280,9 +280,15 @@ export async function markCardioComplete(entryId: string): Promise<void> {
  */
 export async function logCardioSession(
     userId: string,
-    params: { title: string; durationMinutes: number; completedAt: Date }
+    params: {
+        title: string;
+        durationMinutes: number;
+        completedAt: Date;
+        distanceMeters?: number;
+        steps?: number | null;
+    }
 ): Promise<void> {
-    const { title, durationMinutes, completedAt } = params;
+    const { title, durationMinutes, completedAt, distanceMeters, steps } = params;
     const startedAt = new Date(completedAt.getTime() - durationMinutes * 60 * 1000);
 
     const { error } = await supabase
@@ -294,6 +300,8 @@ export async function logCardioSession(
             completed_at: completedAt.toISOString(),
             duration_seconds: Math.round(durationMinutes * 60),
             title,
+            distance_meters: distanceMeters ?? null,
+            steps: steps ?? null,
         });
 
     if (error) throw error;

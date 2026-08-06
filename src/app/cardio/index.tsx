@@ -158,6 +158,11 @@ export default function CardioIndexScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
+                <TouchableOpacity style={styles.outdoorRunButton} onPress={() => router.push('/cardio/run')} activeOpacity={0.8}>
+                    <Ionicons name="navigate-outline" size={20} color="#FFF" />
+                    <Text style={styles.outdoorRunButtonText}>Start Outdoor Run</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.logSessionButton} onPress={() => openLogModal()} activeOpacity={0.8}>
                     <Ionicons name="add-circle-outline" size={20} color={theme.colors.primary} />
                     <Text style={styles.logSessionButtonText}>Log a Cardio Session</Text>
@@ -536,6 +541,21 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
         fontSize: 14,
         fontWeight: '900',
         letterSpacing: 1,
+    },
+    outdoorRunButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: theme.colors.primary,
+        borderRadius: 14,
+        paddingVertical: 14,
+        marginBottom: 12,
+    },
+    outdoorRunButtonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '800',
     },
     logSessionButton: {
         flexDirection: 'row',

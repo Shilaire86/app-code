@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { goBackOr } from '@/lib/navigation';
 import { showPrompt } from '@/lib/confirm';
+import { metersToMiles, formatPace } from '@/lib/runTracking';
 
 export default function LogDetailScreen() {
     const theme = useTheme();
@@ -93,6 +94,7 @@ export default function LogDetailScreen() {
     // Exclude them here rather than showing "0 lbs / 0 reps" for work that
     // was never done.
     const performedSets = sets.filter((set: any) => (set.weight_lbs || 0) > 0 || (set.reps || 0) > 0);
+    const isRun = typeof log?.distance_meters === 'number' && log.distance_meters > 0;
 
     // Group sets by exercise. `exercises` is null for custom/quick-workout
     // sets that don't match a catalog exercise — those carry their name in
@@ -137,10 +139,29 @@ export default function LogDetailScreen() {
                             <Text style={styles.statLabel}>DURATION</Text>
                             <Text style={styles.statValue}>{Math.floor(log?.duration_seconds / 60)}m</Text>
                         </View>
-                        <View style={styles.statItem}>
-                            <Text style={styles.statLabel}>TOTAL SETS</Text>
-                            <Text style={styles.statValue}>{performedSets.length}</Text>
-                        </View>
+                        {isRun ? (
+                            <>
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statLabel}>MILES</Text>
+                                    <Text style={styles.statValue}>{metersToMiles(log.distance_meters).toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statLabel}>PACE</Text>
+                                    <Text style={styles.statValue}>{formatPace(log.duration_seconds, log.distance_meters)}</Text>
+                                </View>
+                                {typeof log?.steps === 'number' && (
+                                    <View style={styles.statItem}>
+                                        <Text style={styles.statLabel}>STEPS</Text>
+                                        <Text style={styles.statValue}>{log.steps.toLocaleString()}</Text>
+                                    </View>
+                                )}
+                            </>
+                        ) : (
+                            <View style={styles.statItem}>
+                                <Text style={styles.statLabel}>TOTAL SETS</Text>
+                                <Text style={styles.statValue}>{performedSets.length}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
 

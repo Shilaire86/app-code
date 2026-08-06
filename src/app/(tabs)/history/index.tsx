@@ -34,6 +34,12 @@ const HistoryCard = memo(({ item, onPress, formatDate, formatDuration }: { item:
                     <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
                     <Text style={styles.metaText}>{formatDuration(item.duration_seconds)}</Text>
                 </View>
+                {typeof item.distance_meters === 'number' && item.distance_meters > 0 && (
+                    <View style={styles.meta}>
+                        <Ionicons name="walk-outline" size={14} color={colors.textSecondary} />
+                        <Text style={styles.metaText}>{(item.distance_meters / 1609.344).toFixed(2)} mi</Text>
+                    </View>
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -66,6 +72,7 @@ export default function WorkoutHistoryScreen() {
                     duration_seconds,
                     title,
                     notes,
+                    distance_meters,
                     workouts (
                         name
                     )

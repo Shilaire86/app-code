@@ -13,6 +13,11 @@ import { scheduleDailyCheckIn, registerForPushNotificationsAsync, scheduleWeekly
 import { useProfileStore } from '@/stores/profileStore';
 import { useSyncQueueStore } from '@/stores/syncQueueStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
+// Registers the background location task (TaskManager.defineTask) at module
+// load — must happen unconditionally on every launch, including a
+// background relaunch to service a location update, so import for the
+// side effect rather than because anything here calls into it directly.
+import '@/lib/runTracking';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
