@@ -28,11 +28,23 @@ export const useThemeStore = create<ThemeState>()(
 
 function applyColorScheme(themeMode: ThemeMode) {
     if (Platform.OS === 'web') return;
-    Appearance.setColorScheme((themeMode === 'system' ? null : themeMode) as any);
+    try {
+        Appearance.setColorScheme((themeMode === 'system' ? null : themeMode) as any);
+    } catch (error) {
+        // Android's native AppearanceModule.setColorScheme can throw a
+        // NullPointerException if called before the activity/bridge is
+        // fully attached (observed crashing every cold start in closed
+        // testing — see the deferred initial call below). Don't let a
+        // theme-sync failure take down the whole app.
+        console.warn('[themeStore] Failed to apply color scheme:', error);
+    }
 }
 
 const initialThemeMode = useThemeStore.getState().themeMode;
-applyColorScheme(initialThemeMode);
+// Deferred (not called synchronously at module-eval time) so the native
+// module has a chance to finish attaching during cold start on Android
+// first — calling this at module scope crashed every launch in practice.
+setTimeout(() => applyColorScheme(initialThemeMode), 0);
 
 useThemeStore.subscribe((state) => {
     applyColorScheme(state.themeMode);
