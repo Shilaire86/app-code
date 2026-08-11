@@ -52,6 +52,13 @@ interface ProfileState {
     reset: () => void;
 }
 
+// Bumped on every fetchProfile call so a slow/stale request (e.g. one the
+// 10s timeout below already gave up on) can tell it's no longer the
+// current one and skip writing its results — without this, retrying after
+// a timeout could still have the original request silently resolve later
+// and clobber whatever the retry produced with stale data.
+let latestFetchRequestId = 0;
+
 export const useProfileStore = create<ProfileState>((set, get) => ({
     profile: null,
     stage: 'initiate',
@@ -90,6 +97,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         if (state.lastFetchAtMs && (nowMs - state.lastFetchAtMs) < 1500 && state.bootstrappedUserId === userId) return;
 
         console.log('[profileStore] Fetching profile for:', userId);
+        const myRequestId = ++latestFetchRequestId;
         set({
             isLoading: true,
             bootstrapState: 'loading',
@@ -98,13 +106,18 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             lastFetchAtMs: nowMs,
         });
 
-        // Add a timeout fallback
+        // Add a timeout fallback — only acts if this is still the most
+        // recent request. Note this does NOT cancel the underlying
+        // Supabase calls below; it just stops blocking the UI on them.
+        // The stale-request guards on every `set()` below are what
+        // actually prevent this request's (possibly still-running)
+        // results from clobbering a newer retry once it finishes.
         const timeoutId = setTimeout(() => {
-            if (get().isLoading) {
+            if (get().isLoading && myRequestId === latestFetchRequestId) {
                 console.warn('[profileStore] Profile fetch timed out');
                 set({ isLoading: false });
             }
-        }, 10000);
+        }, 20000);
 
         try {
             // 1. Fetch profile
@@ -183,6 +196,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
             console.log('[profileStore] All data fetched successfully');
             clearTimeout(timeoutId);
+            // A newer fetchProfile call (e.g. the user retried after this
+            // one's 10s timeout already fired) has since started — don't
+            // clobber its state with this stale, slower request's results.
+            if (myRequestId !== latestFetchRequestId) return;
             set({
                 profile: ensuredProfile,
                 stage: stageStatus?.current_stage || 'initiate',
@@ -213,6 +230,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         } catch (error) {
             console.error('[profileStore] Fatal error fetching profile:', error);
             clearTimeout(timeoutId);
+            if (myRequestId !== latestFetchRequestId) return;
             set({
                 isLoading: false,
                 bootstrapState: 'failed',
