@@ -28,23 +28,30 @@ export const useThemeStore = create<ThemeState>()(
 
 function applyColorScheme(themeMode: ThemeMode) {
     if (Platform.OS === 'web') return;
+    if (themeMode === 'system') {
+        // Android's native AppearanceModule.setColorScheme requires a
+        // non-null string and throws a NullPointerException when passed
+        // null — confirmed via local repro, crashing every cold start
+        // since 'system' is the default themeMode for every fresh
+        // install. Skipping the call here is safe: useTheme() already
+        // derives the correct light/dark palette on its own via
+        // useColorScheme(), independent of this call. This override
+        // only exists to keep native chrome (status bar, system
+        // dialogs, etc.) in sync when the user picks an *explicit*
+        // light/dark override — there's nothing to override back to
+        // when going back to 'system'.
+        return;
+    }
     try {
-        Appearance.setColorScheme((themeMode === 'system' ? null : themeMode) as any);
+        Appearance.setColorScheme(themeMode);
     } catch (error) {
-        // Android's native AppearanceModule.setColorScheme can throw a
-        // NullPointerException if called before the activity/bridge is
-        // fully attached (observed crashing every cold start in closed
-        // testing — see the deferred initial call below). Don't let a
-        // theme-sync failure take down the whole app.
+        // Defensive: don't let a theme-sync failure take down the app.
         console.warn('[themeStore] Failed to apply color scheme:', error);
     }
 }
 
 const initialThemeMode = useThemeStore.getState().themeMode;
-// Deferred (not called synchronously at module-eval time) so the native
-// module has a chance to finish attaching during cold start on Android
-// first — calling this at module scope crashed every launch in practice.
-setTimeout(() => applyColorScheme(initialThemeMode), 0);
+applyColorScheme(initialThemeMode);
 
 useThemeStore.subscribe((state) => {
     applyColorScheme(state.themeMode);
