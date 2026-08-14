@@ -70,7 +70,8 @@
           "motionPermission": "Allow The Becoming Method to access motion & fitness data to count your steps during outdoor runs."
         }
       ],
-      "expo-task-manager"
+      "expo-task-manager",
+      "expo-asset"
     ],
     "extra": {
       "router": {},
